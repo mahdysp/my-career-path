@@ -1,96 +1,56 @@
-'use client';
+"use client";
+import { useState } from "react";
 
-import { useState } from 'react';
-
-export default function QuizPage() {
-  const [name, setName] = useState('');
-  const [skill, setSkill] = useState('frontend');
-  const [submitted, setSubmitted] = useState(false);
-  const [aiResult, setAiResult] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    // شبیه‌سازی تأخیر برای حس بهتر
-    setTimeout(async () => {
-      const response = await fetch('/api/career', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, skill }),
-      });
-      const data = await response.json();
-      setAiResult(data.aiResponse);
-      setSubmitted(true);
-      setLoading(false);
-    }, 1500);
-  };
+export default function CareerHub() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [category, setCategory] = useState("all");
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      backgroundColor: '#f3f4f6', 
-      fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif' 
-    }}>
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '2rem', 
-        borderRadius: '16px', 
-        boxShadow: '0 10px 25px rgba(0,0,0,0.1)', 
-        width: '100%', 
-        maxWidth: '400px',
-        textAlign: 'right',
-        direction: 'rtl'
-      }}>
-        {submitted ? (
-          <div>
-            <h2 style={{ color: '#111827', marginBottom: '1rem' }}>تحلیل نهایی</h2>
-            <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '8px', border: '1px solid #d1fae5' }}>
-              <p style={{ color: '#065f46', lineHeight: '1.6' }}>{aiResult}</p>
-            </div>
-            <button 
-              onClick={() => setSubmitted(false)} 
-              style={{ marginTop: '1.5rem', width: '100%', padding: '10px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
-            >
-              شروع دوباره
-            </button>
+    <div className="min-h-screen bg-[#f8fafc] text-[#1e293b]" style={{ fontFamily: 'vazirmatn, sans-serif', direction: 'rtl' }}>
+      
+      {/* ۱. هدر سایت (Navbar) */}
+      <nav className="bg-white border-b border-[#e2e8f0] sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-sm">
+        <div className="flex items-center gap-8">
+          <span className="text-2xl font-black text-[#2563eb] tracking-tight">کارخونه</span>
+          <div className="hidden md:flex gap-6 text-sm font-medium text-[#64748b]">
+            <a href="#" className="hover:text-[#2563eb] transition">فرصت‌های شغلی</a>
+            <a href="#" className="hover:text-[#2563eb] transition">شایستگی‌سنجی</a>
+            <a href="#" className="hover:text-[#2563eb] transition">شرکت‌ها</a>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <h1 style={{ color: '#1f2937', marginBottom: '1.5rem', textAlign: 'center' }}>مشاوره شغلی هوشمند</h1>
-            
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '5px', color: '#374151' }}>نام شما</label>
-              <input 
-                type="text" value={name} onChange={(e) => setName(e.target.value)} required
-                style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box' }}
-                placeholder="مثلاً: نفیسه"
-              />
-            </div>
+        </div>
+        <div className="flex gap-3">
+          <button className="text-sm font-semibold px-4 py-2 text-[#2563eb] hover:bg-[#eff6ff] rounded-xl transition">ورود کارفرما</button>
+          <button className="text-sm font-semibold px-5 py-2 bg-[#2563eb] text-white hover:bg-[#1d4ed8] rounded-xl shadow-md shadow-blue-100 transition">ثبت‌نام کارجو</button>
+        </div>
+      </nav>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '5px', color: '#374151' }}>مهارت مورد نظر</label>
-              <select value={skill} onChange={(e) => setSkill(e.target.value)}
-                style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '8px', backgroundColor: 'white' }}
-              >
-                <option value="frontend">برنامه‌نویسی فرانت‌اند</option>
-                <option value="backend">برنامه‌نویسی بک‌اند</option>
-                <option value="design">طراحی رابط کاربری</option>
-                <option value="embedded">سیستم‌های نهفته و سخت‌افزار</option>
-              </select>
-            </div>
+      {/* ۲. بخش قهرمان (Hero Section) */}
+      <header className="max-w-6xl mx-auto px-6 pt-16 pb-12 text-center">
+        <span className="text-xs font-bold uppercase tracking-wider bg-[#dbeafe] text-[#2563eb] px-3 py-1.5 rounded-full">پلتفرم تخصصی اشتغال مهندسی</span>
+        <h1 className="text-4xl md:text-5xl font-black text-[#0f172a] mt-6 leading-tight max-w-3xl mx-auto">
+          مسیر شغلی خودت را پیدا کن و در <span className="text-[#2563eb]">بهترین شرکت‌ها</span> استخدام شو
+        </h1>
+        <p className="text-[#64748b] mt-4 text-base md:text-lg max-w-2xl mx-auto font-normal">
+          با سیستم هوشمند ارزیابی مهارت، شایستگی‌های خودت را بسنج و مستقیم به کارفرمایان معتبر متصل شو.
+        </p>
 
-            <button type="submit" disabled={loading}
-              style={{ width: '100%', padding: '12px', backgroundColor: loading ? '#9ca3af' : '#4f46e5', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }}
-            >
-              {loading ? 'در حال تحلیل...' : 'دریافت مسیر شغلی'}
-            </button>
-          </form>
-        )}
-      </div>
+        {/* باکس جستجوی دریبل‌پسند (Search Bar) */}
+        <div className="max-w-3xl mx-auto bg-white p-3 rounded-2xl shadow-xl shadow-slate-100 border border-[#e2e8f0] mt-10 flex flex-col md:flex-row gap-2 items-center">
+          <div className="w-full relative flex items-center px-3">
+            <input 
+              type="text" 
+              placeholder="عنوان شغلی، مهارت یا شرکت..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pr-4 py-3 bg-transparent text-sm font-medium focus:outline-none placeholder-[#94a3b8]"
+            />
+          </div>
+          <button className="w-full md:w-auto bg-[#0f172a] text-white text-sm font-bold px-8 py-4 rounded-xl hover:bg-[#1e293b] transition whitespace-nowrap">
+            جستجوی فرصت‌ها
+          </button>
+        </div>
+      </header>
+
     </div>
   );
 }
