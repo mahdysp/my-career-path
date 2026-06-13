@@ -256,7 +256,7 @@ export default function CareerHub() {
                 fontFamily: "Vazirmatn, sans-serif",
               }}
             >
-              ورود به حساب
+              ورود
             </button>
             <button
               className="nav-register"
@@ -269,7 +269,7 @@ export default function CareerHub() {
                 fontFamily: "Vazirmatn, sans-serif",
               }}
             >
-              ساخت حساب رایگان
+              ثبت نام
             </button>
           </div>
         </nav>
