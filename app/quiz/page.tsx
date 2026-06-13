@@ -155,6 +155,7 @@ export default function CareerHub() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap');
+
         @keyframes blink {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.5; transform: scale(0.7); }
@@ -163,11 +164,60 @@ export default function CareerHub() {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-12px); }
         }
+
         .search-btn:hover { background: #1e40af !important; transform: scale(1.02); }
         .search-btn:active { transform: scale(0.98); }
         .tag-pill:hover { background: rgba(59,130,246,0.2) !important; border-color: rgba(59,130,246,0.5) !important; }
         .nav-login:hover { background: rgba(59,130,246,0.12) !important; border-color: rgba(59,130,246,0.6) !important; color: #60a5fa !important; }
         .nav-register:hover { background: #1e40af !important; box-shadow: 0 6px 24px rgba(29,78,216,0.5) !important; }
+
+        /* ناوبار موبایل */
+        @media (max-width: 768px) {
+          .nav-inner {
+            padding: 12px 16px !important;
+          }
+          .nav-btn-text { display: none; }
+          .nav-login-short::after { content: "ورود"; }
+          .nav-register-short::after { content: "ثبت‌نام"; }
+        }
+
+        /* گرید اصلی موبایل */
+        @media (max-width: 768px) {
+          .main-grid {
+            grid-template-columns: 1fr !important;
+            padding: 32px 20px !important;
+            gap: 40px !important;
+          }
+          .main-grid h1 {
+            font-size: 28px !important;
+          }
+          .main-grid p {
+            font-size: 14px !important;
+          }
+          .search-box {
+            max-width: 100% !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+          .search-box input {
+            width: 100% !important;
+            padding: 14px 16px !important;
+          }
+          .search-btn {
+            width: 100% !important;
+            padding: 14px !important;
+            text-align: center !important;
+          }
+          .stats-row {
+            gap: 20px !important;
+          }
+          .svg-col {
+            display: none !important;
+          }
+          .tags-row {
+            gap: 6px !important;
+          }
+        }
       `}</style>
 
       <div
@@ -183,33 +233,35 @@ export default function CareerHub() {
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
         />
 
-        {/* ناوبار — بدون لوگو */}
-        <nav style={{
-          position: "sticky", top: 0, zIndex: 50,
-          background: "rgba(7,13,26,0.85)", backdropFilter: "blur(16px)",
-          borderBottom: "1px solid rgba(59,130,246,0.1)",
-          padding: "14px 40px", display: "flex", justifyContent: "space-between", alignItems: "center",
-        }}>
-          {/* فضای خالی سمت راست به جای لوگو */}
+        {/* ناوبار */}
+        <nav
+          className="nav-inner"
+          style={{
+            position: "sticky", top: 0, zIndex: 50,
+            background: "rgba(7,13,26,0.85)", backdropFilter: "blur(16px)",
+            borderBottom: "1px solid rgba(59,130,246,0.1)",
+            padding: "14px 40px", display: "flex",
+            justifyContent: "space-between", alignItems: "center",
+          }}
+        >
           <div />
-        
           <div style={{ display: "flex", gap: 10 }}>
             <button
               className="nav-login"
               style={{
-                fontSize: 18, fontWeight: 700, padding: "9px 22px",
+                fontSize: 14, fontWeight: 700, padding: "9px 22px",
                 color: "#93c5fd", background: "transparent",
                 border: "1px solid rgba(59,130,246,0.25)",
                 borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
                 fontFamily: "Vazirmatn, sans-serif",
               }}
             >
-              ورود
+              ورود به حساب
             </button>
             <button
               className="nav-register"
               style={{
-                fontSize: 18, fontWeight: 700, padding: "9px 22px",
+                fontSize: 14, fontWeight: 700, padding: "9px 22px",
                 color: "#fff", background: "#1d4ed8",
                 border: "1px solid rgba(59,130,246,0.4)",
                 borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
@@ -217,19 +269,21 @@ export default function CareerHub() {
                 fontFamily: "Vazirmatn, sans-serif",
               }}
             >
-              ثبت نام
+              ساخت حساب رایگان
             </button>
           </div>
         </nav>
 
         {/* محتوای اصلی */}
-        <main style={{
-          maxWidth: 1200, margin: "0 auto", padding: "80px 40px",
-          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60,
-          alignItems: "center", position: "relative", zIndex: 10,
-        }}>
-
-          {/* ستون راست */}
+        <main
+          className="main-grid"
+          style={{
+            maxWidth: 1200, margin: "0 auto", padding: "80px 40px",
+            display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60,
+            alignItems: "center", position: "relative", zIndex: 10,
+          }}
+        >
+          {/* ستون راست: متن */}
           <div style={{ textAlign: "right" }}>
 
             <div style={{ marginBottom: 20 }}>
@@ -262,11 +316,14 @@ export default function CareerHub() {
             </p>
 
             {/* باکس جستجو */}
-            <div style={{
-              background: "rgba(15,31,61,0.9)", border: "1px solid rgba(59,130,246,0.2)",
-              borderRadius: 18, padding: 8, display: "flex", gap: 8, alignItems: "center",
-              maxWidth: 500, boxShadow: "0 0 40px rgba(29,78,216,0.1)",
-            }}>
+            <div
+              className="search-box"
+              style={{
+                background: "rgba(15,31,61,0.9)", border: "1px solid rgba(59,130,246,0.2)",
+                borderRadius: 18, padding: 8, display: "flex", gap: 8, alignItems: "center",
+                maxWidth: 500, boxShadow: "0 0 40px rgba(29,78,216,0.1)",
+              }}
+            >
               <input
                 type="text"
                 placeholder="جستجوی حوزه تخصصی..."
@@ -295,7 +352,7 @@ export default function CareerHub() {
             </div>
 
             {/* تگ‌های پیشنهادی */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
+            <div className="tags-row" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
               <span style={{ fontSize: 12, color: "#64748b", display: "flex", alignItems: "center" }}>پیشنهادی:</span>
               {tags.map((tag) => (
                 <button
@@ -314,8 +371,8 @@ export default function CareerHub() {
               ))}
             </div>
 
-            {/* آمار — فقط دو تا */}
-            <div style={{ display: "flex", gap: 32, marginTop: 40 }}>
+            {/* آمار */}
+            <div className="stats-row" style={{ display: "flex", gap: 32, marginTop: 40 }}>
               {[
                 { num: "+۲۴۰۰", lbl: "مسیر شغلی", color: "#3b82f6" },
                 { num: "%۹۴",   lbl: "دقت نتایج",  color: "#10b981" },
@@ -328,8 +385,8 @@ export default function CareerHub() {
             </div>
           </div>
 
-          {/* ستون چپ: SVG */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {/* ستون چپ: SVG — در موبایل مخفی میشه */}
+          <div className="svg-col" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg viewBox="0 0 480 420" style={{ width: "100%", maxWidth: 480, animation: "float 5s ease-in-out infinite" }} xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="mtnGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -353,7 +410,6 @@ export default function CareerHub() {
               <ellipse cx="240" cy="280" rx="200" ry="120" fill="url(#glowCenter)" />
               <polygon points="240,360 420,80 560,360" fill="url(#mtnGrad)" />
               <polygon points="80,360 220,140 370,360" fill="url(#mtnFront)" />
-
               <path d="M 100,340 Q 160,280 200,220 T 270,160 T 310,120" fill="none" stroke="url(#pathGrad)" strokeWidth="2.5" strokeDasharray="8 5" opacity="0.7" />
 
               {[{ cx: 100, cy: 340 }, { cx: 180, cy: 255 }, { cx: 240, cy: 195 }, { cx: 285, cy: 148 }].map((pt, i) => (
@@ -397,7 +453,6 @@ export default function CareerHub() {
               <line x1="0" y1="380" x2="480" y2="380" stroke="rgba(59,130,246,0.05)" strokeWidth="1" />
             </svg>
           </div>
-
         </main>
       </div>
     </>
