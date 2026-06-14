@@ -1,38 +1,61 @@
-import { NextResponse } from "next/server";
-// در صورت استفاده از کتابخانه‌هایی مثل bcrypt برای هش کردن رمز عبور:
-// import bcrypt from "bcryptjs";
+import { NextRequest, NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, password, name } = body;
+    const { firstName, lastName, education, email, password } = await req.json();
 
-    // ۱. اعتبارسنجی اولیه داده‌ها
-    if (!email || !password) {
+    if (!firstName || !lastName || !education || !email || !password) {
       return NextResponse.json(
-        { message: "لطفاً ایمیل و رمز عبور را وارد کنید." },
+        { message: "لطفاً همه فیلدها را تکمیل کنید." },
         { status: 400 }
       );
     }
 
-    // ۲. اتصال به دیتابیس و بررسی تکراری نبودن ایمیل (نمونه فرضی)
-    // const existingUser = await db.user.findUnique({ where: { email } });
-    // if (existingUser) return NextResponse.json({ message: "این ایمیل قبلاً ثبت شده است." }, { status: 400 });
+    // 1) Create the auth user (Supabase handles password hashing + sends
+    //    a confirmation email automatically, since "Confirm email" is ON)
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: email.toLowerCase(),
+      password,
+    });
 
-    // ۳. هش کردن رمز عبور
-    // const hashedPassword = await bcrypt.hash(password, 10);
+    if (authError) {
+      // Common case: email already registered
+      return NextResponse.json({ message: authError.message }, { status: 400 });
+    }
 
-    // ۴. ذخیره کاربر در دیتابیس
-    // const newUser = await db.user.create({ data: { email, password: hashedPassword, name } });
+    const userId = authData.user?.id;
 
-    return NextResponse.json(
-      { message: "ثبت‌نام با موفقیت انجام شد." },
-      { status: 201 }
-    );
-  } catch (error) {
-    return NextResponse.json(
-      { message: "خطایی در سرور رخ داده است." },
-      { status: 500 }
-    );
+    if (!userId) {
+      return NextResponse.json(
+        { message: "خطا در ایجاد حساب کاربری." },
+        { status: 500 }
+      );
+    }
+
+    // 2) Insert the extra profile fields, linked to the auth user's id
+    const { error: profileError } = await supabase.from("profiles").insert({
+      id: userId,
+      email: email.toLowerCase(),
+      first_name: firstName,
+      last_name: lastName,
+      education,
+    });
+
+    if (profileError) {
+      console.error("Profile insert error:", profileError);
+      return NextResponse.json(
+        { message: "حساب کاربری ساخته شد اما ذخیره اطلاعات با خطا مواجه شد." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      message: "ثبت‌نام با موفقیت انجام شد. لطفاً ایمیل خود را برای تایید حساب بررسی کنید.",
+      requiresEmailConfirmation: true,
+    });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ message: "خطای سرور." }, { status: 500 });
   }
 }
