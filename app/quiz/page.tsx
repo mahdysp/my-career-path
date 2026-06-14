@@ -9,6 +9,24 @@ export default function CareerHub() {
   const animRef = useRef<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // وضعیت کاربر لاگین‌شده
+  const [user, setUser] = useState<{ id: string; email: string; firstName: string; lastName: string } | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => setUser(data.user))
+      .catch(() => setUser(null))
+      .finally(() => setUserLoading(false));
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setUser(null);
+    router.refresh();
+  };
+
   useEffect(() => {
     const cv = canvasRef.current;
     const wrap = wrapRef.current;
@@ -170,6 +188,7 @@ export default function CareerHub() {
         .tag-pill:hover { background: rgba(59,130,246,0.2) !important; border-color: rgba(59,130,246,0.5) !important; }
         .nav-login:hover { background: rgba(59,130,246,0.12) !important; border-color: rgba(59,130,246,0.6) !important; color: #60a5fa !important; }
         .nav-register:hover { background: #1e40af !important; box-shadow: 0 6px 24px rgba(29,78,216,0.5) !important; }
+        .nav-logout:hover { background: rgba(239,68,68,0.12) !important; border-color: rgba(239,68,68,0.6) !important; color: #fca5a5 !important; }
 
         /* ناوبار موبایل */
         @media (max-width: 768px) {
@@ -241,36 +260,81 @@ export default function CareerHub() {
             justifyContent: "space-between", alignItems: "center",
           }}
         >
-          <div />
-          <div style={{ display: "flex", gap: 10 }}>
-            <button
-              className="nav-login"
-              onClick={() => router.push("/auth")}
-              style={{
-                fontSize: 18, fontWeight: 700, padding: "9px 22px",
-                color: "#93c5fd", background: "transparent",
-                border: "1px solid rgba(59,130,246,0.25)",
-                borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
-                fontFamily: "Vazirmatn, sans-serif",
-              }}
-            >
-              ورود
-            </button>
-            <button
-              className="nav-register"
-                onClick={() => router.push("/register")}
-              style={{
-                fontSize: 18, fontWeight: 700, padding: "9px 22px",
-                color: "#fff", background: "#1d4ed8",
-                border: "1px solid rgba(59,130,246,0.4)",
-                borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
-                boxShadow: "0 4px 16px rgba(29,78,216,0.35)",
-                fontFamily: "Vazirmatn, sans-serif",
-              }}
-            >
-              ثبت نام
-            </button>
-          </div>
+          {!userLoading && user ? (
+            <>
+              {/* سمت چپ: دکمه خروج (قرمز) */}
+              <button
+                className="nav-logout"
+                onClick={handleLogout}
+                style={{
+                  fontSize: 14, fontWeight: 700, padding: "9px 22px",
+                  color: "#f87171", background: "transparent",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                  borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
+                  fontFamily: "Vazirmatn, sans-serif",
+                }}
+              >
+                خروج
+              </button>
+
+              {/* سمت راست: نام کاربر + داشبورد */}
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <span style={{
+                  fontSize: 14, fontWeight: 700, color: "#e2e8f0",
+                  fontFamily: "Vazirmatn, sans-serif",
+                }}>
+                  سلام، {user.firstName || user.email}
+                </span>
+                <button
+                  className="nav-register"
+                  onClick={() => router.push("/dashboard")}
+                  style={{
+                    fontSize: 14, fontWeight: 700, padding: "9px 22px",
+                    color: "#fff", background: "#1d4ed8",
+                    border: "1px solid rgba(59,130,246,0.4)",
+                    borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
+                    boxShadow: "0 4px 16px rgba(29,78,216,0.35)",
+                    fontFamily: "Vazirmatn, sans-serif",
+                  }}
+                >
+                  داشبورد
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div />
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  className="nav-login"
+                  onClick={() => router.push("/auth")}
+                  style={{
+                    fontSize: 14, fontWeight: 700, padding: "9px 22px",
+                    color: "#93c5fd", background: "transparent",
+                    border: "1px solid rgba(59,130,246,0.25)",
+                    borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
+                    fontFamily: "Vazirmatn, sans-serif",
+                  }}
+                >
+                  ورود به حساب
+                </button>
+                <button
+                  className="nav-register"
+                  onClick={() => router.push("/register")}
+                  style={{
+                    fontSize: 14, fontWeight: 700, padding: "9px 22px",
+                    color: "#fff", background: "#1d4ed8",
+                    border: "1px solid rgba(59,130,246,0.4)",
+                    borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
+                    boxShadow: "0 4px 16px rgba(29,78,216,0.35)",
+                    fontFamily: "Vazirmatn, sans-serif",
+                  }}
+                >
+                  ساخت حساب رایگان
+                </button>
+              </div>
+            </>
+          )}
         </nav>
 
         {/* محتوای اصلی */}
