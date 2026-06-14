@@ -1,13 +1,10 @@
-import { NextResponse } from "next/server";
-// در صورت استفاده از کتابخانه‌هایی مثل bcrypt برای هش کردن رمز عبور:
-// import bcrypt from "bcryptjs";
+import { NextRequest, NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, password, name } = body;
+    const { email, password } = await req.json();
 
-    // ۱. اعتبارسنجی اولیه داده‌ها
     if (!email || !password) {
       return NextResponse.json(
         { message: "لطفاً ایمیل و رمز عبور را وارد کنید." },
@@ -15,24 +12,65 @@ export async function POST(request: Request) {
       );
     }
 
-    // ۲. اتصال به دیتابیس و بررسی تکراری نبودن ایمیل (نمونه فرضی)
-    // const existingUser = await db.user.findUnique({ where: { email } });
-    // if (existingUser) return NextResponse.json({ message: "این ایمیل قبلاً ثبت شده است." }, { status: 400 });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.toLowerCase(),
+      password,
+    });
 
-    // ۳. هش کردن رمز عبور
-    // const hashedPassword = await bcrypt.hash(password, 10);
+    if (error) {
+      // پیام‌های رایج Supabase:
+      // - "Invalid login credentials" => ایمیل یا رمز عبور اشتباه است
+      // - "Email not confirmed" => کاربر هنوز ایمیلش را تایید نکرده است
+      if (error.message.toLowerCase().includes("email not confirmed")) {
+        return NextResponse.json(
+          { message: "ایمیل شما هنوز تایید نشده است. لطفاً ایمیل خود را بررسی کنید." },
+          { status: 401 }
+        );
+      }
+      if (error.message.toLowerCase().includes("invalid login credentials")) {
+        return NextResponse.json(
+          { message: "ایمیل یا رمز عبور اشتباه است." },
+          { status: 401 }
+        );
+      }
+      return NextResponse.json({ message: error.message }, { status: 401 });
+    }
 
-    // ۴. ذخیره کاربر در دیتابیس
-    // const newUser = await db.user.create({ data: { email, password: hashedPassword, name } });
+    if (!data.session) {
+      return NextResponse.json(
+        { message: "ورود ناموفق بود. لطفاً دوباره تلاش کنید." },
+        { status: 401 }
+      );
+    }
 
-    return NextResponse.json(
-      { message: "ثبت‌نام با موفقیت انجام شد." },
-      { status: 201 }
-    );
-  } catch (error) {
-    return NextResponse.json(
-      { message: "خطایی در سرور رخ داده است." },
-      { status: 500 }
-    );
+    // ست کردن کوکی‌های session برای حفظ وضعیت ورود کاربر
+    const response = NextResponse.json({
+      message: "ورود با موفقیت انجام شد.",
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+      },
+    });
+
+    response.cookies.set("sb-access-token", data.session.access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: data.session.expires_in,
+    });
+
+    response.cookies.set("sb-refresh-token", data.session.refresh_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30, // 30 روز
+    });
+
+    return response;
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ message: "خطای سرور." }, { status: 500 });
   }
 }
