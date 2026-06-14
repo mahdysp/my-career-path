@@ -375,7 +375,14 @@ export default function AuthPage() {
           <div style={{ marginTop: 24, fontSize: 13, color: "#64748b" }}>
             {isLogin ? "هنوز ثبت‌نام نکرده‌ای؟ " : "قبلاً ثبت‌نام کرده‌ای؟ "}
             <button
-              onClick={() => { setIsLogin(!isLogin); setError(""); }}
+              onClick={() => {
+                if (isLogin) {
+                  router.push("/register");
+                } else {
+                  setIsLogin(true);
+                  setError("");
+                }
+              }}
               className="auth-switch"
               style={{
                 color: "#3b82f6", fontWeight: 700, background: "none",
