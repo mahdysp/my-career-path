@@ -17,6 +17,11 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  // وضعیت بررسی ایمیل
+  const [emailStatus, setEmailStatus] = useState<"idle" | "checking" | "valid" | "invalid" | "exists">("idle");
+  const [emailMessage, setEmailMessage] = useState("");
 
   useEffect(() => {
     const cv = canvasRef.current;
@@ -150,9 +155,72 @@ export default function RegisterPage() {
     };
   }, []);
 
+  // بررسی ایمیل هنگام خروج از فیلد (onBlur)
+  const checkEmail = async () => {
+    const email = formData.email.trim();
+
+    if (!email) {
+      setEmailStatus("idle");
+      setEmailMessage("");
+      return;
+    }
+
+    // اعتبارسنجی سریع فرمت در سمت کلاینت (قبل از ارسال درخواست)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailStatus("invalid");
+      setEmailMessage("فرمت ایمیل صحیح نیست.");
+      return;
+    }
+
+    setEmailStatus("checking");
+    setEmailMessage("در حال بررسی...");
+
+    try {
+      const res = await fetch("/api/auth/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setEmailStatus("idle");
+        setEmailMessage("");
+        return;
+      }
+
+      if (!data.valid) {
+        setEmailStatus("invalid");
+        setEmailMessage(data.message);
+      } else if (data.exists) {
+        setEmailStatus("exists");
+        setEmailMessage(data.message);
+      } else {
+        setEmailStatus("valid");
+        setEmailMessage(data.message);
+      }
+    } catch {
+      setEmailStatus("idle");
+      setEmailMessage("");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // جلوگیری از ارسال فرم اگر ایمیل تکراری یا نامعتبر باشد
+    if (emailStatus === "exists") {
+      setError("این ایمیل قبلاً ثبت شده است. لطفاً وارد حساب خود شوید.");
+      return;
+    }
+    if (emailStatus === "invalid") {
+      setError("لطفاً یک ایمیل معتبر وارد کنید.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -168,12 +236,21 @@ export default function RegisterPage() {
         throw new Error(data.message || "مشکلی پیش آمده است.");
       }
 
-      router.push("/quiz");
+      setSuccess(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  // رنگ و آیکون وضعیت ایمیل
+  const emailStatusStyles: Record<string, { color: string; icon: string }> = {
+    idle: { color: "#64748b", icon: "" },
+    checking: { color: "#fbbf24", icon: "⏳" },
+    valid: { color: "#10b981", icon: "✓" },
+    invalid: { color: "#f87171", icon: "✕" },
+    exists: { color: "#f87171", icon: "✕" },
   };
 
   return (
@@ -184,6 +261,10 @@ export default function RegisterPage() {
         @keyframes blink {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.5; transform: scale(0.7); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         .auth-input {
@@ -205,6 +286,10 @@ export default function RegisterPage() {
           box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
         }
         .auth-input::placeholder { color: #475569; }
+
+        .auth-input.email-valid { border-color: rgba(16,185,129,0.5); }
+        .auth-input.email-invalid { border-color: rgba(248,113,113,0.5); }
+        .auth-input.email-checking { border-color: rgba(251,191,36,0.5); }
 
         select.auth-input {
           appearance: none;
@@ -228,6 +313,11 @@ export default function RegisterPage() {
         .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .auth-switch:hover { color: #60a5fa !important; }
+
+        .email-icon-checking {
+          display: inline-block;
+          animation: spin 0.8s linear infinite;
+        }
 
         @media (max-width: 768px) {
           .auth-card { padding: 32px 24px !important; }
@@ -278,6 +368,54 @@ export default function RegisterPage() {
             </span>
           </div>
 
+          {success ? (
+            <>
+              {/* آیکون موفقیت */}
+              <div style={{
+                width: 64, height: 64, borderRadius: 18, margin: "0 auto 20px",
+                background: "linear-gradient(135deg,rgba(16,185,129,0.3),rgba(59,130,246,0.2))",
+                border: "1px solid rgba(16,185,129,0.3)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 26, boxShadow: "0 0 24px rgba(16,185,129,0.2)",
+              }}>
+                📩
+              </div>
+
+              {/* تیتر موفقیت */}
+              <h1 style={{ fontSize: 24, fontWeight: 900, color: "#f8fafc", marginBottom: 8 }}>
+                ایمیل خود را{" "}
+                <span style={{
+                  background: "linear-gradient(90deg,#3b82f6,#10b981)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                }}>
+                  تایید کنید
+                </span>
+              </h1>
+
+              <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.8, marginBottom: 28 }}>
+                لینک تایید به آدرس <strong style={{ color: "#e2e8f0" }}>{formData.email}</strong> ارسال شد.
+                برای فعال‌سازی حساب کاربری، روی لینک داخل ایمیل کلیک کنید و سپس وارد حساب خود شوید.
+              </p>
+
+              <button
+                onClick={() => router.push("/auth")}
+                className="auth-submit"
+                style={{
+                  width: "100%",
+                  background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
+                  color: "#fff", border: "none", borderRadius: 14,
+                  padding: "14px 20px",
+                  fontFamily: "Vazirmatn, sans-serif", fontSize: 16, fontWeight: 900,
+                  cursor: "pointer",
+                  boxShadow: "0 8px 32px rgba(29,78,216,0.35)",
+                  transition: "transform 0.18s, box-shadow 0.18s",
+                }}
+              >
+                رفتن به صفحه ورود
+              </button>
+            </>
+          ) : (
+          <>
           {/* آیکون */}
           <div style={{
             width: 64, height: 64, borderRadius: 18, margin: "0 auto 20px",
@@ -303,7 +441,11 @@ export default function RegisterPage() {
           <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.7, marginBottom: 28 }}>
             با تکمیل اطلاعات زیر، حساب کاربری‌ات رو بساز و مسیر شغلی‌ات رو کشف کن
           </p>
+          </>
+          )}
 
+          {!success && (
+          <>
           {/* خطا */}
           {error && (
             <div style={{
@@ -368,15 +510,48 @@ export default function RegisterPage() {
               <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
                 ایمیل
               </label>
-              <input
-                type="email"
-                placeholder="example@email.com"
-                className="auth-input"
-                required
-                style={{ textAlign: "left", direction: "ltr" }}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  type="email"
+                  placeholder="example@email.com"
+                  className={`auth-input ${
+                    emailStatus === "valid" ? "email-valid" :
+                    emailStatus === "invalid" || emailStatus === "exists" ? "email-invalid" :
+                    emailStatus === "checking" ? "email-checking" : ""
+                  }`}
+                  required
+                  style={{ textAlign: "left", direction: "ltr", paddingLeft: 38 }}
+                  value={formData.email}
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    setEmailStatus("idle");
+                    setEmailMessage("");
+                  }}
+                  onBlur={checkEmail}
+                />
+                {/* آیکون وضعیت */}
+                {emailStatus !== "idle" && (
+                  <span style={{
+                    position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+                    fontSize: 14, color: emailStatusStyles[emailStatus].color,
+                  }}>
+                    {emailStatus === "checking" ? (
+                      <span className="email-icon-checking">⏳</span>
+                    ) : (
+                      emailStatusStyles[emailStatus].icon
+                    )}
+                  </span>
+                )}
+              </div>
+              {/* پیام وضعیت */}
+              {emailMessage && (
+                <div style={{
+                  fontSize: 12, marginTop: 6, textAlign: "right",
+                  color: emailStatusStyles[emailStatus].color,
+                }}>
+                  {emailMessage}
+                </div>
+              )}
             </div>
 
             <div>
@@ -396,7 +571,7 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || emailStatus === "exists" || emailStatus === "invalid"}
               className="auth-submit"
               style={{
                 width: "100%", marginTop: 6,
