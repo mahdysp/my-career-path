@@ -17,6 +17,9 @@ export async function POST(req: NextRequest) {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: email.toLowerCase(),
       password,
+      options: {
+        emailRedirectTo: "https://my-career-path-nine.vercel.app/auth",
+      },
     });
 
     if (authError) {
