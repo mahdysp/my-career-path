@@ -258,6 +258,7 @@ export default function CareerHub() {
             </button>
             <button
               className="nav-register"
+                onClick={() => router.push("/register")}
               style={{
                 fontSize: 18, fontWeight: 700, padding: "9px 22px",
                 color: "#fff", background: "#1d4ed8",
