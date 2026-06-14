@@ -176,9 +176,6 @@ export default function CareerHub() {
           .nav-inner {
             padding: 12px 16px !important;
           }
-          .nav-btn-text { display: none; }
-          .nav-login-short::after { content: "ورود"; }
-          .nav-register-short::after { content: "ثبت‌نام"; }
         }
 
         /* گرید اصلی موبایل */
@@ -248,6 +245,7 @@ export default function CareerHub() {
           <div style={{ display: "flex", gap: 10 }}>
             <button
               className="nav-login"
+              onClick={() => router.push("/auth")}
               style={{
                 fontSize: 14, fontWeight: 700, padding: "9px 22px",
                 color: "#93c5fd", background: "transparent",
@@ -256,10 +254,11 @@ export default function CareerHub() {
                 fontFamily: "Vazirmatn, sans-serif",
               }}
             >
-              ورود
+              ورود به حساب
             </button>
             <button
               className="nav-register"
+              onClick={() => router.push("/auth")}
               style={{
                 fontSize: 14, fontWeight: 700, padding: "9px 22px",
                 color: "#fff", background: "#1d4ed8",
@@ -269,7 +268,7 @@ export default function CareerHub() {
                 fontFamily: "Vazirmatn, sans-serif",
               }}
             >
-              ثبت نام
+              ساخت حساب رایگان
             </button>
           </div>
         </nav>
