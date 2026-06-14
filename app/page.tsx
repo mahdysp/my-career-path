@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link"; // <-- اضافه شدن ایمپورت Link
 
 export default function CareerHub() {
   const router = useRouter();
@@ -12,10 +11,9 @@ export default function CareerHub() {
 
   const handleStartAnalysis = () => {
     setIsLoading(true);
-    // ایجاد وقفه کوتاه برای اجرای کامل افکت کشیده شدن صفحه به چپ
     setTimeout(() => {
       router.push("/quiz");
-    }, 550);
+    }, 600);
   };
 
   useEffect(() => {
@@ -59,8 +57,8 @@ export default function CareerHub() {
       ];
       const c = colors[Math.floor(Math.random() * colors.length)];
       return {
-        x: Math.random() * (cv?.width || 800),
-        y: Math.random() * (cv?.height || 600),
+        x: Math.random() * cv!.width,
+        y: Math.random() * cv!.height,
         vx: (Math.random() - 0.5) * 0.4,
         vy: (Math.random() - 0.5) * 0.4,
         r: Math.random() * 2 + 1,
@@ -128,8 +126,8 @@ export default function CareerHub() {
         p.life++;
         if (
           p.life > p.maxLife ||
-          p.x < -10 || p.x > (cv?.width || 0) + 10 ||
-          p.y < -10 || p.y > (cv?.height || 0) + 10
+          p.x < -10 || p.x > cv!.width + 10 ||
+          p.y < -10 || p.y > cv!.height + 10
         ) {
           particles[i] = makeParticle();
           return;
@@ -188,27 +186,10 @@ export default function CareerHub() {
           box-shadow: 0 12px 40px rgba(29,78,216,0.5) !important;
         }
         .start-btn:active { transform: scale(0.99) !important; }
-        
-        /* کلاس‌های انیمیشن نرم برای خروج هماهنگ */
-        .page-wrap {
-          transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease-in-out;
-        }
-        .slide-out-active {
-          transform: translateX(100%) scale(0.98);
-          opacity: 0;
-        }
-        .auth-link {
-          transition: all 0.2s ease-in-out;
-        }
-        .auth-link:hover {
-          background: rgba(59,130,246,0.15);
-          border-color: rgba(59,130,246,0.6);
-        }
       `}</style>
 
       <div
         ref={wrapRef}
-        className={`page-wrap ${isLoading ? "slide-out-active" : ""}`}
         style={{
           minHeight: "100vh", width: "100%", background: "#070d1a",
           fontFamily: "Vazirmatn, sans-serif", direction: "rtl",
@@ -222,27 +203,6 @@ export default function CareerHub() {
           ref={canvasRef}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
         />
-
-        {/* Auth Buttons Header */}
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0,
-          padding: "24px 32px", display: "flex", justifyContent: "flex-end",
-          gap: "12px", zIndex: 20
-        }}>
-          <Link href="/auth" style={{
-            padding: "8px 16px", color: "#94a3b8", fontSize: "14px", fontWeight: 500,
-            textDecoration: "none", display: "flex", alignItems: "center"
-          }}>
-            ورود
-          </Link>
-          <Link href="/auth" className="auth-link" style={{
-            padding: "8px 20px", color: "#60a5fa", fontSize: "14px", fontWeight: 700,
-            background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.3)",
-            borderRadius: "12px", textDecoration: "none", display: "flex", alignItems: "center"
-          }}>
-            ثبت نام
-          </Link>
-        </div>
 
         {/* Badge */}
         <div style={{ position: "relative", zIndex: 10, marginBottom: 20 }}>
