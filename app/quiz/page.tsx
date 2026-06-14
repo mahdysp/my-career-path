@@ -247,20 +247,20 @@ export default function CareerHub() {
               className="nav-login"
               onClick={() => router.push("/auth")}
               style={{
-                fontSize: 14, fontWeight: 700, padding: "9px 22px",
+                fontSize: 18 fontWeight: 700, padding: "9px 22px",
                 color: "#93c5fd", background: "transparent",
                 border: "1px solid rgba(59,130,246,0.25)",
                 borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
                 fontFamily: "Vazirmatn, sans-serif",
               }}
             >
-              ورود به حساب
+              ورود
             </button>
             <button
               className="nav-register"
               onClick={() => router.push("/auth")}
               style={{
-                fontSize: 14, fontWeight: 700, padding: "9px 22px",
+                fontSize: 18 fontWeight: 700, padding: "9px 22px",
                 color: "#fff", background: "#1d4ed8",
                 border: "1px solid rgba(59,130,246,0.4)",
                 borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
@@ -268,7 +268,7 @@ export default function CareerHub() {
                 fontFamily: "Vazirmatn, sans-serif",
               }}
             >
-              ساخت حساب رایگان
+              ثبت نام
             </button>
           </div>
         </nav>
