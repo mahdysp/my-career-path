@@ -608,3 +608,9 @@ export default function RegisterPage() {
     </>
   );
 }
+</form>
+        </div>
+      </div>
+    </div>
+  );
+}
