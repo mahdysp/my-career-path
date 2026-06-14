@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link"; // <-- اضافه شدن ایمپورت Link
 
 export default function CareerHub() {
   const router = useRouter();
@@ -196,6 +197,13 @@ export default function CareerHub() {
           transform: translateX(100%) scale(0.98);
           opacity: 0;
         }
+        .auth-link {
+          transition: all 0.2s ease-in-out;
+        }
+        .auth-link:hover {
+          background: rgba(59,130,246,0.15);
+          border-color: rgba(59,130,246,0.6);
+        }
       `}</style>
 
       <div
@@ -214,6 +222,27 @@ export default function CareerHub() {
           ref={canvasRef}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
         />
+
+        {/* Auth Buttons Header */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0,
+          padding: "24px 32px", display: "flex", justifyContent: "flex-end",
+          gap: "12px", zIndex: 20
+        }}>
+          <Link href="/auth" style={{
+            padding: "8px 16px", color: "#94a3b8", fontSize: "14px", fontWeight: 500,
+            textDecoration: "none", display: "flex", alignItems: "center"
+          }}>
+            ورود
+          </Link>
+          <Link href="/auth" className="auth-link" style={{
+            padding: "8px 20px", color: "#60a5fa", fontSize: "14px", fontWeight: 700,
+            background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.3)",
+            borderRadius: "12px", textDecoration: "none", display: "flex", alignItems: "center"
+          }}>
+            ثبت نام
+          </Link>
+        </div>
 
         {/* Badge */}
         <div style={{ position: "relative", zIndex: 10, marginBottom: 20 }}>
@@ -329,4 +358,4 @@ export default function CareerHub() {
       </div>
     </>
   );
-}
+}Q
