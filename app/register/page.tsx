@@ -19,7 +19,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // وضعیت بررسی ایمیل
   const [emailStatus, setEmailStatus] = useState<"idle" | "checking" | "valid" | "invalid" | "exists">("idle");
   const [emailMessage, setEmailMessage] = useState("");
 
@@ -155,7 +154,6 @@ export default function RegisterPage() {
     };
   }, []);
 
-  // بررسی ایمیل هنگام خروج از فیلد (onBlur)
   const checkEmail = async () => {
     const email = formData.email.trim();
 
@@ -165,7 +163,6 @@ export default function RegisterPage() {
       return;
     }
 
-    // اعتبارسنجی سریع فرمت در سمت کلاینت (قبل از ارسال درخواست)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setEmailStatus("invalid");
@@ -211,7 +208,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    // جلوگیری از ارسال فرم اگر ایمیل تکراری یا نامعتبر باشد
     if (emailStatus === "exists") {
       setError("این ایمیل قبلاً ثبت شده است. لطفاً وارد حساب خود شوید.");
       return;
@@ -244,7 +240,6 @@ export default function RegisterPage() {
     }
   };
 
-  // رنگ و آیکون وضعیت ایمیل
   const emailStatusStyles: Record<string, { color: string; icon: string }> = {
     idle: { color: "#64748b", icon: "" },
     checking: { color: "#fbbf24", icon: "⏳" },
@@ -370,7 +365,6 @@ export default function RegisterPage() {
 
           {success ? (
             <>
-              {/* آیکون موفقیت */}
               <div style={{
                 width: 64, height: 64, borderRadius: 18, margin: "0 auto 20px",
                 background: "linear-gradient(135deg,rgba(16,185,129,0.3),rgba(59,130,246,0.2))",
@@ -381,7 +375,6 @@ export default function RegisterPage() {
                 📩
               </div>
 
-              {/* تیتر موفقیت */}
               <h1 style={{ fontSize: 24, fontWeight: 900, color: "#f8fafc", marginBottom: 8 }}>
                 ایمیل خود را{" "}
                 <span style={{
@@ -415,202 +408,193 @@ export default function RegisterPage() {
               </button>
             </>
           ) : (
-          <>
-          {/* آیکون */}
-          <div style={{
-            width: 64, height: 64, borderRadius: 18, margin: "0 auto 20px",
-            background: "linear-gradient(135deg,rgba(29,78,216,0.3),rgba(16,185,129,0.2))",
-            border: "1px solid rgba(59,130,246,0.3)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 26, boxShadow: "0 0 24px rgba(59,130,246,0.2)",
-          }}>
-            ✨
-          </div>
-
-          {/* تیتر */}
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: "#f8fafc", marginBottom: 8 }}>
-            عضویت در{" "}
-            <span style={{
-              background: "linear-gradient(90deg,#3b82f6,#10b981)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            }}>
-              سامانه
-            </span>
-          </h1>
-
-          <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.7, marginBottom: 28 }}>
-            با تکمیل اطلاعات زیر، حساب کاربری‌ات رو بساز و مسیر شغلی‌ات رو کشف کن
-          </p>
-          </>
-          )}
-
-          {!success && (
-          <>
-          {/* خطا */}
-          {error && (
-            <div style={{
-              background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
-              color: "#f87171", fontSize: 13, padding: "10px 14px",
-              borderRadius: 12, marginBottom: 16, textAlign: "center",
-            }}>
-              {error}
-            </div>
-          )}
-
-          {/* فرم */}
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "right" }}>
-
-            <div className="auth-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <div>
-                <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                  نام
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثلاً علی"
-                  className="auth-input"
-                  required
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                />
+            <>
+              {/* آیکون */}
+              <div style={{
+                width: 64, height: 64, borderRadius: 18, margin: "0 auto 20px",
+                background: "linear-gradient(135deg,rgba(29,78,216,0.3),rgba(16,185,129,0.2))",
+                border: "1px solid rgba(59,130,246,0.3)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 26, boxShadow: "0 0 24px rgba(59,130,246,0.2)",
+              }}>
+                ✨
               </div>
-              <div>
-                <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                  نام خانوادگی
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثلاً محمدی"
-                  className="auth-input"
-                  required
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                />
-              </div>
-            </div>
 
-            <div>
-              <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                وضعیت تحصیلی
-              </label>
-              <select
-                className="auth-input"
-                required
-                value={formData.education}
-                onChange={(e) => setFormData({ ...formData, education: e.target.value })}
-              >
-                <option value="">وضعیت تحصیلی خود را انتخاب کن</option>
-                <option value="student">دانش‌آموز</option>
-                <option value="university">دانشجو</option>
-                <option value="graduate">فارغ‌التحصیل</option>
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                ایمیل
-              </label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type="email"
-                  placeholder="example@email.com"
-                  className={`auth-input ${
-                    emailStatus === "valid" ? "email-valid" :
-                    emailStatus === "invalid" || emailStatus === "exists" ? "email-invalid" :
-                    emailStatus === "checking" ? "email-checking" : ""
-                  }`}
-                  required
-                  style={{ textAlign: "left", direction: "ltr", paddingLeft: 38 }}
-                  value={formData.email}
-                  onChange={(e) => {
-                    setFormData({ ...formData, email: e.target.value });
-                    setEmailStatus("idle");
-                    setEmailMessage("");
-                  }}
-                  onBlur={checkEmail}
-                />
-                {/* آیکون وضعیت */}
-                {emailStatus !== "idle" && (
-                  <span style={{
-                    position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
-                    fontSize: 14, color: emailStatusStyles[emailStatus].color,
-                  }}>
-                    {emailStatus === "checking" ? (
-                      <span className="email-icon-checking">⏳</span>
-                    ) : (
-                      emailStatusStyles[emailStatus].icon
-                    )}
-                  </span>
-                )}
-              </div>
-              {/* پیام وضعیت */}
-              {emailMessage && (
-                <div style={{
-                  fontSize: 12, marginTop: 6, textAlign: "right",
-                  color: emailStatusStyles[emailStatus].color,
+              {/* تیتر */}
+              <h1 style={{ fontSize: 26, fontWeight: 900, color: "#f8fafc", marginBottom: 8 }}>
+                عضویت در{" "}
+                <span style={{
+                  background: "linear-gradient(90deg,#3b82f6,#10b981)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
                 }}>
-                  {emailMessage}
+                  سامانه
+                </span>
+              </h1>
+
+              <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.7, marginBottom: 28 }}>
+                با تکمیل اطلاعات زیر، حساب کاربری‌ات رو بساز و مسیر شغلی‌ات رو کشف کن
+              </p>
+
+              {/* خطا */}
+              {error && (
+                <div style={{
+                  background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+                  color: "#f87171", fontSize: 13, padding: "10px 14px",
+                  borderRadius: 12, marginBottom: 16, textAlign: "center",
+                }}>
+                  {error}
                 </div>
               )}
-            </div>
 
-            <div>
-              <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                رمز عبور
-              </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                className="auth-input"
-                required
-                style={{ textAlign: "left", direction: "ltr" }}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-            </div>
+              {/* فرم */}
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "right" }}>
 
-            <button
-              type="submit"
-              disabled={loading || emailStatus === "exists" || emailStatus === "invalid"}
-              className="auth-submit"
-              style={{
-                width: "100%", marginTop: 6,
-                background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
-                color: "#fff", border: "none", borderRadius: 14,
-                padding: "14px 20px",
-                fontFamily: "Vazirmatn, sans-serif", fontSize: 16, fontWeight: 900,
-                cursor: "pointer",
-                boxShadow: "0 8px 32px rgba(29,78,216,0.35)",
-                transition: "transform 0.18s, box-shadow 0.18s",
-              }}
-            >
-              {loading ? "در حال پردازش..." : "ثبت‌نام نهایی"}
-            </button>
-          </form>
+                <div className="auth-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
+                      نام
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثلاً علی"
+                      className="auth-input"
+                      required
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
+                      نام خانوادگی
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثلاً محمدی"
+                      className="auth-input"
+                      required
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    />
+                  </div>
+                </div>
 
-          {/* لینک ورود */}
-          <div style={{ marginTop: 24, fontSize: 13, color: "#64748b" }}>
-            قبلاً ثبت‌نام کرده‌ای؟{" "}
-            <button
-              onClick={() => router.push("/auth")}
-              className="auth-switch"
-              style={{
-                color: "#3b82f6", fontWeight: 700, background: "none",
-                border: "none", cursor: "pointer", fontFamily: "Vazirmatn, sans-serif",
-                fontSize: 13, transition: "color 0.15s",
-              }}
-            >
-              ورود به حساب
-            </button>
-          </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
+                    وضعیت تحصیلی
+                  </label>
+                  <select
+                    className="auth-input"
+                    required
+                    value={formData.education}
+                    onChange={(e) => setFormData({ ...formData, education: e.target.value })}
+                  >
+                    <option value="">وضعیت تحصیلی خود را انتخاب کن</option>
+                    <option value="student">دانش‌آموز</option>
+                    <option value="university">دانشجو</option>
+                    <option value="graduate">فارغ‌التحصیل</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
+                    ایمیل
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="email"
+                      placeholder="example@email.com"
+                      className={`auth-input ${
+                        emailStatus === "valid" ? "email-valid" :
+                        emailStatus === "invalid" || emailStatus === "exists" ? "email-invalid" :
+                        emailStatus === "checking" ? "email-checking" : ""
+                      }`}
+                      required
+                      style={{ textAlign: "left", direction: "ltr", paddingLeft: 38 }}
+                      value={formData.email}
+                      onChange={(e) => {
+                        setFormData({ ...formData, email: e.target.value });
+                        setEmailStatus("idle");
+                        setEmailMessage("");
+                      }}
+                      onBlur={checkEmail}
+                    />
+                    {emailStatus !== "idle" && (
+                      <span style={{
+                        position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+                        fontSize: 14, color: emailStatusStyles[emailStatus].color,
+                      }}>
+                        {emailStatus === "checking" ? (
+                          <span className="email-icon-checking">⏳</span>
+                        ) : (
+                          emailStatusStyles[emailStatus].icon
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  {emailMessage && (
+                    <div style={{
+                      fontSize: 12, marginTop: 6, textAlign: "right",
+                      color: emailStatusStyles[emailStatus].color,
+                    }}>
+                      {emailMessage}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
+                    رمز عبور
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    className="auth-input"
+                    required
+                    style={{ textAlign: "left", direction: "ltr" }}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || emailStatus === "exists" || emailStatus === "invalid"}
+                  className="auth-submit"
+                  style={{
+                    width: "100%", marginTop: 6,
+                    background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
+                    color: "#fff", border: "none", borderRadius: 14,
+                    padding: "14px 20px",
+                    fontFamily: "Vazirmatn, sans-serif", fontSize: 16, fontWeight: 900,
+                    cursor: "pointer",
+                    boxShadow: "0 8px 32px rgba(29,78,216,0.35)",
+                    transition: "transform 0.18s, box-shadow 0.18s",
+                  }}
+                >
+                  {loading ? "در حال پردازش..." : "ثبت‌نام نهایی"}
+                </button>
+              </form>
+
+              {/* لینک ورود */}
+              <div style={{ marginTop: 24, fontSize: 13, color: "#64748b" }}>
+                قبلاً ثبت‌نام کرده‌ای؟{" "}
+                <button
+                  onClick={() => router.push("/auth")}
+                  className="auth-switch"
+                  style={{
+                    color: "#3b82f6", fontWeight: 700, background: "none",
+                    border: "none", cursor: "pointer", fontFamily: "Vazirmatn, sans-serif",
+                    fontSize: 13, transition: "color 0.15s",
+                  }}
+                >
+                  ورود به حساب
+                </button>
+              </div>
+            </>
+          )}
+
         </div>
       </div>
     </>
-  );
-}
-</form>
-        </div>
-      </div>
-    </div>
   );
 }
