@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,8 +37,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2) Insert the extra profile fields, linked to the auth user's id
-    const { error: profileError } = await supabase.from("profiles").insert({
+    // 2) Insert the extra profile fields, linked to the auth user's id.
+    //    Uses supabaseAdmin (service_role) because the newly created user
+    //    has no authenticated session on this server-side anon client,
+    //    so RLS would otherwise block the insert.
+    const { error: profileError } = await supabaseAdmin.from("profiles").insert({
       id: userId,
       email: email.toLowerCase(),
       first_name: firstName,
