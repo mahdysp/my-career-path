@@ -61,7 +61,7 @@ ${count} سوال ترکیبی طراحی کن که:
         "X-Title": "My Career Path",
       },
       body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct:free",
+        model: "meta-llama/llama-3.2-3b-instruct:free",
         messages: [
           {
             role: "user",
