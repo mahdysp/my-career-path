@@ -161,9 +161,9 @@ export default function CareerHub() {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      router.push(`/result?q=${encodeURIComponent(searchQuery)}`);
+      router.push(`/assessment?q=${encodeURIComponent(searchQuery)}&count=10`);
     } else {
-      router.push("/result");
+      router.push("/assessment?count=10");
     }
   };
 
