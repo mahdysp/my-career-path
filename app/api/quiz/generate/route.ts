@@ -52,17 +52,19 @@ ${count} سوال ترکیبی طراحی کن که:
 
 برای ${count} سوال، حدوداً ${Math.round(count * 0.6)} تا multiple_choice و ${Math.round(count * 0.4)} تا likert بیاور. فقط JSON خالص برگردان.`;
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "HTTP-Referer": "https://my-career-path-nine.vercel.app",
-        "X-Title": "My Career Path",
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "google/gemma-3-4b-it:free",
+        model: "llama-3.1-8b-instant",
         messages: [
+          {
+            role: "system",
+            content: "You are a career counseling expert. Always respond with valid JSON only, no markdown, no extra text.",
+          },
           {
             role: "user",
             content: prompt,
@@ -75,7 +77,7 @@ ${count} سوال ترکیبی طراحی کن که:
 
     if (!response.ok) {
       const err = await response.json();
-      console.error("OpenRouter API error:", err);
+      console.error("Groq API error:", err);
       return NextResponse.json(
         { message: "خطا در ساخت سوالات.", detail: err },
         { status: 500 }
