@@ -52,38 +52,38 @@ ${count} سوال ترکیبی طراحی کن که:
 
 برای ${count} سوال، حدوداً ${Math.round(count * 0.6)} تا multiple_choice و ${Math.round(count * 0.4)} تا likert بیاور. فقط JSON خالص برگردان.`;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: prompt }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 4000,
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "HTTP-Referer": "https://my-career-path-nine.vercel.app",
+        "X-Title": "My Career Path",
+      },
+      body: JSON.stringify({
+        model: "mistralai/mistral-7b-instruct:free",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
           },
-        }),
-      }
-    );
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+      }),
+    });
 
     if (!response.ok) {
       const err = await response.json();
-      console.error("Gemini API error:", err);
+      console.error("OpenRouter API error:", err);
       return NextResponse.json(
-        { message: "خطا در ساخت سوالات. لطفاً دوباره تلاش کنید." },
+        { message: "خطا در ساخت سوالات.", detail: err },
         { status: 500 }
       );
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const text = data.choices?.[0]?.message?.content || "";
 
     // پاک کردن markdown fences احتمالی
     const clean = text.replace(/```json|```/g, "").trim();
