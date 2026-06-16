@@ -13,18 +13,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1) Create the auth user (Supabase handles password hashing + sends
-    //    a confirmation email automatically, since "Confirm email" is ON)
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: email.toLowerCase(),
       password,
-      options: {
-        emailRedirectTo: "https://my-career-path-nine.vercel.app/auth",
-      },
     });
 
     if (authError) {
-      // Common case: email already registered
       return NextResponse.json({ message: authError.message }, { status: 400 });
     }
 
@@ -37,10 +31,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2) Insert the extra profile fields, linked to the auth user's id.
-    //    Uses supabaseAdmin (service_role) because the newly created user
-    //    has no authenticated session on this server-side anon client,
-    //    so RLS would otherwise block the insert.
+    // insert پروفایل با supabaseAdmin
     const { error: profileError } = await supabaseAdmin.from("profiles").insert({
       id: userId,
       email: email.toLowerCase(),
@@ -57,9 +48,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // چون Confirm Email خاموش است، session فوری برمی‌گردد
+    // کوکی‌های session را ست می‌کنیم تا کاربر بلافاصله لاگین باشد
+    if (authData.session) {
+      const response = NextResponse.json({
+        message: "ثبت‌نام با موفقیت انجام شد.",
+        requiresEmailConfirmation: false,
+      });
+
+      response.cookies.set("sb-access-token", authData.session.access_token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: authData.session.expires_in,
+      });
+
+      response.cookies.set("sb-refresh-token", authData.session.refresh_token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+      });
+
+      return response;
+    }
+
     return NextResponse.json({
-      message: "ثبت‌نام با موفقیت انجام شد. لطفاً ایمیل خود را برای تایید حساب بررسی کنید.",
-      requiresEmailConfirmation: true,
+      message: "ثبت‌نام با موفقیت انجام شد.",
+      requiresEmailConfirmation: false,
     });
   } catch (err) {
     console.error(err);
