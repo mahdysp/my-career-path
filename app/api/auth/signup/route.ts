@@ -42,8 +42,17 @@ export async function POST(req: NextRequest) {
 
     if (profileError) {
       console.error("Profile insert error:", profileError);
+    
+      // unique constraint violation — ایمیل تکراری
+      if (profileError.code === "23505") {
+        return NextResponse.json(
+          { message: "این ایمیل قبلاً ثبت شده است. لطفاً وارد حساب خود شوید." },
+          { status: 400 }
+        );
+      }
+    
       return NextResponse.json(
-        { message: "حساب کاربری ساخته شد اما ذخیره اطلاعات با خطا مواجه شد." },
+        { message: "خطا در ذخیره اطلاعات. لطفاً دوباره تلاش کنید." },
         { status: 500 }
       );
     }
