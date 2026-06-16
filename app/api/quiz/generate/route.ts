@@ -61,7 +61,7 @@ ${count} سوال ترکیبی طراحی کن که:
         "X-Title": "My Career Path",
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-r1-distill-llama-70b:free",
+        model: "deepseek/deepseek-r1-distill-llama-70b",
         messages: [
           {
             role: "user",
