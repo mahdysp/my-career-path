@@ -205,41 +205,40 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError("");
-
-  if (emailStatus === "exists") {
-    setError("این ایمیل قبلاً ثبت شده است. لطفاً وارد حساب خود شوید.");
-    return;
-  }
-  if (emailStatus === "invalid") {
-    setError("لطفاً یک ایمیل معتبر وارد کنید.");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "مشکلی پیش آمده است.");
+    e.preventDefault();
+    setError("");
+  
+    if (emailStatus === "exists") {
+      setError("این ایمیل قبلاً ثبت شده است. لطفاً وارد حساب خود شوید.");
+      return;
     }
-
-    // مستقیماً به داشبورد هدایت می‌شود (نیازی به تایید ایمیل نیست)
-    router.push("/dashboard");
-  } catch (err: any) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+    if (emailStatus === "invalid") {
+      setError("لطفاً یک ایمیل معتبر وارد کنید.");
+      return;
+    }
+  
+    setLoading(true);
+  
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+  
+      const data = await res.json();
+  
+      if (!res.ok) {
+        throw new Error(data.message || "مشکلی پیش آمده است.");
+      }
+  
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const emailStatusStyles: Record<string, { color: string; icon: string }> = {
     idle: { color: "#64748b", icon: "" },
