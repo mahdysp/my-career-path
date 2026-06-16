@@ -53,7 +53,7 @@ ${count} سوال ترکیبی طراحی کن که:
 برای ${count} سوال، حدوداً ${Math.round(count * 0.6)} تا multiple_choice و ${Math.round(count * 0.4)} تا likert بیاور. فقط JSON خالص برگردان.`;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
       {
         method: "POST",
         headers: {
