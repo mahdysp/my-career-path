@@ -210,7 +210,7 @@ export default function ResultPage() {
         }
       })
       .catch(() => {
-        setError("خطا در اتصال به سرور.");
+        setError("خطا در اتصال به سرور." + err.message);
         setPhase("error");
       });
   }, []);
