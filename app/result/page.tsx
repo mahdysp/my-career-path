@@ -189,41 +189,42 @@ export default function ResultPage() {
     setQuery(quizData.query || "");
 
     fetch("/api/quiz/analyze", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query: quizData.query,
-      questions: quizData.questions,
-      answers: quizData.answers,
-    }),
-  })
-    .then(async (res) => {
-      const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error("پاسخ سرور معتبر نیست: " + text.slice(0, 100));
-      }
-      if (!res.ok) {
-        throw new Error(data.message || data.detail || "خطای سرور: " + res.status);
-      }
-      return data;
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: quizData.query,
+        questions: quizData.questions,
+        answers: quizData.answers,
+      }),
     })
-    .then((data) => {
-      if (data.result) {
-        setResult(data.result);
-        setPhase("result");
-        sessionStorage.removeItem("quiz_data");
-      } else {
-        setError(data.message || "خطا در دریافت نتیجه.");
+      .then(async (res) => {
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          throw new Error("پاسخ سرور معتبر نیست: " + text.slice(0, 100));
+        }
+        if (!res.ok) {
+          throw new Error(data.message || data.detail || "خطای سرور: " + res.status);
+        }
+        return data;
+      })
+      .then((data) => {
+        if (data.result) {
+          setResult(data.result);
+          setPhase("result");
+          sessionStorage.removeItem("quiz_data");
+        } else {
+          setError(data.message || "خطا در دریافت نتیجه.");
+          setPhase("error");
+        }
+      })
+      .catch((err) => {
+        setError(err.message);
         setPhase("error");
-      }
-    })
-    .catch((err) => {
-      setError(err.message);
-      setPhase("error");
-    });
+      });
+  }, []);
 
   const getMatchColor = (pct: number) => {
     if (pct >= 85) return "#10b981";
