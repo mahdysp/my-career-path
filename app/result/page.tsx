@@ -209,7 +209,7 @@ export default function ResultPage() {
           setPhase("error");
         }
       })
-      .catch(() => {
+      .catch((err) => {
         setError("خطا در اتصال به سرور." + err.message);
         setPhase("error");
       });
