@@ -355,21 +355,12 @@ export default function CareerHub() {
         >
           {!userLoading && user ? (
             <>
-              <button
-                className="nav-logout"
-                onClick={handleLogout}
-                style={{
-                  fontSize: 14, fontWeight: 700, padding: "9px 22px",
-                  color: "#f87171", background: "transparent",
-                  border: "1px solid rgba(239,68,68,0.3)",
-                  borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
-                  fontFamily: "Vazirmatn, sans-serif",
-                }}
-              >
-                خروج
-              </button>
+              {/* سمت راست (RTL: اول در JSX): نام کاربر + داشبورد */}
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#e2e8f0", fontFamily: "Vazirmatn, sans-serif" }}>
+                <span style={{
+                  fontSize: 14, fontWeight: 700, color: "#e2e8f0",
+                  fontFamily: "Vazirmatn, sans-serif",
+                }}>
                   سلام، {user.firstName || user.email}
                 </span>
                 <button
@@ -387,6 +378,21 @@ export default function CareerHub() {
                   داشبورد
                 </button>
               </div>
+          
+              {/* سمت چپ (RTL: دوم در JSX): دکمه خروج */}
+              <button
+                className="nav-logout"
+                onClick={handleLogout}
+                style={{
+                  fontSize: 14, fontWeight: 700, padding: "9px 22px",
+                  color: "#f87171", background: "transparent",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                  borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
+                  fontFamily: "Vazirmatn, sans-serif",
+                }}
+              >
+                خروج
+              </button>
             </>
           ) : (
             <>
