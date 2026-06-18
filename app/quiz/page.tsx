@@ -1,3 +1,4 @@
+// مسیر فایل: app/quiz/page.tsx
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -12,6 +13,9 @@ export default function CareerHub() {
   // وضعیت کاربر لاگین‌شده
   const [user, setUser] = useState<{ id: string; email: string; firstName: string; lastName: string } | null>(null);
   const [userLoading, setUserLoading] = useState(true);
+
+  // ── جدید: وضعیت مودال اخطار ──
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -159,11 +163,16 @@ export default function CareerHub() {
     };
   }, []);
 
+  // ── جدید: handleSearch با چک لاگین ──
   const handleSearch = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     if (searchQuery.trim()) {
-      router.push(`/assessment?q=${encodeURIComponent(searchQuery)}&count=10`);
+      router.push(`/result?q=${encodeURIComponent(searchQuery)}`);
     } else {
-      router.push("/assessment?count=10");
+      router.push("/result");
     }
   };
 
@@ -182,6 +191,10 @@ export default function CareerHub() {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-12px); }
         }
+        @keyframes modalIn {
+          from { opacity: 0; transform: scale(0.92) translateY(16px); }
+          to   { opacity: 1; transform: scale(1)    translateY(0);    }
+        }
 
         .search-btn:hover { background: #1e40af !important; transform: scale(1.02); }
         .search-btn:active { transform: scale(0.98); }
@@ -189,50 +202,29 @@ export default function CareerHub() {
         .nav-login:hover { background: rgba(59,130,246,0.12) !important; border-color: rgba(59,130,246,0.6) !important; color: #60a5fa !important; }
         .nav-register:hover { background: #1e40af !important; box-shadow: 0 6px 24px rgba(29,78,216,0.5) !important; }
         .nav-logout:hover { background: rgba(239,68,68,0.12) !important; border-color: rgba(239,68,68,0.6) !important; color: #fca5a5 !important; }
+        .modal-login-btn:hover { background: #1e40af !important; box-shadow: 0 8px 28px rgba(29,78,216,0.5) !important; }
+        .modal-reg-btn:hover { background: rgba(59,130,246,0.12) !important; border-color: rgba(59,130,246,0.5) !important; }
 
-        /* ناوبار موبایل */
         @media (max-width: 768px) {
-          .nav-inner {
-            padding: 12px 16px !important;
-          }
-        }
-
-        /* گرید اصلی موبایل */
-        @media (max-width: 768px) {
+          .nav-inner { padding: 12px 16px !important; }
           .main-grid {
             grid-template-columns: 1fr !important;
             padding: 32px 20px !important;
             gap: 40px !important;
           }
-          .main-grid h1 {
-            font-size: 28px !important;
-          }
-          .main-grid p {
-            font-size: 14px !important;
-          }
+          .main-grid h1 { font-size: 28px !important; }
+          .main-grid p  { font-size: 14px !important; }
           .search-box {
             max-width: 100% !important;
             flex-direction: column !important;
             gap: 10px !important;
           }
-          .search-box input {
-            width: 100% !important;
-            padding: 14px 16px !important;
-          }
-          .search-btn {
-            width: 100% !important;
-            padding: 14px !important;
-            text-align: center !important;
-          }
-          .stats-row {
-            gap: 20px !important;
-          }
-          .svg-col {
-            display: none !important;
-          }
-          .tags-row {
-            gap: 6px !important;
-          }
+          .search-box input { width: 100% !important; padding: 14px 16px !important; }
+          .search-btn { width: 100% !important; padding: 14px !important; text-align: center !important; }
+          .stats-row { gap: 20px !important; }
+          .svg-col { display: none !important; }
+          .tags-row { gap: 6px !important; }
+          .auth-modal-card { padding: 32px 24px !important; }
         }
       `}</style>
 
@@ -249,6 +241,107 @@ export default function CareerHub() {
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
         />
 
+        {/* ── مودال اخطار ورود ── */}
+        {showAuthModal && (
+          <div
+            onClick={() => setShowAuthModal(false)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 100,
+              background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 24,
+            }}
+          >
+            <div
+              className="auth-modal-card"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "100%", maxWidth: 400, textAlign: "center",
+                background: "linear-gradient(145deg,rgba(15,31,61,0.98),rgba(7,13,26,0.99))",
+                border: "1px solid rgba(59,130,246,0.22)",
+                borderRadius: 24, padding: "40px 36px",
+                boxShadow: "0 0 80px rgba(29,78,216,0.18), 0 0 0 1px rgba(255,255,255,0.04) inset",
+                animation: "modalIn 0.22s ease-out both",
+              }}
+            >
+              {/* آیکون */}
+              <div style={{
+                width: 60, height: 60, borderRadius: 16, margin: "0 auto 18px",
+                background: "linear-gradient(135deg,rgba(245,158,11,0.2),rgba(29,78,216,0.15))",
+                border: "1px solid rgba(245,158,11,0.35)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 26, boxShadow: "0 0 20px rgba(245,158,11,0.15)",
+              }}>
+                🔐
+              </div>
+
+              {/* تیتر */}
+              <h2 style={{ fontSize: 22, fontWeight: 900, color: "#f8fafc", marginBottom: 10 }}>
+                ابتدا{" "}
+                <span style={{
+                  background: "linear-gradient(90deg,#3b82f6,#10b981)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                }}>
+                  وارد شوید
+                </span>
+              </h2>
+
+              <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.8, marginBottom: 28 }}>
+                برای شروع ارزیابی مسیر شغلی، ابتدا باید وارد حساب کاربری خود شوید.
+                اگه حساب ندارید، ثبت‌نام رایگانه!
+              </p>
+
+              {/* دکمه‌ها */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <button
+                  className="modal-login-btn"
+                  onClick={() => router.push("/auth")}
+                  style={{
+                    width: "100%",
+                    background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
+                    color: "#fff", border: "none", borderRadius: 14,
+                    padding: "13px 20px",
+                    fontFamily: "Vazirmatn, sans-serif", fontSize: 15, fontWeight: 900,
+                    cursor: "pointer",
+                    boxShadow: "0 6px 24px rgba(29,78,216,0.35)",
+                    transition: "all 0.18s",
+                  }}
+                >
+                  ورود به حساب کاربری
+                </button>
+                <button
+                  className="modal-reg-btn"
+                  onClick={() => router.push("/register")}
+                  style={{
+                    width: "100%",
+                    background: "rgba(59,130,246,0.07)",
+                    color: "#93c5fd", border: "1px solid rgba(59,130,246,0.25)",
+                    borderRadius: 14, padding: "13px 20px",
+                    fontFamily: "Vazirmatn, sans-serif", fontSize: 15, fontWeight: 700,
+                    cursor: "pointer", transition: "all 0.18s",
+                  }}
+                >
+                  ساخت حساب رایگان ✨
+                </button>
+              </div>
+
+              {/* دکمه بستن */}
+              <button
+                onClick={() => setShowAuthModal(false)}
+                style={{
+                  marginTop: 20, fontSize: 13, color: "#475569",
+                  background: "none", border: "none", cursor: "pointer",
+                  fontFamily: "Vazirmatn, sans-serif", transition: "color 0.15s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#94a3b8")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
+              >
+                انصراف
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ناوبار */}
         <nav
           className="nav-inner"
@@ -262,12 +355,11 @@ export default function CareerHub() {
         >
           {!userLoading && user ? (
             <>
-              {/* سمت چپ: دکمه خروج (قرمز) */}
               <button
                 className="nav-logout"
                 onClick={handleLogout}
                 style={{
-                  fontSize: 18, fontWeight: 700, padding: "9px 22px",
+                  fontSize: 14, fontWeight: 700, padding: "9px 22px",
                   color: "#f87171", background: "transparent",
                   border: "1px solid rgba(239,68,68,0.3)",
                   borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
@@ -276,20 +368,15 @@ export default function CareerHub() {
               >
                 خروج
               </button>
-
-              {/* سمت راست: نام کاربر + داشبورد */}
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <span style={{
-                  fontSize: 18, fontWeight: 700, color: "#e2e8f0",
-                  fontFamily: "Vazirmatn, sans-serif",
-                }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#e2e8f0", fontFamily: "Vazirmatn, sans-serif" }}>
                   سلام، {user.firstName || user.email}
                 </span>
                 <button
                   className="nav-register"
                   onClick={() => router.push("/dashboard")}
                   style={{
-                    fontSize: 18, fontWeight: 700, padding: "9px 22px",
+                    fontSize: 14, fontWeight: 700, padding: "9px 22px",
                     color: "#fff", background: "#1d4ed8",
                     border: "1px solid rgba(59,130,246,0.4)",
                     borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
@@ -309,20 +396,20 @@ export default function CareerHub() {
                   className="nav-login"
                   onClick={() => router.push("/auth")}
                   style={{
-                    fontSize: 18, fontWeight: 700, padding: "9px 22px",
+                    fontSize: 14, fontWeight: 700, padding: "9px 22px",
                     color: "#93c5fd", background: "transparent",
                     border: "1px solid rgba(59,130,246,0.25)",
                     borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
                     fontFamily: "Vazirmatn, sans-serif",
                   }}
                 >
-                  ورود
+                  ورود به حساب
                 </button>
                 <button
                   className="nav-register"
                   onClick={() => router.push("/register")}
                   style={{
-                    fontSize: 18, fontWeight: 700, padding: "9px 22px",
+                    fontSize: 14, fontWeight: 700, padding: "9px 22px",
                     color: "#fff", background: "#1d4ed8",
                     border: "1px solid rgba(59,130,246,0.4)",
                     borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
@@ -330,7 +417,7 @@ export default function CareerHub() {
                     fontFamily: "Vazirmatn, sans-serif",
                   }}
                 >
-                  ثبت نام
+                  ساخت حساب رایگان
                 </button>
               </div>
             </>
@@ -346,9 +433,7 @@ export default function CareerHub() {
             alignItems: "center", position: "relative", zIndex: 10,
           }}
         >
-          {/* ستون راست: متن */}
           <div style={{ textAlign: "right" }}>
-
             <div style={{ marginBottom: 20 }}>
               <span style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
@@ -378,7 +463,6 @@ export default function CareerHub() {
               تخصص خود را انتخاب کن و با سیستم هوشمند ارزیابی مهارت، شایستگی‌هایت رو بسنج.
             </p>
 
-            {/* باکس جستجو */}
             <div
               className="search-box"
               style={{
@@ -414,7 +498,6 @@ export default function CareerHub() {
               </button>
             </div>
 
-            {/* تگ‌های پیشنهادی */}
             <div className="tags-row" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
               <span style={{ fontSize: 12, color: "#64748b", display: "flex", alignItems: "center" }}>پیشنهادی:</span>
               {tags.map((tag) => (
@@ -434,7 +517,6 @@ export default function CareerHub() {
               ))}
             </div>
 
-            {/* آمار */}
             <div className="stats-row" style={{ display: "flex", gap: 32, marginTop: 40 }}>
               {[
                 { num: "+۲۴۰۰", lbl: "مسیر شغلی", color: "#3b82f6" },
@@ -448,7 +530,6 @@ export default function CareerHub() {
             </div>
           </div>
 
-          {/* ستون چپ: SVG — در موبایل مخفی میشه */}
           <div className="svg-col" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg viewBox="0 0 480 420" style={{ width: "100%", maxWidth: 480, animation: "float 5s ease-in-out infinite" }} xmlns="http://www.w3.org/2000/svg">
               <defs>
@@ -469,22 +550,18 @@ export default function CareerHub() {
                   <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
                 </radialGradient>
               </defs>
-
               <ellipse cx="240" cy="280" rx="200" ry="120" fill="url(#glowCenter)" />
               <polygon points="240,360 420,80 560,360" fill="url(#mtnGrad)" />
               <polygon points="80,360 220,140 370,360" fill="url(#mtnFront)" />
               <path d="M 100,340 Q 160,280 200,220 T 270,160 T 310,120" fill="none" stroke="url(#pathGrad)" strokeWidth="2.5" strokeDasharray="8 5" opacity="0.7" />
-
               {[{ cx: 100, cy: 340 }, { cx: 180, cy: 255 }, { cx: 240, cy: 195 }, { cx: 285, cy: 148 }].map((pt, i) => (
                 <g key={i}>
                   <circle cx={pt.cx} cy={pt.cy} r="5" fill="#0b1629" stroke="#3b82f6" strokeWidth="1.5" />
                   <circle cx={pt.cx} cy={pt.cy} r="2.5" fill="#3b82f6" />
                 </g>
               ))}
-
               <line x1="220" y1="140" x2="220" y2="105" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
               <polygon points="220,105 255,114 220,123" fill="#f59e0b" opacity="0.9" />
-
               <g transform="translate(390, 90)">
                 <circle cx="0" cy="0" r="32" fill="rgba(15,31,61,0.8)" stroke="rgba(59,130,246,0.3)" strokeWidth="1" />
                 <circle cx="0" cy="0" r="26" fill="none" stroke="rgba(59,130,246,0.15)" strokeWidth="1" />
@@ -494,7 +571,6 @@ export default function CareerHub() {
                 <path d="M 20,0 L 5,-5 L 0,0 L 5,5 Z" fill="#475569" opacity="0.5" />
                 <circle cx="0" cy="0" r="3" fill="#f59e0b" />
               </g>
-
               <g transform="translate(30, 140)">
                 <rect width="110" height="58" rx="10" fill="rgba(15,31,61,0.9)" stroke="rgba(59,130,246,0.25)" strokeWidth="1" />
                 <rect x="10" y="12" width="28" height="6" rx="3" fill="#3b82f6" opacity="0.7" />
@@ -503,7 +579,6 @@ export default function CareerHub() {
                 <circle cx="90" cy="20" r="12" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.3)" strokeWidth="1" />
                 <text x="90" y="24" textAnchor="middle" fill="#10b981" fontSize="10" fontWeight="700">۹۴٪</text>
               </g>
-
               <g transform="translate(340, 230)">
                 <rect width="115" height="62" rx="10" fill="rgba(15,31,61,0.9)" stroke="rgba(245,158,11,0.25)" strokeWidth="1" />
                 <rect x="10" y="12" width="32" height="6" rx="3" fill="#f59e0b" opacity="0.7" />
@@ -511,7 +586,6 @@ export default function CareerHub() {
                 <rect x="10" y="34" width="38" height="5" rx="2.5" fill="#334155" opacity="0.5" />
                 <rect x="10" y="44" width="55" height="5" rx="2.5" fill="#334155" opacity="0.3" />
               </g>
-
               <line x1="0" y1="360" x2="480" y2="360" stroke="rgba(59,130,246,0.08)" strokeWidth="1" />
               <line x1="0" y1="380" x2="480" y2="380" stroke="rgba(59,130,246,0.05)" strokeWidth="1" />
             </svg>
