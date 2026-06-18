@@ -164,15 +164,16 @@ export default function CareerHub() {
   }, []);
 
   // ── جدید: handleSearch با چک لاگین ──
+  // درست:
   const handleSearch = () => {
     if (!user) {
       setShowAuthModal(true);
       return;
     }
     if (searchQuery.trim()) {
-      router.push(`/result?q=${encodeURIComponent(searchQuery)}`);
+      router.push(`/assessment?q=${encodeURIComponent(searchQuery)}`);
     } else {
-      router.push("/result");
+      router.push("/assessment");
     }
   };
 
