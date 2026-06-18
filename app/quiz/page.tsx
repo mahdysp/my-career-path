@@ -201,7 +201,7 @@ export default function CareerHub() {
         .tag-pill:hover { background: rgba(59,130,246,0.2) !important; border-color: rgba(59,130,246,0.5) !important; }
         .nav-login:hover { background: rgba(59,130,246,0.12) !important; border-color: rgba(59,130,246,0.6) !important; color: #60a5fa !important; }
         .nav-register:hover { background: #1e40af !important; box-shadow: 0 6px 24px rgba(29,78,216,0.5) !important; }
-        .nav-logout:hover { background: rgba(239,68,68,0.12) !important; border-color: rgba(239,68,68,0.6) !important; color: #fca5a5 !important; }
+        .nav-logout:hover { background: linear-gradient(135deg,#b91c1c,#991b1b) !important; box-shadow: 0 6px 24px rgba(220,38,38,0.5) !important; }
         .modal-login-btn:hover { background: #1e40af !important; box-shadow: 0 8px 28px rgba(29,78,216,0.5) !important; }
         .modal-reg-btn:hover { background: rgba(59,130,246,0.12) !important; border-color: rgba(59,130,246,0.5) !important; }
 
@@ -379,15 +379,15 @@ export default function CareerHub() {
                 </button>
               </div>
           
-              {/* سمت چپ (RTL: دوم در JSX): دکمه خروج */}
               <button
                 className="nav-logout"
                 onClick={handleLogout}
                 style={{
                   fontSize: 14, fontWeight: 700, padding: "9px 22px",
-                  color: "#f87171", background: "transparent",
-                  border: "1px solid rgba(239,68,68,0.3)",
+                  color: "#fff", background: "linear-gradient(135deg,#dc2626,#b91c1c)",
+                  border: "1px solid rgba(239,68,68,0.4)",
                   borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
+                  boxShadow: "0 4px 16px rgba(220,38,38,0.35)",
                   fontFamily: "Vazirmatn, sans-serif",
                 }}
               >
