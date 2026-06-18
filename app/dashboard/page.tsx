@@ -318,7 +318,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div style={{
-        minHeight: "100vh", width: "100%", background: "#070d1a",
+        minHeight: "100vh", width: "100%", background: "#0a0a2e",
         fontFamily: "Vazirmatn, sans-serif", direction: "rtl",
         display: "flex", alignItems: "center", justifyContent: "center",
         color: "#94a3b8", fontSize: 14,
