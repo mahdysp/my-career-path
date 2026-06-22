@@ -14,6 +14,289 @@ export default function CareerHub() {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const stats = [
+    { num: "+۲۴۰۰", lbl: "مسیر شغلی" },
+    { num: "۵ دقیقه", lbl: "زمان تحلیل" },
+    { num: "%۹۴", lbl: "دقت نتایج" },
+  ];
+
+  const steps = [
+    { n: "۱", lbl: "پرسش‌نامه" },
+    { n: "۲", lbl: "تحلیل AI" },
+    { n: "۳", lbl: "نتیجه" },
+  ];
+
+  const handleStartAnalysis = () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+
+    timeoutRef.current = setTimeout(() => {
+      router.push("/quiz");
+    }, 600);
+  };
+
+  const handleCardMouseMove = (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+    el.style.setProperty("--my", `${e.clientY - rect.top}px`);
+  };
+
+  useEffect(() => {
+    const cv = canvasRef.current;
+    const wrap = wrapRef.current;
+    if (!cv || !wrap) return;
+
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+
+    let width = wrap.clientWidth;
+    let height = wrap.clientHeight;
+
+    const resize = () => {
+      if (!cv || !wrap || !ctx) return;
+
+      width = wrap.clientWidth;
+      height = wrap.clientHeight;
+
+      const dpr = window.devicePixelRatio || 1;
+      cv.width = width * dpr;
+      cv.height = height * dpr;
+      cv.style.width = `${width}px`;
+      cv.style.height = `${height}px`;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    const STAR_COUNT = 70;
+    const PARTICLE_COUNT = 18;
+
+    const stars = Array.from({ length: STAR_COUNT }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      r: Math.random() * 1.2 + 0.2,
+      a: Math.random() * 0.45 + 0.1,
+      speed: Math.random() * 0.012 + 0.003,
+      phase: Math.random() * Math.PI * 2,
+    }));
+
+    type Particle = {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      r: number;
+      a: number;
+      life: number;
+      maxLife: number;
+    };
+
+    const makeParticle = (): Particle => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.2,
+      vy: (Math.random() - 0.5) * 0.2,
+      r: Math.random() * 1.8 + 0.8,
+      a: Math.random() * 0.25 + 0.08,
+      life: 0,
+      maxLife: Math.random() * 220 + 140,
+    });
+
+    let particles: Particle[] = Array.from(
+      { length: PARTICLE_COUNT },
+      makeParticle
+    );
+
+    let t = 0;
+
+    const draw = () => {
+      t++;
+      ctx.clearRect(0, 0, width, height);
+
+      const g1 = ctx.createRadialGradient(
+        width * 0.5,
+        height * 0.15,
+        0,
+        width * 0.5,
+        height * 0.15,
+        width * 0.55
+      );
+      g1.addColorStop(0, "rgba(94,106,210,0.10)");
+      g1.addColorStop(1, "transparent");
+      ctx.fillStyle = g1;
+      ctx.fillRect(0, 0, width, height);
+
+      const g2 = ctx.createRadialGradient(
+        width * 0.2,
+        height * 0.5,
+        0,
+        width * 0.2,
+        height * 0.5,
+        width * 0.35
+      );
+      g2.addColorStop(0, "rgba(124,58,237,0.06)");
+      g2.addColorStop(1, "transparent");
+      ctx.fillStyle = g2;
+      ctx.fillRect(0, 0, width, height);
+
+      stars.forEach((s) => {
+        s.phase += s.speed;
+        const alpha = s.a * (0.6 + 0.4 * Math.sin(s.phase));
+
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(237,237,239,${alpha})`;
+        ctx.fill();
+      });
+
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const d = Math.hypot(dx, dy);
+
+          if (d < 120) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(94,106,210,${0.05 * (1 - d / 120)})`;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
+        }
+      }
+
+      particles.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life++;
+
+        if (
+          p.life > p.maxLife ||
+          p.x < -20 ||
+          p.x > width + 20 ||
+          p.y < -20 ||
+          p.y > height + 20
+        ) {
+          particles[i] = makeParticle();
+          return;
+        }
+
+        const fade =
+          p.life < 24
+            ? p.life / 24
+            : p.life > p.maxLife - 24
+            ? (p.maxLife - p.life) / 24
+            : 1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(104,114,217,${p.a * fade})`;
+        ctx.fill();
+      });
+
+      const scanY = (t * 0.7) % height;
+      const scan = ctx.createLinearGradient(0, scanY - 20, 0, scanY + 20);
+      scan.addColorStop(0, "transparent");
+      scan.addColorStop(0.5, "rgba(94,106,210,0.035)");
+      scan.addColorStop(1, "transparent");
+      ctx.fillStyle = scan;
+      ctx.fillRect(0, scanY - 20, width, 40);
+
+      animRef.current = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(animRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [router]);
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Vazirmatn:wght@400;500;700;800;900&display=swap');
+
+        :root {
+          --bg-deep: #020203;
+          --bg-base: #050506;
+          --bg-elevated: #0a0a0c;
+          --surface: rgba(255,255,255,0.05);
+          --surface-hover: rgba(255,255,255,0.08);
+          --fg: #EDEDEF;
+          --fg-muted: #8A8F98;
+          --accent: #5E6AD2;
+          --accent-bright: #6872D9;
+          --border: rgba(255,255,255,0.06);
+          --border-hover: rgba(255,255,255,0.10);
+        }
+
+        @keyframes floatOne {
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(0, -18px, 0); }
+        }
+
+        @keyframes floatTwo {
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(14px, -12px, 0); }
+        }
+
+        @keyframes pulseBlob {
+          0%, 100% { opacity: 0.12; transform: scale(1); }
+          50% { opacity: 0.2; transform: scale(1.03); }
+        }
+
+        @keyframes shine {
+          from { transform: translateX(-160%) skewX(-18deg); }
+          to { transform: translateX(220%) skewX(-18deg); }
+        }
+
+        .page-shell {
+          font-family: "Vazirmatn", "Inter", system-ui, sans-serif;
+          color: var(--fg);
+        }
+
+        .grid-overlay {
+          background-image:
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+          background-size: 64px 64px;
+          opacity: 0.22;
+          pointer-events: none;
+        }
+
+        .noise-overlay {
+          background:
+            radial-gradient(circle at 20% 20%, rgba(255,255,255,0.02), transparent 30%),
+            radial-gradient(circle at 80% 30%, rgba(255,255,255,0.015), transparent 25%),
+            radial-gradient(circle at 50% 80%, rgba(255,255,255,0.015), transparent 25%);
+         "use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function CareerHub() {
+  const router = useRouter();
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const animRef = useRef<number>(0);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleStartAnalysis = () => {
     if (isLoading) return;
 
