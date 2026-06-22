@@ -8,6 +8,231 @@ export default function CareerHub() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const animRef = useRef<number>(0);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleStartAnalysis = () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+
+    timeoutRef.current = setTimeout(() => {
+      router.push("/quiz");
+    }, 600);
+  };
+
+  const handleCardMouseMove = (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+    el.style.setProperty("--my", `${e.clientY - rect.top}px`);
+  };
+
+  useEffect(() => {
+    const cv = canvasRef.current;
+    const wrap = wrapRef.current;
+    if (!cv || !wrap) return;
+
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+
+    let bounds = {
+      width: wrap.clientWidth,
+      height: wrap.clientHeight,
+    };
+
+    function resize() {
+      if (!cv || !wrap || !ctx) return;
+
+      bounds = {
+        width: wrap.clientWidth,
+        height: wrap.clientHeight,
+      };
+
+      const dpr = window.devicePixelRatio || 1;
+
+      cv.width = bounds.width * dpr;
+      cv.height = bounds.height * dpr;
+      cv.style.width = `${bounds.width}px`;
+      cv.style.height = `${bounds.height}px`;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    const STAR_COUNT = 72;
+    const PARTICLE_COUNT = 20;
+
+    const stars = Array.from({ length: STAR_COUNT }, () => ({
+      x: Math.random() * bounds.width,
+      y: Math.random() * bounds.height,
+      r: Math.random() * 1.1 + 0.25,
+      a: Math.random() * 0.45 + 0.12,
+      speed: Math.random() * 0.012 + 0.003,
+      phase: Math.random() * Math.PI * 2,
+    }));
+
+    type Particle = {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      r: number;
+      a: number;
+      life: number;
+      maxLife: number;
+    };
+
+    function makeParticle(): Particle {
+      return {
+        x: Math.random() * bounds.width,
+        y: Math.random() * bounds.height,
+        vx: (Math.random() - 0.5) * 0.22,
+        vy: (Math.random() - 0.5) * 0.22,
+        r: Math.random() * 1.8 + 0.8,
+        a: Math.random() * 0.25 + 0.08,
+        life: 0,
+        maxLife: Math.random() * 260 + 150,
+      };
+    }
+
+    let particles: Particle[] = Array.from(
+      { length: PARTICLE_COUNT },
+      makeParticle
+    );
+
+    let t = 0;
+
+    function draw() {
+      if (!ctx) return;
+
+      t += 1;
+      ctx.clearRect(0, 0, bounds.width, bounds.height);
+
+      const ambientTop = ctx.createRadialGradient(
+        bounds.width * 0.5,
+        bounds.height * 0.12,
+        0,
+        bounds.width * 0.5,
+        bounds.height * 0.12,
+        bounds.width * 0.55
+      );
+      ambientTop.addColorStop(0, "rgba(94,106,210,0.10)");
+      ambientTop.addColorStop(1, "transparent");
+      ctx.fillStyle = ambientTop;
+      ctx.fillRect(0, 0, bounds.width, bounds.height);
+
+      const ambientSide = ctx.createRadialGradient(
+        bounds.width * 0.18,
+        bounds.height * 0.48,
+        0,
+        bounds.width * 0.18,
+        bounds.height * 0.48,
+        bounds.width * 0.38
+      );
+      ambientSide.addColorStop(0, "rgba(124,58,237,0.07)");
+      ambientSide.addColorStop(1, "transparent");
+      ctx.fillStyle = ambientSide;
+      ctx.fillRect(0, 0, bounds.width, bounds.height);
+
+      stars.forEach((s) => {
+        s.phase += s.speed;
+        const alpha = s.a * (0.65 + 0.35 * Math.sin(s.phase));
+
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(237,237,239,${alpha})`;
+        ctx.fill();
+      });
+
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const d = Math.hypot(dx, dy);
+
+          if (d < 120) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(94,106,210,${0.05 * (1 - d / 120)})`;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
+        }
+      }
+
+      particles.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life++;
+
+        if (
+          p.life > p.maxLife ||
+          p.x < -20 ||
+          p.x > bounds.width + 20 ||
+          p.y < -20 ||
+          p.y > bounds.height + 20
+        ) {
+          particles[i] = makeParticle();
+          return;
+        }
+
+        const fade =
+          p.life < 24
+            ? p.life / 24
+            : p.life > p.maxLife - 24
+            ? (p.maxLife - p.life) / 24
+            : 1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(104,114,217,${p.a * fade})`;
+        ctx.fill();
+      });
+
+      const sweepY = (t * 0.7) % bounds.height;
+      const sweep = ctx.createLinearGradient(0, sweepY - 22, 0, sweepY + 22);
+      sweep.addColorStop(0, "transparent");
+      sweep.addColorStop(0.5, "rgba(94,106,210,0.035)");
+      sweep.addColorStop(1, "transparent");
+      ctx.fillStyle = sweep;
+      ctx.fillRect(0, sweepY - 22, bounds.width, 44);
+
+      animRef.current = requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(animRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [router]);
+
+  const stats = [
+    { num: "+۲۴۰۰", lbl: "مسیر شغلی" },
+    { num: "۵ دقیقه", lbl: "زمان تحلیل" },
+    { num: "use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function CareerHub() {
+  const router = useRouter();
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
