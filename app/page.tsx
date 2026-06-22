@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -8,18 +7,15 @@ export default function CareerHub() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>(0);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleStartAnalysis = () => {
-    if (isLoading) return;
     setIsLoading(true);
-    timeoutRef.current = setTimeout(() => {
+    setTimeout(() => {
       router.push("/quiz");
     }, 600);
   };
 
-  // Animated canvas background
   useEffect(() => {
     const cv = canvasRef.current;
     const wrap = wrapRef.current;
@@ -27,665 +23,297 @@ export default function CareerHub() {
     const ctx = cv.getContext("2d");
     if (!ctx) return;
 
-    let width = wrap.clientWidth;
-    let height = wrap.clientHeight;
-
-    const resize = () => {
+    function resize() {
       if (!cv || !wrap) return;
-      width = wrap.clientWidth;
-      height = wrap.clientHeight;
-      const dpr = window.devicePixelRatio || 1;
-      cv.width = width * dpr;
-      cv.height = height * dpr;
-      cv.style.width = `${width}px`;
-      cv.style.height = `${height}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-
+      cv.width = wrap.offsetWidth;
+      cv.height = wrap.offsetHeight;
+    }
     resize();
     window.addEventListener("resize", resize);
 
-    const STAR_COUNT = 90;
-    const PARTICLE_COUNT = 28;
+    const STAR_COUNT = 120;
+    const PARTICLE_COUNT = 40;
 
     const stars = Array.from({ length: STAR_COUNT }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      r: Math.random() * 1.4 + 0.25,
-      a: Math.random() * 0.7 + 0.2,
-      speed: Math.random() * 0.02 + 0.004,
+      x: Math.random() * cv.width,
+      y: Math.random() * cv.height,
+      r: Math.random() * 1.2 + 0.2,
+      a: Math.random(),
+      speed: Math.random() * 0.008 + 0.002,
       phase: Math.random() * Math.PI * 2,
     }));
 
     type Particle = {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      r: number;
-      color: string;
-      a: number;
-      life: number;
-      maxLife: number;
+      x: number; y: number; vx: number; vy: number;
+      r: number; color: string; a: number; life: number; maxLife: number;
     };
 
-    const makeParticle = (): Particle => {
+    function makeParticle(): Particle {
       const colors = [
-        "rgba(0,255,136,",
-        "rgba(255,0,255,",
-        "rgba(0,212,255,",
+        "rgba(59,130,246,",
+        "rgba(16,185,129,",
+        "rgba(245,158,11,",
+        "rgba(99,102,241,",
       ];
+      const c = colors[Math.floor(Math.random() * colors.length)];
       return {
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.35,
-        vy: (Math.random() - 0.5) * 0.35,
-        r: Math.random() * 1.8 + 0.8,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        a: Math.random() * 0.5 + 0.15,
+        x: Math.random() * cv!.width,
+        y: Math.random() * cv!.height,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        r: Math.random() * 2 + 1,
+        color: c,
+        a: Math.random() * 0.6 + 0.2,
         life: 0,
-        maxLife: Math.random() * 220 + 160,
+        maxLife: Math.random() * 300 + 200,
       };
-    };
+    }
 
-    let particles: Particle[] = Array.from(
-      { length: PARTICLE_COUNT },
-      makeParticle
-    );
-
+    let particles: Particle[] = Array.from({ length: PARTICLE_COUNT }, makeParticle);
     let t = 0;
-    const draw = () => {
-      t += 1;
-      ctx.clearRect(0, 0, width, height);
 
-      // Ambient glows
+    function draw() {
+      if (!cv || !ctx) return;
+      t++;
+      ctx.clearRect(0, 0, cv.width, cv.height);
+
       const g1 = ctx.createRadialGradient(
-        width * 0.2,
-        height * 0.22,
-        0,
-        width * 0.2,
-        height * 0.22,
-        width * 0.45
+        cv.width * 0.2, cv.height * 0.3, 0,
+        cv.width * 0.2, cv.height * 0.3, cv.width * 0.45
       );
-      g1.addColorStop(0, "rgba(0,255,136,0.09)");
+      g1.addColorStop(0, "rgba(29,78,216,0.07)");
       g1.addColorStop(1, "transparent");
       ctx.fillStyle = g1;
-      ctx.fillRect(0, 0, width, height);
+      ctx.fillRect(0, 0, cv.width, cv.height);
 
       const g2 = ctx.createRadialGradient(
-        width * 0.82,
-        height * 0.72,
-        0,
-        width * 0.82,
-        height * 0.72,
-        width * 0.5
+        cv.width * 0.8, cv.height * 0.65, 0,
+        cv.width * 0.8, cv.height * 0.65, cv.width * 0.5
       );
-      g2.addColorStop(0, "rgba(255,0,255,0.06)");
+      g2.addColorStop(0, "rgba(16,185,129,0.05)");
       g2.addColorStop(1, "transparent");
       ctx.fillStyle = g2;
-      ctx.fillRect(0, 0, width, height);
+      ctx.fillRect(0, 0, cv.width, cv.height);
 
-      // Stars
       stars.forEach((s) => {
         s.phase += s.speed;
-        const alpha = s.a * (0.55 + 0.45 * Math.sin(s.phase));
+        const a = s.a * (0.6 + 0.4 * Math.sin(s.phase));
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(180,255,230,${alpha})`;
+        ctx.fillStyle = `rgba(148,163,184,${a})`;
         ctx.fill();
       });
 
-      // Particle links
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 110) {
+          if (d < 90) {
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(0,255,136,${0.06 * (1 - d / 110)})`;
-            ctx.lineWidth = 0.6;
+            ctx.strokeStyle = `rgba(59,130,246,${0.08 * (1 - d / 90)})`;
+            ctx.lineWidth = 0.5;
             ctx.stroke();
           }
         }
       }
 
-      // Particles
       particles.forEach((p, i) => {
         p.x += p.vx;
         p.y += p.vy;
         p.life++;
-
         if (
           p.life > p.maxLife ||
-          p.x < -10 || p.x > width + 10 ||
-          p.y < -10 || p.y > height + 10
+          p.x < -10 || p.x > cv!.width + 10 ||
+          p.y < -10 || p.y > cv!.height + 10
         ) {
           particles[i] = makeParticle();
           return;
         }
-
         const fade =
-          p.life < 30
-            ? p.life / 30
-            : p.life > p.maxLife - 30
-            ? (p.maxLife - p.life) / 30
-            : 1;
-
+          p.life < 30 ? p.life / 30
+          : p.life > p.maxLife - 30 ? (p.maxLife - p.life) / 30
+          : 1;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `${p.color}${p.a * fade})`;
+        ctx.fillStyle = p.color + p.a * fade + ")";
         ctx.fill();
       });
 
-      // Scanning line
-      const scanY = (t * 1.8) % height;
-      const scanGlow = ctx.createLinearGradient(0, scanY - 20, 0, scanY + 20);
-      scanGlow.addColorStop(0, "transparent");
-      scanGlow.addColorStop(0.5, "rgba(0,212,255,0.08)");
-      scanGlow.addColorStop(1, "transparent");
-      ctx.fillStyle = scanGlow;
-      ctx.fillRect(0, scanY - 20, width, 40);
+      const scanY = (t * 0.5) % cv.height;
+      const sg = ctx.createLinearGradient(0, scanY - 30, 0, scanY + 30);
+      sg.addColorStop(0, "transparent");
+      sg.addColorStop(0.5, "rgba(59,130,246,0.025)");
+      sg.addColorStop(1, "transparent");
+      ctx.fillStyle = sg;
+      ctx.fillRect(0, scanY - 30, cv.width, 60);
 
       animRef.current = requestAnimationFrame(draw);
-    };
+    }
 
     draw();
 
     return () => {
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(animRef.current);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const stats = [
-    { num: "+۲۴۰۰", lbl: "مسیر شغلی", color: "#00ff88" },
-    { num: "۵ دقیقه", lbl: "زمان تحلیل", color: "#ff00ff" },
-    { num: "%۹۴", lbl: "دقت نتایج", color: "#00d4ff" },
+    { num: "+۲۴۰۰", lbl: "مسیر شغلی", color: "#3b82f6" },
+    { num: "۵ دقیقه", lbl: "زمان تحلیل", color: "#f59e0b" },
+    { num: "%۹۴",   lbl: "دقت نتایج",  color: "#10b981" },
   ];
 
   const steps = [
-    { n: "۱", lbl: "پرسش‌نامه", color: "#00ff88" },
-    { n: "۲", lbl: "تحلیل AI", color: "#ff00ff" },
-    { n: "۳", lbl: "نتیجه", color: "#00d4ff" },
+    { n: "۱", lbl: "پرسش‌نامه", color: "#3b82f6", border: "rgba(59,130,246,0.4)" },
+    { n: "۲", lbl: "تحلیل AI",  color: "#f59e0b", border: "rgba(245,158,11,0.4)"  },
+    { n: "۳", lbl: "نتیجه",     color: "#10b981", border: "rgba(16,185,129,0.4)"  },
   ];
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800;900&display=swap');
-
-        :root {
-          --bg: #0a0a0f;
-          --fg: #e0e0e0;
-          --card: #12121a;
-          --muted: #1c1c2e;
-          --muted-fg: #8b93a7;
-          --accent: #00ff88;
-          --accent-2: #ff00ff;
-          --accent-3: #00d4ff;
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap');
+        @keyframes blink {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50%       { opacity: 0.5; transform: scale(0.7); }
         }
-
-        @keyframes blink { 50% { opacity: 0; } }
-        @keyframes titleGlitch {
-          0%, 100% { transform: translate(0); }
-          20% { transform: translate(1px, -1px); }
-          40% { transform: translate(-1px, 1px); }
-          60% { transform: translate(0.5px, 0); }
-          80% { transform: translate(-0.5px, 0.5px); }
-        }
-        @keyframes pulseGlow {
-          0%, 100% { box-shadow: 0 0 0 rgba(0,255,136,0), 0 0 18px rgba(0,255,136,0.08); }
-          50% { box-shadow: 0 0 0 rgba(0,255,136,0), 0 0 28px rgba(0,255,136,0.16); }
-        }
-        @keyframes scanMove {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(100vh); }
-        }
-
-        .cyber-scanlines::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: repeating-linear-gradient(
-            0deg,
-            transparent 0px,
-            transparent 2px,
-            rgba(0, 0, 0, 0.28) 2px,
-            rgba(0, 0, 0, 0.28) 4px
-          );
-          pointer-events: none;
-          opacity: 0.35;
-          z-index: 2;
-        }
-        .cyber-grid {
-          background-image:
-            linear-gradient(rgba(0, 255, 136, 0.045) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 255, 136, 0.045) 1px, transparent 1px);
-          background-size: 42px 42px;
-        }
-        .cyber-chamfer {
-          clip-path: polygon(
-            0 12px, 12px 0, calc(100% - 12px) 0, 100% 12px,
-            100% calc(100% - 12px), calc(100% - 12px) 100%,
-            12px 100%, 0 calc(100% - 12px)
-          );
-        }
-        .cyber-chamfer-sm {
-          clip-path: polygon(
-            0 9px, 9px 0, calc(100% - 9px) 0, 100% 9px,
-            100% calc(100% - 9px), calc(100% - 9px) 100%,
-            9px 100%, 0 calc(100% - 9px)
-          );
-        }
-        .cyber-title {
-          position: relative;
-          display: inline-block;
-          color: var(--accent);
-          text-shadow: 0 0 10px rgba(0,255,136,0.35), 0 0 18px rgba(0,255,136,0.16);
-          animation: titleGlitch 5.5s infinite steps(2, end);
-        }
-        .cyber-title::before,
-        .cyber-title::after {
-          content: attr(data-text);
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          opacity: 0.45;
-        }
-        .cyber-title::before { transform: translateX(1px); color: var(--accent-2); }
-        .cyber-title::after { transform: translateX(-1px); color: var(--accent-3); }
-
-        .terminal-cursor {
-          display: inline-block;
-          width: 8px;
-          height: 1em;
-          margin-right: 6px;
-          background: var(--accent);
-          vertical-align: -2px;
-          animation: blink 1s step-end infinite;
-        }
-        .start-btn {
-          position: relative;
-          overflow: hidden;
-          isolation: isolate;
-        }
-        .start-btn::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, transparent 45%);
-          opacity: 0.7;
-          pointer-events: none;
-        }
-        .start-btn:hover::before { transform: translateX(110%); transition: transform 550ms ease; }
         .start-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 0 8px rgba(0,255,136,0.75), 0 0 24px rgba(0,255,136,0.2), inset 0 0 0 1px rgba(255,255,255,0.06) !important;
-          filter: brightness(1.05);
+          transform: translateY(-2px) scale(1.01) !important;
+          box-shadow: 0 12px 40px rgba(29,78,216,0.5) !important;
         }
-        .start-btn:active { transform: translateY(0) scale(0.995); }
-        .hud-card {
-          transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
-          animation: pulseGlow 4.5s ease-in-out infinite;
-        }
-        .hud-card:hover {
-          transform: translateY(-2px);
-          border-color: rgba(0,255,136,0.55) !important;
-          box-shadow: 0 0 8px rgba(0,255,136,0.25), 0 0 28px rgba(0,255,136,0.08), inset 0 0 0 1px rgba(255,255,255,0.03);
-        }
-        .step-node { transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease; }
-        .step-node:hover { transform: translateY(-1px); box-shadow: 0 0 12px rgba(0,255,136,0.18); }
-        .scanner {
-          position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1;
-        }
-        .scanner::before {
-          content: "";
-          position: absolute; top: -20%; left: 0; right: 0; height: 16%;
-          background: linear-gradient(to bottom, transparent, rgba(0, 212, 255, 0.035), transparent);
-          animation: scanMove 7.5s linear infinite;
-        }
-        .focus-neon:focus-visible {
-          outline: none;
-          box-shadow: 0 0 0 2px rgba(10,10,15,1), 0 0 0 4px rgba(0,255,136,0.6), 0 0 16px rgba(0,255,136,0.22);
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .cyber-title, .scanner::before, .terminal-cursor, .hud-card, .start-btn::before {
-            animation: none !important; transition: none !important;
-          }
-        }
+        .start-btn:active { transform: scale(0.99) !important; }
       `}</style>
 
       <div
         ref={wrapRef}
-        className="cyber-scanlines cyber-grid"
         style={{
-          minHeight: "100vh",
-          width: "100%",
-          position: "relative",
-          overflow: "hidden",
-          background:
-            "radial-gradient(circle at 20% 20%, rgba(0,255,136,0.08), transparent 28%), radial-gradient(circle at 80% 70%, rgba(255,0,255,0.08), transparent 30%), linear-gradient(180deg, #090a10 0%, #0a0a0f 52%, #06070c 100%)",
-          fontFamily: "Vazirmatn, sans-serif",
-          direction: "rtl",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "40px 20px",
+          minHeight: "100vh", width: "100%", background: "#070d1a",
+          fontFamily: "Vazirmatn, sans-serif", direction: "rtl",
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          position: "relative", overflow: "hidden", padding: "40px 20px",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.015), transparent 60%)",
-            mixBlendMode: "screen",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
-        <div className="scanner" />
+        {/* Canvas background */}
         <canvas
           ref={canvasRef}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
         />
 
-        <div style={{ position: "relative", zIndex: 10, marginBottom: 18 }}>
-          <span
-            className="cyber-chamfer-sm"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "7px 16px",
-              border: "1px solid rgba(0,255,136,0.35)",
-              background: "rgba(0,255,136,0.08)",
-              color: "#b6ffd9",
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: "0.06em",
-              boxShadow: "0 0 14px rgba(0,255,136,0.08)",
-            }}
-          >
-            <span
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: "50%",
-                background: "#00ff88",
-                boxShadow: "0 0 8px rgba(0,255,136,0.9)",
-                display: "inline-block",
-              }}
-            />
-            SYSTEM: AI CAREER ROUTER
+        {/* Badge */}
+        <div style={{ position: "relative", zIndex: 10, marginBottom: 20 }}>
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)",
+            color: "#fcd34d", fontSize: 12, fontWeight: 700,
+            padding: "5px 14px", borderRadius: 100, letterSpacing: "0.05em",
+          }}>
+            <span style={{
+              width: 6, height: 6, background: "#f59e0b", borderRadius: "50%",
+              animation: "blink 1.8s ease-in-out infinite", display: "inline-block",
+            }} />
+            هوش مصنوعی مسیریاب شغلی
           </span>
         </div>
 
-        <div
-          className="cyber-chamfer hud-card"
-          style={{
-            position: "relative",
-            zIndex: 10,
-            width: "100%",
-            maxWidth: 500,
-            textAlign: "center",
-            background:
-              "linear-gradient(145deg, rgba(18,18,26,0.96), rgba(8,10,16,0.98))",
-            border: "1px solid rgba(0,255,136,0.24)",
-            padding: "42px 28px 30px",
-            boxShadow:
-              "0 0 0 1px rgba(255,255,255,0.03) inset, 0 0 24px rgba(0,255,136,0.06)",
-            backdropFilter: "blur(8px)",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: 12,
-              left: 14,
-              display: "flex",
-              gap: 6,
-              opacity: 0.9,
-            }}
-          >
-            {["#ff3366", "#ffd000", "#00ff88"].map((c) => (
-              <span
-                key={c}
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: c,
-                  boxShadow: `0 0 8px ${c}`,
-                  display: "inline-block",
-                }}
-              />
-            ))}
-          </div>
+        {/* Card */}
+        <div style={{
+          position: "relative", zIndex: 10, width: "100%", maxWidth: 460, textAlign: "center",
+          background: "linear-gradient(145deg,rgba(15,31,61,0.95),rgba(7,13,26,0.98))",
+          border: "1px solid rgba(59,130,246,0.18)", borderRadius: 24, padding: "40px 44px",
+          boxShadow: "0 0 60px rgba(29,78,216,0.12), 0 0 0 1px rgba(255,255,255,0.04) inset",
+        }}>
 
-          <div
-            style={{
-              width: 74,
-              height: 74,
-              margin: "0 auto 22px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "1px solid rgba(0,212,255,0.35)",
-              background:
-                "linear-gradient(135deg, rgba(0,212,255,0.12), rgba(0,255,136,0.1))",
-              boxShadow:
-                "0 0 14px rgba(0,212,255,0.12), inset 0 0 24px rgba(255,255,255,0.03)",
-              clipPath:
-                "polygon(0 12px, 12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px))",
-              fontSize: 30,
-            }}
-          >
+          {/* Icon */}
+          <div style={{
+            width: 64, height: 64, borderRadius: 18, margin: "0 auto 24px",
+            background: "linear-gradient(135deg,rgba(29,78,216,0.3),rgba(16,185,129,0.2))",
+            border: "1px solid rgba(59,130,246,0.3)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 28, boxShadow: "0 0 24px rgba(59,130,246,0.2)",
+          }}>
             🎯
           </div>
 
-          <div
-            style={{
-              fontSize: 11,
-              color: "#7fffd1",
-              letterSpacing: "0.22em",
-              marginBottom: 10,
-              fontWeight: 800,
-            }}
-          >
-            [ CAREER / ANALYSIS / HUB ]
-          </div>
-
-          <h1
-            style={{
-              fontSize: "clamp(2rem, 5vw, 3.1rem)",
-              lineHeight: 1.18,
-              color: "#f3f6fb",
-              margin: "0 0 12px",
-              fontWeight: 900,
-            }}
-          >
+          {/* Title */}
+          <h1 style={{ fontSize: 28, fontWeight: 900, lineHeight: 1.25, color: "#f8fafc", marginBottom: 10 }}>
             سامانه{" "}
-            <span className="cyber-title" data-text="هدایت مسیر">
+            <span style={{
+              background: "linear-gradient(90deg,#3b82f6,#10b981)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            }}>
               هدایت مسیر
             </span>
-            <br />
-            شغلی من
+            <br />شغلی من
           </h1>
 
-          <p
-            style={{
-              fontSize: 14,
-              color: "#9aa4ba",
-              lineHeight: 1.9,
-              marginBottom: 26,
-            }}
-          >
-            <span style={{ color: "#00ff88", fontWeight: 800 }}>›</span> با پاسخ
-            به چند سؤال هوشمند، بهترین مسیر شغلی متناسب با علاقه، مهارت و
-            هدف‌هایت را پیدا کن.
-            <span className="terminal-cursor" />
+          <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.7, marginBottom: 28 }}>
+            با پاسخ به چند سؤال هوشمند، بهترین مسیر شغلی متناسب با علاقه، مهارت و هدف‌هایت رو پیدا کن.
           </p>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-              gap: 10,
-              marginBottom: 26,
-            }}
-          >
+          {/* Stats */}
+          <div style={{ display: "flex", gap: 10, marginBottom: 28 }}>
             {stats.map((s) => (
-              <div
-                key={s.lbl}
-                className="cyber-chamfer-sm"
-                style={{
-                  background: "rgba(28,28,46,0.66)",
-                  border: `1px solid ${s.color}33`,
-                  padding: "12px 8px",
-                  boxShadow: `0 0 10px ${s.color}10 inset`,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 900,
-                    color: s.color,
-                    textShadow: `0 0 10px ${s.color}55`,
-                  }}
-                >
-                  {s.num}
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "#8b93a7",
-                    marginTop: 4,
-                    letterSpacing: "0.03em",
-                  }}
-                >
-                  {s.lbl}
-                </div>
+              <div key={s.lbl} style={{
+                flex: 1,
+                background: "rgba(59,130,246,0.06)",
+                border: "1px solid rgba(59,130,246,0.12)",
+                borderRadius: 12, padding: "10px 8px",
+              }}>
+                <div style={{ fontSize: 18, fontWeight: 900, color: s.color }}>{s.num}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{s.lbl}</div>
               </div>
             ))}
           </div>
 
+          {/* Button */}
           <button
+            className="start-btn"
             onClick={handleStartAnalysis}
             disabled={isLoading}
-            aria-busy={isLoading}
-            className="start-btn cyber-chamfer-sm focus-neon"
             style={{
               width: "100%",
-              minHeight: 52,
-              border: "1px solid rgba(0,255,136,0.5)",
-              background:
-                "linear-gradient(135deg, rgba(0,255,136,0.92), rgba(0,212,255,0.88))",
-              color: "#071018",
-              padding: "14px 18px",
-              fontFamily: "Vazirmatn, sans-serif",
-              fontSize: 16,
-              fontWeight: 900,
-              letterSpacing: "0.04em",
+              background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
+              color: "#fff", border: "none", borderRadius: 14,
+              padding: "14px 20px",
+              fontFamily: "Vazirmatn, sans-serif", fontSize: 16, fontWeight: 900,
               cursor: isLoading ? "not-allowed" : "pointer",
-              opacity: isLoading ? 0.76 : 1,
-              boxShadow:
-                "0 0 8px rgba(0,255,136,0.35), 0 0 26px rgba(0,255,136,0.14), inset 0 0 0 1px rgba(255,255,255,0.08)",
-              transition: "all 160ms ease",
+              opacity: isLoading ? 0.7 : 1,
+              boxShadow: "0 8px 32px rgba(29,78,216,0.35)",
+              transition: "transform 0.18s, box-shadow 0.18s",
             }}
           >
             {isLoading ? "در حال پردازش..." : "شروع تحلیل رایگان ←"}
           </button>
 
-          <div
-            style={{
-              marginTop: 12,
-              fontSize: 11,
-              color: "#76819c",
-              letterSpacing: "0.04em",
-            }}
-          >
-            بدون ثبت‌نام • کمتر از ۵ دقیقه • خروجی شخصی‌سازی‌شده
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "stretch",
-              marginTop: 24,
-              gap: 8,
-            }}
-          >
+          {/* Steps */}
+          <div style={{ display: "flex", alignItems: "center", marginTop: 20 }}>
             {steps.map((step, idx) => (
-              <div
-                key={step.n}
-                style={{
-                  flex: 1,
-                  position: "relative",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
+              <div key={step.n} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, position: "relative" }}>
                 {idx > 0 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 13,
-                      right: "50%",
-                      width: "calc(100% - 32px)",
-                      height: 1,
-                      background:
-                        "linear-gradient(90deg, rgba(0,255,136,0.28), rgba(0,212,255,0.12))",
-                    }}
-                  />
+                  <div style={{ position: "absolute", top: 11, right: 0, width: "calc(50% - 11px)", height: 1, background: "rgba(59,130,246,0.2)" }} />
                 )}
-                <div
-                  className="step-node cyber-chamfer-sm"
-                  style={{
-                    minWidth: 34,
-                    height: 28,
-                    padding: "0 10px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "rgba(10,10,15,0.86)",
-                    border: `1px solid ${step.color}66`,
-                    color: step.color,
-                    fontSize: 12,
-                    fontWeight: 900,
-                    boxShadow: `0 0 10px ${step.color}1a`,
-                  }}
-                >
+                {idx < steps.length - 1 && (
+                  <div style={{ position: "absolute", top: 11, left: 0, width: "calc(50% - 11px)", height: 1, background: "rgba(59,130,246,0.2)" }} />
+                )}
+                <div style={{
+                  width: 22, height: 22, borderRadius: "50%",
+                  background: "rgba(59,130,246,0.1)",
+                  border: `1px solid ${step.border}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 10, fontWeight: 700, color: step.color,
+                }}>
                   {step.n}
                 </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "#8b93a7",
-                    textAlign: "center",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {step.lbl}
-                </div>
+                <div style={{ fontSize: 10, color: "#94a3b8" }}>{step.lbl}</div>
               </div>
             ))}
           </div>
+
         </div>
       </div>
     </>
