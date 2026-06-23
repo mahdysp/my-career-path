@@ -40,14 +40,14 @@ export default function CareerHub() {
 
   const steps = [
     { n: "۱", lbl: "پرسش‌نامه" },
-    { n: "۲", lbl: "تحلیل AI" },
+    { n: "۲", lbl: "تحلیل" },
     { n: "۳", lbl: "نتیجه" },
   ];
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap');
         
         @keyframes float-blob-1 {
           0%, 100% { transform: translateY(0) translateX(0) scale(1); }
@@ -174,7 +174,7 @@ export default function CareerHub() {
           minHeight: "100vh",
           width: "100%",
           background: "#050506",
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: "'Vazirmatn', system-ui, sans-serif",
           direction: "rtl",
           display: "flex",
           flexDirection: "column",
@@ -279,44 +279,7 @@ export default function CareerHub() {
           }}
         />
 
-        {/* Badge */}
-        <div
-          style={{
-            position: "relative",
-            zIndex: 10,
-            marginBottom: 32,
-          }}
-        >
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              background: "rgba(94, 106, 210, 0.1)",
-              border: "1px solid rgba(94, 106, 210, 0.3)",
-              color: "#8B92D9",
-              fontSize: 12,
-              fontWeight: 600,
-              padding: "8px 16px",
-              borderRadius: 100,
-              letterSpacing: "0.05em",
-              textTransform: "uppercase",
-            }}
-          >
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                background: "#5E6AD2",
-                borderRadius: "50%",
-                animation: "pulse-glow 1.5s ease-in-out infinite",
-                boxShadow: "0 0 8px rgba(94, 106, 210, 0.6)",
-              }}
-              className="badge-pulse"
-            />
-            هوش مصنوعی مسیریاب شغلی
-          </span>
-        </div>
+        
 
         {/* Card with spotlight effect */}
         <div
@@ -498,7 +461,7 @@ export default function CareerHub() {
               border: "none",
               borderRadius: 12,
               padding: "16px 24px",
-              fontFamily: "'Inter', sans-serif",
+              fontFamily: "'Vazirmatn', sans-serif",
               fontSize: 15,
               fontWeight: 600,
               cursor: isLoading ? "not-allowed" : "pointer",
