@@ -320,19 +320,19 @@ export default function CareerHub() {
           {/* Icon */}
           <div
             style={{
-              width: 88,
-              height: 88,
-              borderRadius: 18,
+              width: 100,
+              height: 100,
+              borderRadius: 20,
               margin: "0 auto 28px",
-              background: "linear-gradient(135deg, rgba(94, 106, 210, 0.15), rgba(139, 92, 246, 0.08))",
-              border: "1px solid rgba(94, 106, 210, 0.2)",
+              background: "linear-gradient(135deg, rgba(94, 106, 210, 0.12), rgba(139, 92, 246, 0.06))",
+              border: "1px solid rgba(94, 106, 210, 0.18)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 32,
+              overflow: "hidden",
               boxShadow: `
-                0 0 30px rgba(94, 106, 210, 0.12),
-                0 0 60px rgba(94, 106, 210, 0.08) inset
+                0 0 40px rgba(94, 106, 210, 0.1),
+                0 0 80px rgba(94, 106, 210, 0.05) inset
               `,
             }}
           >
@@ -340,9 +340,9 @@ export default function CareerHub() {
               src="/icon.png" 
               alt="آیکون مسیریابی شغلی" 
               style={{ 
-                width: 52, 
-                height: 52,
-                objectFit: "contain",
+                width: "100%", 
+                height: "100%",
+                objectFit: "cover",
               }} 
             />
           </div>
