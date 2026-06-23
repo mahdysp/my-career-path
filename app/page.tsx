@@ -320,31 +320,31 @@ export default function CareerHub() {
           {/* Icon */}
           <div
             style={{
-              width: 72,
-              height: 72,
-              borderRadius: 16,
+              width: 88,
+              height: 88,
+              borderRadius: 18,
               margin: "0 auto 28px",
-              background: "linear-gradient(135deg, rgba(94, 106, 210, 0.2), rgba(139, 92, 246, 0.1))",
-              border: "1px solid rgba(94, 106, 210, 0.25)",
+              background: "linear-gradient(135deg, rgba(94, 106, 210, 0.15), rgba(139, 92, 246, 0.08))",
+              border: "1px solid rgba(94, 106, 210, 0.2)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: 32,
               boxShadow: `
-                0 0 24px rgba(94, 106, 210, 0.15),
-                0 0 48px rgba(94, 106, 210, 0.1) inset
+                0 0 30px rgba(94, 106, 210, 0.12),
+                0 0 60px rgba(94, 106, 210, 0.08) inset
               `,
             }}
           >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(139, 146, 217, 0.8)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <circle cx="12" cy="12" r="6" />
-              <circle cx="12" cy="12" r="2" />
-              <line x1="12" y1="2" x2="12" y2="4" />
-              <line x1="12" y1="20" x2="12" y2="22" />
-              <line x1="2" y1="12" x2="4" y2="12" />
-              <line x1="20" y1="12" x2="22" y2="12" />
-            </svg>
+            <img 
+              src="/icon.png" 
+              alt="آیکون مسیریابی شغلی" 
+              style={{ 
+                width: 52, 
+                height: 52,
+                objectFit: "contain",
+              }} 
+            />
           </div>
 
           {/* Title */}
@@ -568,17 +568,7 @@ export default function CareerHub() {
           </div>
         </div>
 
-        {/* Footer hint */}
-        <p
-          style={{
-            marginTop: 24,
-            fontSize: 12,
-            color: "rgba(255,255,255,0.4)",
-            direction: "rtl",
-          }}
-        >
-          تجزیه و تحلیل با هوش مصنوعی پیشرفته
-        </p>
+        
       </div>
 
       <style>{`
