@@ -35,6 +35,36 @@ export default function CareerHub() {
     setTimeout(() => router.push("/quiz"), 600);
   };
 
+  // Generate random stars
+  const stars = Array.from({ length: 50 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 2 + 0.5,
+    duration: Math.random() * 3 + 2,
+    delay: Math.random() * 5,
+  }));
+
+  // Generate floating particles
+  const particles = Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 4 + 2,
+    duration: Math.random() * 6 + 4,
+    delay: Math.random() * 3,
+    color: i % 4 === 0 ? "#5E6AD2" : i % 4 === 1 ? "#8B92D9" : i % 4 === 2 ? "#A5B0E8" : "#C4BDE8",
+  }));
+
+  // Light rays positions
+  const lightRays = [
+    { left: "20%", top: "0%", height: "70%", angle: 15 },
+    { left: "35%", top: "0%", height: "60%", angle: 8 },
+    { left: "50%", top: "0%", height: "80%", angle: 0 },
+    { left: "65%", top: "0%", height: "65%", angle: -10 },
+    { left: "80%", top: "0%", height: "75%", angle: -18 },
+  ];
+
   return (
     <>
       <style>{`
@@ -42,13 +72,27 @@ export default function CareerHub() {
         
         @keyframes float-1 {
           0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-25px) scale(1.03); }
+          33% { transform: translateY(-30px) scale(1.05); }
+          66% { transform: translateY(-15px) scale(0.98); }
         }
         
         @keyframes float-2 {
           0%, 100% { transform: translate(0, 0) rotate(0deg); }
-          25% { transform: translate(10px, -15px) rotate(2deg); }
-          75% { transform: translate(-5px, -20px) rotate(-1deg); }
+          25% { transform: translate(15px, -20px) rotate(3deg); }
+          50% { transform: translate(-10px, -30px) rotate(-2deg); }
+          75% { transform: translate(5px, -15px) rotate(1deg); }
+        }
+        
+        @keyframes float-particle {
+          0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+          25% { transform: translateY(-30px) translateX(10px); opacity: 0.6; }
+          50% { transform: translateY(-50px) translateX(-5px); opacity: 0.4; }
+          75% { transform: translateY(-20px) translateX(15px); opacity: 0.5; }
+        }
+        
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(1); }
+          50% { opacity: 0.9; transform: scale(1.3); }
         }
         
         @keyframes pulse-ring {
@@ -86,6 +130,29 @@ export default function CareerHub() {
           to { transform: rotate(360deg); }
         }
         
+        @keyframes aurora-drift {
+          0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.5; }
+          25% { transform: translate(40px, -30px) scale(1.1) rotate(5deg); opacity: 0.7; }
+          50% { transform: translate(-30px, -50px) scale(0.95) rotate(-3deg); opacity: 0.55; }
+          75% { transform: translate(20px, -70px) scale(1.05) rotate(2deg); opacity: 0.45; }
+        }
+        
+        @keyframes aurora-drift-2 {
+          0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.4; }
+          33% { transform: translate(-50px, 25px) scale(1.15) rotate(-4deg); opacity: 0.6; }
+          66% { transform: translate(25px, -35px) scale(0.9) rotate(3deg); opacity: 0.45; }
+        }
+        
+        @keyframes nebula-pulse {
+          0%, 100% { opacity: 0.15; transform: scale(1); }
+          50% { opacity: 0.25; transform: scale(1.08); }
+        }
+        
+        @keyframes light-ray-glow {
+          0%, 100% { opacity: 0.04; }
+          50% { opacity: 0.12; }
+        }
+        
         .container {
           min-height: 100vh;
           width: 100%;
@@ -108,7 +175,7 @@ export default function CareerHub() {
           content: '';
           position: absolute;
           inset: 0;
-          background: radial-gradient(400px circle at var(--mx) var(--my), rgba(94,106,210,0.08), transparent 100%);
+          background: radial-gradient(400px circle at var(--mx) var(--my), rgba(94,106,210,0.12), transparent 100%);
           transition: opacity 0.3s;
           opacity: 0;
         }
@@ -153,16 +220,16 @@ export default function CareerHub() {
         
         .hero-icon-bg {
           position: absolute;
-          inset: -30px;
-          background: radial-gradient(circle, rgba(94,106,210,0.2) 0%, transparent 70%);
-          filter: blur(30px);
+          inset: -40px;
+          background: radial-gradient(circle, rgba(94,106,210,0.3) 0%, rgba(139,92,246,0.15) 40%, rgba(99,102,241,0.08) 70%, transparent 100%);
+          filter: blur(40px);
           animation: float-1 6s ease-in-out infinite;
         }
         
         .hero-ring {
           position: absolute;
           border-radius: 50%;
-          border: 1px solid rgba(94,106,210,0.2);
+          border: 1px solid rgba(94,106,210,0.25);
         }
         
         .hero-ring-1 {
@@ -176,23 +243,23 @@ export default function CareerHub() {
           height: 320px;
           animation: orbit-reverse 35s linear infinite;
           border-style: dashed;
-          border-color: rgba(139,92,246,0.15);
+          border-color: rgba(139,92,246,0.2);
         }
         
         .hero-ring-3 {
           width: 380px;
           height: 380px;
           animation: orbit 45s linear infinite;
-          border-color: rgba(99,102,241,0.1);
+          border-color: rgba(99,102,241,0.12);
         }
         
         .orbit-dot {
           position: absolute;
-          width: 10px;
-          height: 10px;
-          background: #5E6AD2;
+          width: 12px;
+          height: 12px;
+          background: linear-gradient(135deg, #5E6AD2, #8B92D9);
           border-radius: 50%;
-          box-shadow: 0 0 15px rgba(94,106,210,0.8);
+          box-shadow: 0 0 20px rgba(94,106,210,0.9), 0 0 40px rgba(94,106,210,0.4);
         }
         
         .hero-icon-inner {
@@ -207,7 +274,7 @@ export default function CareerHub() {
           border-radius: 50%;
           object-fit: cover;
           animation: float-2 7s ease-in-out infinite;
-          box-shadow: 0 0 40px rgba(94,106,210,0.4), 0 0 80px rgba(94,106,210,0.2), inset 0 0 30px rgba(94,106,210,0.1);
+          box-shadow: 0 0 60px rgba(94,106,210,0.5), 0 0 120px rgba(94,106,210,0.25), inset 0 0 50px rgba(94,106,210,0.2);
         }
         
         .pulse-dot {
@@ -218,7 +285,7 @@ export default function CareerHub() {
           width: 100%;
           height: 100%;
           border-radius: 50%;
-          border: 2px solid rgba(94,106,210,0.4);
+          border: 2px solid rgba(94,106,210,0.6);
           animation: pulse-ring 2.5s ease-out infinite;
         }
         
@@ -307,29 +374,6 @@ export default function CareerHub() {
           box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 50px rgba(94,106,210,0.08);
         }
         
-        .step-circle {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #5E6AD2, #4F5DAA);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-          font-weight: 700;
-          color: #fff;
-          box-shadow: 0 0 30px rgba(94,106,210,0.4);
-          position: relative;
-          z-index: 1;
-        }
-        
-        .step-circle.inactive {
-          background: rgba(94,106,210,0.08);
-          border: 1px solid rgba(94,106,210,0.25);
-          color: #8B92D9;
-          box-shadow: none;
-        }
-        
         .progress-track {
           height: 4px;
           background: rgba(94,106,210,0.15);
@@ -343,12 +387,6 @@ export default function CareerHub() {
           background-size: 200% 100%;
           animation: shimmer-text 2s ease infinite;
           border-radius: 2px;
-        }
-        
-        .particle {
-          position: absolute;
-          border-radius: 50%;
-          pointer-events: none;
         }
         
         .section-divider {
@@ -377,87 +415,233 @@ export default function CareerHub() {
       `}</style>
 
       <div className="container">
-        {/* Background Layers */}
+        {/* Base Gradient Layer */}
         <div style={{
           position: "fixed",
           inset: 0,
-          background: "radial-gradient(ellipse 120% 60% at 50% -5%, #0d0d1f 0%, #050507 45%, #020204 100%)",
+          background: `
+            radial-gradient(ellipse 140% 70% at 50% -10%, #12122a 0%, #0a0a18 30%, #050507 60%, #020204 100%),
+            radial-gradient(ellipse 80% 50% at 80% 80%, rgba(94,106,210,0.08) 0%, transparent 50%),
+            radial-gradient(ellipse 60% 40% at 20% 70%, rgba(139,92,246,0.06) 0%, transparent 50%)
+          `,
           pointerEvents: "none",
         }} />
 
-        {/* Noise Texture */}
+        {/* Noise Texture - Subtle Film Grain */}
         <div style={{
           position: "fixed",
           inset: 0,
-          opacity: 0.018,
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          opacity: 0.025,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch' seed='15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
           pointerEvents: "none",
         }} />
 
-        {/* Grid Overlay */}
+        {/* Grid Overlay - Technical Precision */}
         <div style={{
           position: "fixed",
           inset: 0,
-          backgroundImage: `linear-gradient(rgba(94,106,210,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(94,106,210,0.04) 1px, transparent 1px)`,
-          backgroundSize: "56px 56px",
+          backgroundImage: `
+            linear-gradient(rgba(94,106,210,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(94,106,210,0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: "48px 48px",
           pointerEvents: "none",
         }} />
 
-        {/* Ambient Glows */}
+        {/* Aurora Effect 1 - Primary Indigo */}
         <div style={{
           position: "fixed",
-          top: "-40%",
-          left: "25%",
+          top: "-50%",
+          left: "20%",
+          width: "1000px",
+          height: "1000px",
+          background: `
+            radial-gradient(ellipse at center, 
+              rgba(94,106,210,0.35) 0%, 
+              rgba(94,106,210,0.2) 20%,
+              rgba(99,102,241,0.15) 40%,
+              transparent 70%
+            )
+          `,
+          filter: "blur(60px)",
+          animation: "aurora-drift 15s ease-in-out infinite",
+          pointerEvents: "none",
+        }} />
+
+        {/* Aurora Effect 2 - Purple Accent */}
+        <div style={{
+          position: "fixed",
+          top: "20%",
+          right: "-30%",
+          width: "800px",
+          height: "800px",
+          background: `
+            radial-gradient(ellipse at center,
+              rgba(139,92,246,0.25) 0%,
+              rgba(139,92,246,0.15) 30%,
+              rgba(167,139,250,0.08) 50%,
+              transparent 70%
+            )
+          `,
+          filter: "blur(70px)",
+          animation: "aurora-drift-2 18s ease-in-out infinite",
+          pointerEvents: "none",
+        }} />
+
+        {/* Aurora Effect 3 - Deep Blue */}
+        <div style={{
+          position: "fixed",
+          bottom: "-20%",
+          left: "30%",
           width: "900px",
-          height: "900px",
-          background: "radial-gradient(circle, rgba(94,106,210,0.18) 0%, transparent 55%)",
-          filter: "blur(100px)",
-          animation: "float-1 10s ease-in-out infinite",
-          pointerEvents: "none",
-        }} />
-
-        <div style={{
-          position: "fixed",
-          bottom: "5%",
-          right: "-25%",
-          width: "700px",
-          height: "700px",
-          background: "radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 55%)",
+          height: "600px",
+          background: `
+            radial-gradient(ellipse at center bottom,
+              rgba(59,130,246,0.15) 0%,
+              rgba(99,102,241,0.1) 40%,
+              transparent 70%
+            )
+          `,
           filter: "blur(80px)",
-          animation: "float-2 12s ease-in-out infinite",
+          animation: "nebula-pulse 12s ease-in-out infinite",
           pointerEvents: "none",
         }} />
 
+        {/* Aurora Effect 4 - Soft Lavender */}
         <div style={{
           position: "fixed",
-          top: "35%",
-          left: "-15%",
+          top: "40%",
+          left: "-20%",
           width: "600px",
           height: "600px",
-          background: "radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 55%)",
+          background: `
+            radial-gradient(ellipse at center,
+              rgba(165,180,232,0.12) 0%,
+              rgba(139,92,246,0.06) 50%,
+              transparent 70%
+            )
+          `,
           filter: "blur(90px)",
-          animation: "float-1 8s ease-in-out infinite",
+          animation: "aurora-drift 20s ease-in-out infinite",
+          animationDelay: "-5s",
+          pointerEvents: "none",
+        }} />
+
+        {/* Light Rays */}
+        {lightRays.map((ray, i) => (
+          <div
+            key={i}
+            style={{
+              position: "fixed",
+              left: ray.left,
+              top: ray.top,
+              width: "2px",
+              height: ray.height,
+              background: `linear-gradient(to bottom, 
+                transparent 0%, 
+                rgba(94,106,210,${0.08 + i * 0.02}) 30%,
+                rgba(139,92,246,${0.05 + i * 0.01}) 60%,
+                transparent 100%
+              )`,
+              transform: `rotate(${ray.angle}deg)`,
+              transformOrigin: "top center",
+              animation: "light-ray-glow 8s ease-in-out infinite",
+              animationDelay: `${i * 1.5}s`,
+              pointerEvents: "none",
+              filter: "blur(1px)",
+            }}
+          />
+        ))}
+
+        {/* Nebula Cloud 1 */}
+        <div style={{
+          position: "fixed",
+          top: "10%",
+          right: "10%",
+          width: "400px",
+          height: "300px",
+          background: `
+            radial-gradient(ellipse at 30% 50%,
+              rgba(94,106,210,0.08) 0%,
+              rgba(139,92,246,0.04) 40%,
+              transparent 70%
+            )
+          `,
+          filter: "blur(50px)",
+          animation: "nebula-pulse 10s ease-in-out infinite",
+          pointerEvents: "none",
+        }} />
+
+        {/* Nebula Cloud 2 */}
+        <div style={{
+          position: "fixed",
+          bottom: "20%",
+          left: "5%",
+          width: "500px",
+          height: "400px",
+          background: `
+            radial-gradient(ellipse at 70% 60%,
+              rgba(99,102,241,0.06) 0%,
+              rgba(165,180,232,0.04) 50%,
+              transparent 70%
+            )
+          `,
+          filter: "blur(60px)",
+          animation: "aurora-drift-2 14s ease-in-out infinite",
           animationDelay: "-3s",
           pointerEvents: "none",
         }} />
 
-        {/* Floating Particles */}
-        {[...Array(8)].map((_, i) => (
+        {/* Twinkling Stars */}
+        {stars.map((star) => (
           <div
-            key={i}
-            className="particle"
+            key={star.id}
             style={{
-              width: `${3 + Math.random() * 3}px`,
-              height: `${3 + Math.random() * 3}px`,
-              background: i % 3 === 0 ? "#5E6AD2" : i % 3 === 1 ? "#8B92D9" : "#A5B0E8",
-              opacity: 0.2 + Math.random() * 0.2,
-              top: `${10 + Math.random() * 80}%`,
-              left: `${5 + Math.random() * 90}%`,
-              animation: `float-${i % 2 + 1} ${4 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`,
+              position: "fixed",
+              top: `${star.y}%`,
+              left: `${star.x}%`,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              background: "white",
+              borderRadius: "50%",
+              boxShadow: `0 0 ${star.size * 2}px rgba(255,255,255,0.8), 0 0 ${star.size * 4}px rgba(94,106,210,0.3)`,
+              animation: `twinkle ${star.duration}s ease-in-out infinite`,
+              animationDelay: `${star.delay}s`,
+              pointerEvents: "none",
             }}
           />
         ))}
+
+        {/* Floating Particles */}
+        {particles.map((p) => (
+          <div
+            key={p.id}
+            style={{
+              position: "fixed",
+              top: `${p.y}%`,
+              left: `${p.x}%`,
+              width: `${p.size}px`,
+              height: `${p.size}px`,
+              background: p.color,
+              borderRadius: "50%",
+              filter: "blur(1px)",
+              animation: `float-particle ${p.duration}s ease-in-out infinite`,
+              animationDelay: `${p.delay}s`,
+              pointerEvents: "none",
+            }}
+          />
+        ))}
+
+        {/* Vignette Effect */}
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: `
+            radial-gradient(ellipse at center, transparent 40%, rgba(5,5,7,0.4) 100%),
+            radial-gradient(ellipse at top, transparent 60%, rgba(2,2,4,0.3) 100%)
+          `,
+          pointerEvents: "none",
+        }} />
 
         {/* Main Content */}
         <div style={{
@@ -507,7 +691,7 @@ export default function CareerHub() {
               color: "#EDEDEF",
               direction: "rtl",
             }}>
-              <span style={{ fontSize: 14, fontWeight: 500, color: "#8A8F98", display: "block", marginBottom: 8, letterSpacing: "0.1em", textTransform: "uppercase" }}>Karex</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "#8A8F98", display: "block", marginBottom: 8, letterSpacing: "0.15em", textTransform: "uppercase" }}>Karex</span>
               <span className="accent-text">هدایت مسیر</span>
               <br />
               <span className="glow-text">شغلی من</span>
@@ -624,7 +808,7 @@ export default function CareerHub() {
             {[
               { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>, title: "تحلیل دقیق", desc: "بر اساس مهارت‌های شما" },
               { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>, title: "نتایج مطمئن", desc: "94% صحت پیش‌بینی" },
-              { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>, title: "سریع", desc: "فقط ۵ دقیقه زمان" },
+              { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>, title: "سریع", desc: "فقط 5 دقیقه زمان" },
             ].map((feature, i) => (
               <div key={i} className="feature-card" style={{ textAlign: "center" }}>
                 <div style={{
@@ -724,8 +908,8 @@ export default function CareerHub() {
           bottom: 0,
           left: 0,
           right: 0,
-          height: 150,
-          background: "linear-gradient(to top, rgba(5,5,7,0.9), transparent)",
+          height: 200,
+          background: "linear-gradient(to top, rgba(2,2,4,0.95) 0%, rgba(5,5,7,0.5) 50%, transparent 100%)",
           pointerEvents: "none",
           zIndex: 5,
         }} />
