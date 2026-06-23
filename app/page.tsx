@@ -505,7 +505,9 @@ export default function CareerHub() {
               lineHeight: 1.25,
               letterSpacing: "-0.035em",
               color: "#EDEDEF",
+              direction: "rtl",
             }}>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "#8A8F98", display: "block", marginBottom: 8, letterSpacing: "0.1em", textTransform: "uppercase" }}>Karex</span>
               <span className="accent-text">هدایت مسیر</span>
               <br />
               <span className="glow-text">شغلی من</span>
@@ -529,7 +531,7 @@ export default function CareerHub() {
             flexWrap: "wrap",
             justifyContent: "center",
           }}>
-            {["رایگان", "بدون ثبت‌نام", "نتیجه فوری"].map((text, i) => (
+            {["رایگان", "نتیجه فوری"].map((text, i) => (
               <span key={i} className="badge-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="20 6 9 17 4 12"/>
@@ -556,9 +558,9 @@ export default function CareerHub() {
             {/* Stats Grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
               {[
-                { num: "+۲۴۰۰", label: "مسیر شغلی" },
-                { num: "۵ دقیقه", label: "زمان تحلیل" },
-                { num: "%۹۴", label: "دقت نتایج" },
+                { num: "+2400", label: "مسیر شغلی" },
+                { num: "5 دقیقه", label: "زمان تحلیل" },
+                { num: "%94", label: "دقت نتایج" },
               ].map((stat, i) => (
                 <div key={i} className="stat-box" style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 28, fontWeight: 900, color: "#EDEDEF", letterSpacing: "-0.02em", marginBottom: 6 }}>
@@ -621,7 +623,7 @@ export default function CareerHub() {
           }}>
             {[
               { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>, title: "تحلیل دقیق", desc: "بر اساس مهارت‌های شما" },
-              { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>, title: "نتایج مطمئن", desc: "۹۴٪ صحت پیش‌بینی" },
+              { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>, title: "نتایج مطمئن", desc: "94% صحت پیش‌بینی" },
               { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>, title: "سریع", desc: "فقط ۵ دقیقه زمان" },
             ].map((feature, i) => (
               <div key={i} className="feature-card" style={{ textAlign: "center" }}>
@@ -648,26 +650,63 @@ export default function CareerHub() {
           <div className={`fade-up delay-700 ${loaded ? '' : 'opacity-0'}`} style={{ width: "100%", marginBottom: 40 }}>
             <div className="section-divider" style={{ marginBottom: 36 }} />
             
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative" }}>
-              <div style={{
-                position: "absolute",
-                top: 24,
-                left: "20%",
-                right: "20%",
-                height: 2,
-                background: "linear-gradient(90deg, #5E6AD2, rgba(94,106,210,0.3), #5E6AD2)",
-                borderRadius: 1,
-              }} />
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "center", 
+              alignItems: "center", 
+              gap: 0, 
+              position: "relative",
+              flexWrap: "wrap",
+            }}>
               
               {[
-                { num: "۱", title: "پاسخ به سؤالات", desc: "۱۰ سؤال کلیدی" },
-                { num: "۲", title: "تحلیل", desc: "بررسی هوشمند" },
-                { num: "۳", title: "دریافت نتیجه", desc: "مسیر پیشنهادی" },
+                { num: "1", title: "پاسخ به سؤالات" },
+                { num: "2", title: "تحلیل" },
+                { num: "3", title: "دریافت نتیجه" },
               ].map((step, i) => (
-                <div key={i} style={{ flex: 1, textAlign: "center", position: "relative", zIndex: 1 }}>
-                  <div className={i === 0 ? "step-circle" : "step-circle inactive"}>{step.num}</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#EDEDEF", marginTop: 12, marginBottom: 4 }}>{step.title}</div>
-                  <div style={{ fontSize: 11, color: "#8A8F98" }}>{step.desc}</div>
+                <div key={i} style={{ 
+                  display: "flex", 
+                  alignItems: "center",
+                  gap: 0,
+                }}>
+                  {i > 0 && (
+                    <div style={{
+                      width: 60,
+                      height: 2,
+                      background: "linear-gradient(90deg, rgba(94,106,210,0.3), rgba(94,106,210,0.1))",
+                      margin: "0 -1px",
+                    }} />
+                  )}
+                  <div style={{ 
+                    textAlign: "center", 
+                    position: "relative", 
+                    zIndex: 1,
+                    minWidth: 100,
+                    padding: "16px 20px",
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 12,
+                    transition: "all 0.3s ease",
+                  }}>
+                    <div style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      background: i === 0 ? "linear-gradient(135deg, #5E6AD2, #4F5DAA)" : "rgba(94,106,210,0.1)",
+                      border: i === 0 ? "none" : "1px solid rgba(94,106,210,0.25)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: i === 0 ? "#fff" : "#8B92D9",
+                      boxShadow: i === 0 ? "0 0 20px rgba(94,106,210,0.4)" : "none",
+                      margin: "0 auto 10px",
+                    }}>
+                      {step.num}
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#EDEDEF" }}>{step.title}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -675,7 +714,7 @@ export default function CareerHub() {
 
           {/* Footer */}
           <div className={`fade-up delay-800 ${loaded ? '' : 'opacity-0'}`} style={{ textAlign: "center", paddingBottom: 20 }}>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>بیش از ۲۴۰۰ نفر از این سامانه استفاده کرده‌اند</p>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>Powered by Karex</p>
           </div>
         </div>
 
