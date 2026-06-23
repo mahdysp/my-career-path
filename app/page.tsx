@@ -1,13 +1,13 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function CareerHub() {
   const router = useRouter();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const animRef = useRef<number>(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const handleStartAnalysis = () => {
     setIsLoading(true);
@@ -17,305 +17,613 @@ export default function CareerHub() {
   };
 
   useEffect(() => {
-    const cv = canvasRef.current;
-    const wrap = wrapRef.current;
-    if (!cv || !wrap) return;
-    const ctx = cv.getContext("2d");
-    if (!ctx) return;
-
-    function resize() {
-      if (!cv || !wrap) return;
-      cv.width = wrap.offsetWidth;
-      cv.height = wrap.offsetHeight;
-    }
-    resize();
-    window.addEventListener("resize", resize);
-
-    const STAR_COUNT = 120;
-    const PARTICLE_COUNT = 40;
-
-    const stars = Array.from({ length: STAR_COUNT }, () => ({
-      x: Math.random() * cv.width,
-      y: Math.random() * cv.height,
-      r: Math.random() * 1.2 + 0.2,
-      a: Math.random(),
-      speed: Math.random() * 0.008 + 0.002,
-      phase: Math.random() * Math.PI * 2,
-    }));
-
-    type Particle = {
-      x: number; y: number; vx: number; vy: number;
-      r: number; color: string; a: number; life: number; maxLife: number;
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!cardRef.current) return;
+      const rect = cardRef.current.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      setMousePos({ x, y });
     };
 
-    function makeParticle(): Particle {
-      const colors = [
-        "rgba(59,130,246,",
-        "rgba(16,185,129,",
-        "rgba(245,158,11,",
-        "rgba(99,102,241,",
-      ];
-      const c = colors[Math.floor(Math.random() * colors.length)];
-      return {
-        x: Math.random() * cv!.width,
-        y: Math.random() * cv!.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        r: Math.random() * 2 + 1,
-        color: c,
-        a: Math.random() * 0.6 + 0.2,
-        life: 0,
-        maxLife: Math.random() * 300 + 200,
-      };
+    const card = cardRef.current;
+    if (card) {
+      card.addEventListener("mousemove", handleMouseMove);
+      return () => card.removeEventListener("mousemove", handleMouseMove);
     }
-
-    let particles: Particle[] = Array.from({ length: PARTICLE_COUNT }, makeParticle);
-    let t = 0;
-
-    function draw() {
-      if (!cv || !ctx) return;
-      t++;
-      ctx.clearRect(0, 0, cv.width, cv.height);
-
-      const g1 = ctx.createRadialGradient(
-        cv.width * 0.2, cv.height * 0.3, 0,
-        cv.width * 0.2, cv.height * 0.3, cv.width * 0.45
-      );
-      g1.addColorStop(0, "rgba(29,78,216,0.07)");
-      g1.addColorStop(1, "transparent");
-      ctx.fillStyle = g1;
-      ctx.fillRect(0, 0, cv.width, cv.height);
-
-      const g2 = ctx.createRadialGradient(
-        cv.width * 0.8, cv.height * 0.65, 0,
-        cv.width * 0.8, cv.height * 0.65, cv.width * 0.5
-      );
-      g2.addColorStop(0, "rgba(16,185,129,0.05)");
-      g2.addColorStop(1, "transparent");
-      ctx.fillStyle = g2;
-      ctx.fillRect(0, 0, cv.width, cv.height);
-
-      stars.forEach((s) => {
-        s.phase += s.speed;
-        const a = s.a * (0.6 + 0.4 * Math.sin(s.phase));
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(148,163,184,${a})`;
-        ctx.fill();
-      });
-
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 90) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(59,130,246,${0.08 * (1 - d / 90)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      }
-
-      particles.forEach((p, i) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life++;
-        if (
-          p.life > p.maxLife ||
-          p.x < -10 || p.x > cv!.width + 10 ||
-          p.y < -10 || p.y > cv!.height + 10
-        ) {
-          particles[i] = makeParticle();
-          return;
-        }
-        const fade =
-          p.life < 30 ? p.life / 30
-          : p.life > p.maxLife - 30 ? (p.maxLife - p.life) / 30
-          : 1;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color + p.a * fade + ")";
-        ctx.fill();
-      });
-
-      const scanY = (t * 0.5) % cv.height;
-      const sg = ctx.createLinearGradient(0, scanY - 30, 0, scanY + 30);
-      sg.addColorStop(0, "transparent");
-      sg.addColorStop(0.5, "rgba(59,130,246,0.025)");
-      sg.addColorStop(1, "transparent");
-      ctx.fillStyle = sg;
-      ctx.fillRect(0, scanY - 30, cv.width, 60);
-
-      animRef.current = requestAnimationFrame(draw);
-    }
-
-    draw();
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      cancelAnimationFrame(animRef.current);
-    };
   }, []);
 
   const stats = [
-    { num: "+۲۴۰۰", lbl: "مسیر شغلی", color: "#3b82f6" },
-    { num: "۵ دقیقه", lbl: "زمان تحلیل", color: "#f59e0b" },
-    { num: "%۹۴",   lbl: "دقت نتایج",  color: "#10b981" },
+    { num: "+۲۴۰۰", lbl: "مسیر شغلی", icon: "path" },
+    { num: "۵ دقیقه", lbl: "زمان تحلیل", icon: "clock" },
+    { num: "%۹۴", lbl: "دقت نتایج", icon: "target" },
   ];
 
   const steps = [
-    { n: "۱", lbl: "پرسش‌نامه", color: "#3b82f6", border: "rgba(59,130,246,0.4)" },
-    { n: "۲", lbl: "تحلیل AI",  color: "#f59e0b", border: "rgba(245,158,11,0.4)"  },
-    { n: "۳", lbl: "نتیجه",     color: "#10b981", border: "rgba(16,185,129,0.4)"  },
+    { n: "۱", lbl: "پرسش‌نامه" },
+    { n: "۲", lbl: "تحلیل AI" },
+    { n: "۳", lbl: "نتیجه" },
   ];
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap');
-        @keyframes blink {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50%       { opacity: 0.5; transform: scale(0.7); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        @keyframes float-blob-1 {
+          0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+          50% { transform: translateY(-30px) translateX(10px) scale(1.05); }
         }
-        .start-btn:hover {
-          transform: translateY(-2px) scale(1.01) !important;
-          box-shadow: 0 12px 40px rgba(29,78,216,0.5) !important;
+        
+        @keyframes float-blob-2 {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(2deg); }
         }
-        .start-btn:active { transform: scale(0.99) !important; }
+        
+        @keyframes float-blob-3 {
+          0%, 100% { transform: translateY(0) scale(1); }
+          33% { transform: translateY(-15px) scale(1.02); }
+          66% { transform: translateY(-25px) scale(0.98); }
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.5; }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        
+        .btn-primary {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .btn-primary::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent
+          );
+          transition: left 0.5s ease;
+        }
+        
+        .btn-primary:hover::before {
+          left: 100%;
+        }
+        
+        .btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 
+            0 0 0 1px rgba(94, 106, 210, 0.5),
+            0 4px 12px rgba(94, 106, 210, 0.3),
+            0 8px 32px rgba(94, 106, 210, 0.2),
+            inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-primary:active {
+          transform: scale(0.98);
+        }
+        
+        .card-spotlight {
+          background: radial-gradient(
+            300px circle at var(--mouse-x) var(--mouse-y),
+            rgba(94, 106, 210, 0.12),
+            transparent 100%
+          );
+        }
+        
+        .step-line {
+          background: linear-gradient(90deg, rgba(94, 106, 210, 0.4), rgba(94, 106, 210, 0.2));
+        }
+        
+        .stat-icon {
+          width: 28px;
+          height: 28px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(94, 106, 210, 0.15);
+          border: 1px solid rgba(94, 106, 210, 0.2);
+        }
+        
+        .badge-pulse {
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        .text-gradient {
+          background: linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #ffffff 40%,
+            rgba(255, 255, 255, 0.7) 100%
+          );
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        .text-gradient-accent {
+          background: linear-gradient(
+            90deg,
+            #5E6AD2 0%,
+            #8B92D9 25%,
+            #5E6AD2 50%,
+            #8B92D9 75%,
+            #5E6AD2 100%
+          );
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: shimmer 3s linear infinite;
+        }
       `}</style>
 
       <div
-        ref={wrapRef}
         style={{
-          minHeight: "100vh", width: "100%", background: "#070d1a",
-          fontFamily: "Vazirmatn, sans-serif", direction: "rtl",
-          display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center",
-          position: "relative", overflow: "hidden", padding: "40px 20px",
+          minHeight: "100vh",
+          width: "100%",
+          background: "#050506",
+          fontFamily: "'Inter', system-ui, sans-serif",
+          direction: "rtl",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          overflow: "hidden",
+          padding: "40px 20px",
         }}
       >
-        {/* Canvas background */}
-        <canvas
-          ref={canvasRef}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
+        {/* Layer 1: Base gradient */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(ellipse 80% 50% at 50% -20%, #0a0a0f 0%, #050506 50%, #020203 100%)",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Layer 2: Noise texture */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            opacity: 0.015,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Layer 3: Grid overlay */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)
+            `,
+            backgroundSize: "64px 64px",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Layer 4: Animated gradient blobs */}
+        <div
+          style={{
+            position: "absolute",
+            top: "-20%",
+            left: "20%",
+            width: "900px",
+            height: "1400px",
+            background: "radial-gradient(ellipse, rgba(94, 106, 210, 0.25) 0%, transparent 70%)",
+            filter: "blur(150px)",
+            animation: "float-blob-1 10s ease-in-out infinite",
+            pointerEvents: "none",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            top: "30%",
+            right: "-10%",
+            width: "600px",
+            height: "800px",
+            background: "radial-gradient(ellipse, rgba(139, 92, 246, 0.15) 0%, transparent 70%)",
+            filter: "blur(120px)",
+            animation: "float-blob-2 12s ease-in-out infinite",
+            pointerEvents: "none",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            bottom: "10%",
+            left: "30%",
+            width: "500px",
+            height: "700px",
+            background: "radial-gradient(ellipse, rgba(99, 102, 241, 0.12) 0%, transparent 70%)",
+            filter: "blur(100px)",
+            animation: "float-blob-3 8s ease-in-out infinite",
+            pointerEvents: "none",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            bottom: "0%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "800px",
+            height: "400px",
+            background: "radial-gradient(ellipse at center bottom, rgba(94, 106, 210, 0.1) 0%, transparent 60%)",
+            filter: "blur(80px)",
+            animation: "pulse-glow 4s ease-in-out infinite",
+            pointerEvents: "none",
+          }}
         />
 
         {/* Badge */}
-        <div style={{ position: "relative", zIndex: 10, marginBottom: 20 }}>
-          <span style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)",
-            color: "#fcd34d", fontSize: 12, fontWeight: 700,
-            padding: "5px 14px", borderRadius: 100, letterSpacing: "0.05em",
-          }}>
-            <span style={{
-              width: 6, height: 6, background: "#f59e0b", borderRadius: "50%",
-              animation: "blink 1.8s ease-in-out infinite", display: "inline-block",
-            }} />
+        <div
+          style={{
+            position: "relative",
+            zIndex: 10,
+            marginBottom: 32,
+          }}
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              background: "rgba(94, 106, 210, 0.1)",
+              border: "1px solid rgba(94, 106, 210, 0.3)",
+              color: "#8B92D9",
+              fontSize: 12,
+              fontWeight: 600,
+              padding: "8px 16px",
+              borderRadius: 100,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                background: "#5E6AD2",
+                borderRadius: "50%",
+                animation: "pulse-glow 1.5s ease-in-out infinite",
+                boxShadow: "0 0 8px rgba(94, 106, 210, 0.6)",
+              }}
+              className="badge-pulse"
+            />
             هوش مصنوعی مسیریاب شغلی
           </span>
         </div>
 
-        {/* Card */}
-        <div style={{
-          position: "relative", zIndex: 10, width: "100%", maxWidth: 460, textAlign: "center",
-          background: "linear-gradient(145deg,rgba(15,31,61,0.95),rgba(7,13,26,0.98))",
-          border: "1px solid rgba(59,130,246,0.18)", borderRadius: 24, padding: "40px 44px",
-          boxShadow: "0 0 60px rgba(29,78,216,0.12), 0 0 0 1px rgba(255,255,255,0.04) inset",
-        }}>
+        {/* Card with spotlight effect */}
+        <div
+          ref={cardRef}
+          style={{
+            position: "relative",
+            zIndex: 10,
+            width: "100%",
+            maxWidth: 480,
+            textAlign: "center",
+            background: "linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 20,
+            padding: "48px 44px",
+            boxShadow: `
+              0 0 0 1px rgba(255,255,255,0.04) inset,
+              0 2px 20px rgba(0,0,0,0.4),
+              0 0 40px rgba(0,0,0,0.2),
+              0 0 80px rgba(94, 106, 210, 0.06)
+            `,
+            "--mouse-x": `${mousePos.x}%`,
+            "--mouse-y": `${mousePos.y}%`,
+          } as React.CSSProperties}
+          className="card-spotlight"
+        >
+          {/* Top accent line */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: "20%",
+              right: "20%",
+              height: "1px",
+              background: "linear-gradient(90deg, transparent, rgba(94, 106, 210, 0.5), transparent)",
+            }}
+          />
 
           {/* Icon */}
-          <div style={{
-            width: 64, height: 64, borderRadius: 18, margin: "0 auto 24px",
-            background: "linear-gradient(135deg,rgba(29,78,216,0.3),rgba(16,185,129,0.2))",
-            border: "1px solid rgba(59,130,246,0.3)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 28, boxShadow: "0 0 24px rgba(59,130,246,0.2)",
-          }}>
-            🎯
+          <div
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: 16,
+              margin: "0 auto 28px",
+              background: "linear-gradient(135deg, rgba(94, 106, 210, 0.2), rgba(139, 92, 246, 0.1))",
+              border: "1px solid rgba(94, 106, 210, 0.25)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 32,
+              boxShadow: `
+                0 0 24px rgba(94, 106, 210, 0.15),
+                0 0 48px rgba(94, 106, 210, 0.1) inset
+              `,
+            }}
+          >
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(139, 146, 217, 0.8)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="6" />
+              <circle cx="12" cy="12" r="2" />
+              <line x1="12" y1="2" x2="12" y2="4" />
+              <line x1="12" y1="20" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="4" y2="12" />
+              <line x1="20" y1="12" x2="22" y2="12" />
+            </svg>
           </div>
 
           {/* Title */}
-          <h1 style={{ fontSize: 28, fontWeight: 900, lineHeight: 1.25, color: "#f8fafc", marginBottom: 10 }}>
+          <h1
+            style={{
+              fontSize: 32,
+              fontWeight: 700,
+              lineHeight: 1.2,
+              letterSpacing: "-0.02em",
+              color: "#EDEDEF",
+              marginBottom: 16,
+              direction: "rtl",
+            }}
+          >
             سامانه{" "}
-            <span style={{
-              background: "linear-gradient(90deg,#3b82f6,#10b981)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            }}>
+            <span
+              className="text-gradient-accent"
+              style={{ fontWeight: 800 }}
+            >
               هدایت مسیر
             </span>
-            <br />شغلی من
+            <br />
+            <span className="text-gradient">شغلی من</span>
           </h1>
 
-          <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.7, marginBottom: 28 }}>
+          <p
+            style={{
+              fontSize: 15,
+              color: "#8A8F98",
+              lineHeight: 1.7,
+              marginBottom: 36,
+              direction: "rtl",
+            }}
+          >
             با پاسخ به چند سؤال هوشمند، بهترین مسیر شغلی متناسب با علاقه، مهارت و هدف‌هایت رو پیدا کن.
           </p>
 
           {/* Stats */}
-          <div style={{ display: "flex", gap: 10, marginBottom: 28 }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              marginBottom: 36,
+            }}
+          >
             {stats.map((s) => (
-              <div key={s.lbl} style={{
-                flex: 1,
-                background: "rgba(59,130,246,0.06)",
-                border: "1px solid rgba(59,130,246,0.12)",
-                borderRadius: 12, padding: "10px 8px",
-              }}>
-                <div style={{ fontSize: 18, fontWeight: 900, color: s.color }}>{s.num}</div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{s.lbl}</div>
+              <div
+                key={s.lbl}
+                style={{
+                  flex: 1,
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 14,
+                  padding: "16px 12px",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <div
+                  className="stat-icon"
+                  style={{ margin: "0 auto 10px" }}
+                >
+                  {s.icon === "path" && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5E6AD2" strokeWidth="2">
+                      <path d="M3 12h4l3-9 4 18 3-9h4" />
+                    </svg>
+                  )}
+                  {s.icon === "clock" && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5E6AD2" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 6v6l4 2" />
+                    </svg>
+                  )}
+                  {s.icon === "target" && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5E6AD2" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <circle cx="12" cy="12" r="6" />
+                      <circle cx="12" cy="12" r="2" />
+                    </svg>
+                  )}
+                </div>
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: "#EDEDEF",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  {s.num}
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "#8A8F98",
+                    marginTop: 4,
+                    fontWeight: 500,
+                  }}
+                >
+                  {s.lbl}
+                </div>
               </div>
             ))}
           </div>
 
           {/* Button */}
           <button
-            className="start-btn"
             onClick={handleStartAnalysis}
             disabled={isLoading}
+            className="btn-primary"
             style={{
               width: "100%",
-              background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
-              color: "#fff", border: "none", borderRadius: 14,
-              padding: "14px 20px",
-              fontFamily: "Vazirmatn, sans-serif", fontSize: 16, fontWeight: 900,
+              background: "linear-gradient(135deg, #5E6AD2, #4F5DAA)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 12,
+              padding: "16px 24px",
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 15,
+              fontWeight: 600,
               cursor: isLoading ? "not-allowed" : "pointer",
               opacity: isLoading ? 0.7 : 1,
-              boxShadow: "0 8px 32px rgba(29,78,216,0.35)",
-              transition: "transform 0.18s, box-shadow 0.18s",
+              transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+              letterSpacing: "-0.01em",
             }}
           >
-            {isLoading ? "در حال پردازش..." : "شروع تحلیل رایگان ←"}
+            {isLoading ? (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  style={{ animation: "spin 1s linear infinite" }}
+                >
+                  <circle cx="12" cy="12" r="10" strokeOpacity="0.3" />
+                  <path d="M12 2a10 10 0 0 1 10 10" />
+                </svg>
+                در حال پردازش...
+              </span>
+            ) : (
+              "شروع تحلیل رایگان ←"
+            )}
           </button>
 
           {/* Steps */}
-          <div style={{ display: "flex", alignItems: "center", marginTop: 20 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginTop: 32,
+            }}
+          >
             {steps.map((step, idx) => (
-              <div key={step.n} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, position: "relative" }}>
+              <div
+                key={step.n}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 8,
+                  position: "relative",
+                }}
+              >
                 {idx > 0 && (
-                  <div style={{ position: "absolute", top: 11, right: 0, width: "calc(50% - 11px)", height: 1, background: "rgba(59,130,246,0.2)" }} />
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 11,
+                      right: 0,
+                      width: "calc(50% - 14px)",
+                      height: "1px",
+                    }}
+                    className="step-line"
+                  />
                 )}
                 {idx < steps.length - 1 && (
-                  <div style={{ position: "absolute", top: 11, left: 0, width: "calc(50% - 11px)", height: 1, background: "rgba(59,130,246,0.2)" }} />
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 11,
+                      left: 0,
+                      width: "calc(50% - 14px)",
+                      height: "1px",
+                    }}
+                    className="step-line"
+                  />
                 )}
-                <div style={{
-                  width: 22, height: 22, borderRadius: "50%",
-                  background: "rgba(59,130,246,0.1)",
-                  border: `1px solid ${step.border}`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 10, fontWeight: 700, color: step.color,
-                }}>
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    background: idx === 0 ? "#5E6AD2" : "rgba(94, 106, 210, 0.1)",
+                    border: `1px solid ${idx === 0 ? "#5E6AD2" : "rgba(94, 106, 210, 0.3)"}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: idx === 0 ? "#fff" : "#8B92D9",
+                    transition: "all 0.2s ease",
+                    boxShadow: idx === 0 ? "0 0 16px rgba(94, 106, 210, 0.4)" : "none",
+                  }}
+                >
                   {step.n}
                 </div>
-                <div style={{ fontSize: 10, color: "#94a3b8" }}>{step.lbl}</div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "#8A8F98",
+                    fontWeight: 500,
+                  }}
+                >
+                  {step.lbl}
+                </div>
               </div>
             ))}
           </div>
-
         </div>
+
+        {/* Footer hint */}
+        <p
+          style={{
+            marginTop: 24,
+            fontSize: 12,
+            color: "rgba(255,255,255,0.4)",
+            direction: "rtl",
+          }}
+        >
+          تجزیه و تحلیل با هوش مصنوعی پیشرفته
+        </p>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </>
   );
 }
