@@ -75,7 +75,6 @@ export default function CareerHub() {
       <main
         dir="rtl"
         style={{
-          minHeight: "100vh",
           minHeight: "100dvh",
           width: "100%",
           position: "relative",
