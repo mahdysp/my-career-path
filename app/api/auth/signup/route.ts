@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: NextRequest) {
@@ -12,20 +13,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ثبت‌نام با emailRedirectTo — Confirm Email روشن است
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // signUp معمولی — Supabase ایمیل تایید می‌فرسته از طریق Custom SMTP
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: email.toLowerCase(),
       password,
-      email_confirm: false, // Supabase ایمیل تایید می‌فرسته
-      user_metadata: {
-        first_name: firstName,
-        last_name: lastName,
+      options: {
+        emailRedirectTo: "https://mykarex.ir/auth",
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+        },
       },
     });
 
     if (authError) {
-      if (authError.message.toLowerCase().includes("already registered") ||
-          authError.message.toLowerCase().includes("already been registered")) {
+      if (authError.message.toLowerCase().includes("already registered")) {
         return NextResponse.json(
           { message: "این ایمیل قبلاً ثبت شده است. لطفاً وارد حساب خود شوید." },
           { status: 400 }
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // insert پروفایل با supabaseAdmin
+    // insert پروفایل با supabaseAdmin (برای bypass کردن RLS)
     const { error: profileError } = await supabaseAdmin.from("profiles").insert({
       id: userId,
       email: email.toLowerCase(),
@@ -68,7 +70,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // چون Confirm Email روشن است، session برنمی‌گردد
     // کاربر باید ایمیلش را تایید کند
     return NextResponse.json({
       message: "ثبت‌نام با موفقیت انجام شد. لطفاً ایمیل خود را برای تایید حساب بررسی کنید.",
