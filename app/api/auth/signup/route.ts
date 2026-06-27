@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: NextRequest) {
@@ -13,12 +12,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // ثبت‌نام با emailRedirectTo — Confirm Email روشن است
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email.toLowerCase(),
       password,
+      email_confirm: false, // Supabase ایمیل تایید می‌فرسته
+      user_metadata: {
+        first_name: firstName,
+        last_name: lastName,
+      },
     });
 
     if (authError) {
+      if (authError.message.toLowerCase().includes("already registered") ||
+          authError.message.toLowerCase().includes("already been registered")) {
+        return NextResponse.json(
+          { message: "این ایمیل قبلاً ثبت شده است. لطفاً وارد حساب خود شوید." },
+          { status: 400 }
+        );
+      }
       return NextResponse.json({ message: authError.message }, { status: 400 });
     }
 
@@ -42,52 +54,27 @@ export async function POST(req: NextRequest) {
 
     if (profileError) {
       console.error("Profile insert error:", profileError);
-    
-      // unique constraint violation — ایمیل تکراری
+
       if (profileError.code === "23505") {
         return NextResponse.json(
           { message: "این ایمیل قبلاً ثبت شده است. لطفاً وارد حساب خود شوید." },
           { status: 400 }
         );
       }
-    
+
       return NextResponse.json(
         { message: "خطا در ذخیره اطلاعات. لطفاً دوباره تلاش کنید." },
         { status: 500 }
       );
     }
 
-    // چون Confirm Email خاموش است، session فوری برمی‌گردد
-    // کوکی‌های session را ست می‌کنیم تا کاربر بلافاصله لاگین باشد
-    if (authData.session) {
-      const response = NextResponse.json({
-        message: "ثبت‌نام با موفقیت انجام شد.",
-        requiresEmailConfirmation: false,
-      });
-
-      response.cookies.set("sb-access-token", authData.session.access_token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: authData.session.expires_in,
-      });
-
-      response.cookies.set("sb-refresh-token", authData.session.refresh_token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 30,
-      });
-
-      return response;
-    }
-
+    // چون Confirm Email روشن است، session برنمی‌گردد
+    // کاربر باید ایمیلش را تایید کند
     return NextResponse.json({
-      message: "ثبت‌نام با موفقیت انجام شد.",
-      requiresEmailConfirmation: false,
+      message: "ثبت‌نام با موفقیت انجام شد. لطفاً ایمیل خود را برای تایید حساب بررسی کنید.",
+      requiresEmailConfirmation: true,
     });
+
   } catch (err) {
     console.error(err);
     return NextResponse.json({ message: "خطای سرور." }, { status: 500 });
