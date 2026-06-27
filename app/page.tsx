@@ -1,540 +1,718 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+"use client";
 
-export default function Home() {
-  const navigate = useNavigate();
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+export default function CareerHub() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoaded(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
+    setMounted(true);
+    router.prefetch("/quiz");
+  }, [router]);
 
-  const handleStartAnalysis = () => {
+  const handleStart = () => {
     setIsLoading(true);
-    setTimeout(() => navigate("/quiz"), 600);
+    setTimeout(() => router.push("/quiz"), 400);
   };
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap');
-        
-        @keyframes fade-up {
-          0% { opacity: 0; transform: translateY(30px); }
-          100% { opacity: 1; transform: translateY(0); }
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap');
+
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          -webkit-tap-highlight-color: transparent;
         }
-        
+
+        html, body {
+          background: #07070b;
+          color: #fff;
+          overflow-x: hidden;
+          font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+        }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(20px, -30px) scale(1.05); }
+        }
+
+        @keyframes floatReverse {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-25px, 20px) scale(1.08); }
+        }
+
         @keyframes shimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
+          0% { background-position: -200% 50%; }
+          100% { background-position: 200% 50%; }
         }
-        
-        @keyframes pulse-soft {
-          0%, 100% { opacity: 0.4; transform: scale(1); }
-          50% { opacity: 0.7; transform: scale(1.05); }
-        }
-        
-        @keyframes glow-pulse {
-          0%, 100% { box-shadow: 0 0 20px rgba(94,106,210,0.3); }
-          50% { box-shadow: 0 0 40px rgba(94,106,210,0.5); }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
         }
 
         @keyframes spin {
-          from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-        
-        .page-container {
-          min-height: 100vh;
-          width: 100%;
-          background: #050507;
-          font-family: 'Vazirmatn', system-ui, sans-serif;
-          direction: rtl;
-          position: relative;
-          overflow: hidden;
+
+        @keyframes borderGlow {
+          0%, 100% { box-shadow: 0 0 0 1px rgba(124, 138, 255, 0.15), 0 20px 60px -20px rgba(124, 138, 255, 0.3); }
+          50% { box-shadow: 0 0 0 1px rgba(124, 138, 255, 0.3), 0 25px 70px -15px rgba(124, 138, 255, 0.45); }
         }
-        
-        .card {
-          background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 24px;
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 10%;
-          right: 10%;
-          height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(94,106,210,0.5), transparent);
-        }
-        
-        .glow-text {
-          background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.85) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        
-        .accent-text {
-          background: linear-gradient(90deg, #5E6AD2 0%, #8B92D9 50%, #5E6AD2 100%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: shimmer 4s ease infinite;
-        }
-        
-        .btn-primary {
-          background: linear-gradient(135deg, #5E6AD2 0%, #4F5DAA 100%);
-          border: none;
-          border-radius: 14px;
-          color: #fff;
-          font-weight: 700;
-          font-size: 16px;
-          padding: 16px 32px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-          font-family: 'Vazirmatn', sans-serif;
-        }
-        
-        .btn-primary::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-          transition: left 0.5s ease;
-        }
-        
-        .btn-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 30px rgba(94,106,210,0.4);
-        }
-        
-        .btn-primary:hover::before {
-          left: 100%;
-        }
-        
-        .btn-primary:active {
-          transform: scale(0.98);
-        }
-        
-        .btn-primary:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-        
-        .badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          background: rgba(94,106,210,0.1);
-          border: 1px solid rgba(94,106,210,0.2);
-          color: #A5B0E8;
-          font-size: 12px;
-          font-weight: 600;
-          padding: 8px 16px;
-          border-radius: 100px;
-        }
-        
-        .stat-box {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 16px;
-          padding: 24px 20px;
-          text-align: center;
-          transition: all 0.3s ease;
-        }
-        
-        .stat-box:hover {
-          background: rgba(255,255,255,0.05);
-          border-color: rgba(94,106,210,0.15);
-        }
-        
-        .feature-box {
-          background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
-          border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 16px;
-          padding: 24px;
-          text-align: center;
-          transition: all 0.3s ease;
-        }
-        
-        .feature-box:hover {
-          transform: translateY(-4px);
-          border-color: rgba(94,106,210,0.2);
-          box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-        }
-        
-        .step-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-        }
-        
-        .step-number {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-          font-weight: 700;
-        }
-        
-        .step-number.active {
-          background: linear-gradient(135deg, #5E6AD2, #4F5DAA);
-          color: #fff;
-          box-shadow: 0 0 25px rgba(94,106,210,0.4);
-        }
-        
-        .step-number.inactive {
-          background: rgba(94,106,210,0.08);
-          border: 1px solid rgba(94,106,210,0.2);
-          color: #8B92D9;
-        }
-        
-        .progress-bar {
-          height: 4px;
-          background: rgba(94,106,210,0.15);
-          border-radius: 2px;
-          overflow: hidden;
-        }
-        
-        .progress-fill {
-          height: 100%;
-          background: linear-gradient(90deg, #5E6AD2, #8B92D9);
-          border-radius: 2px;
-          animation: shimmer 2s ease infinite;
-          background-size: 200% 100%;
-        }
-        
-        .divider {
-          height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(94,106,210,0.2), transparent);
-        }
-        
-        .fade-up {
-          opacity: 0;
-          animation: fade-up 0.6s ease forwards;
-        }
-        
-        .delay-100 { animation-delay: 0.1s; }
-        .delay-200 { animation-delay: 0.2s; }
-        .delay-300 { animation-delay: 0.3s; }
-        .delay-400 { animation-delay: 0.4s; }
-        .delay-500 { animation-delay: 0.5s; }
-        .delay-600 { animation-delay: 0.6s; }
       `}</style>
 
-      <div className="page-container">
-        {/* Background Layers */}
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          background: "radial-gradient(ellipse 100% 50% at 50% -10%, #0d0d1f 0%, #050507 60%, #020204 100%)",
-          pointerEvents: "none",
-        }} />
-
-        {/* Subtle Grid */}
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          backgroundImage: `linear-gradient(rgba(94,106,210,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(94,106,210,0.02) 1px, transparent 1px)`,
-          backgroundSize: "60px 60px",
-          pointerEvents: "none",
-        }} />
-
-        {/* Ambient Glow - Top */}
-        <div style={{
-          position: "fixed",
-          top: "-30%",
-          left: "20%",
-          width: "800px",
-          height: "800px",
-          background: "radial-gradient(circle, rgba(94,106,210,0.2) 0%, transparent 60%)",
-          filter: "blur(80px)",
-          animation: "pulse-soft 8s ease-in-out infinite",
-          pointerEvents: "none",
-        }} />
-
-        {/* Ambient Glow - Bottom */}
-        <div style={{
-          position: "fixed",
-          bottom: "-20%",
-          right: "10%",
-          width: "600px",
-          height: "600px",
-          background: "radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 60%)",
-          filter: "blur(60px)",
-          animation: "pulse-soft 10s ease-in-out infinite",
-          animationDelay: "-4s",
-          pointerEvents: "none",
-        }} />
-
-        {/* Main Content */}
-        <div style={{
+      <main
+        dir="rtl"
+        style={{
+          minHeight: "100vh",
+          minHeight: "100dvh",
+          width: "100%",
           position: "relative",
-          zIndex: 10,
-          maxWidth: 520,
-          margin: "0 auto",
-          padding: "60px 20px",
+          background: "#07070b",
+          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-          gap: 32,
-        }}>
+        }}
+      >
+        {/* Background layers */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,138,255,0.18) 0%, transparent 55%), radial-gradient(ellipse 60% 50% at 100% 100%, rgba(167,139,250,0.12) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 0% 80%, rgba(96,165,250,0.08) 0%, transparent 50%)",
+            pointerEvents: "none",
+          }}
+        />
 
-          {/* Logo Section */}
-          <div className={`fade-up ${loaded ? '' : 'opacity-0'}`} style={{ textAlign: "center" }}>
-            <div style={{
-              width: 80,
-              height: 80,
-              borderRadius: 20,
-              margin: "0 auto 20px",
-              background: "linear-gradient(135deg, rgba(94,106,210,0.3), rgba(139,92,246,0.2))",
-              border: "1px solid rgba(94,106,210,0.35)",
+        {/* Animated blobs */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: "-15%",
+            left: "10%",
+            width: "min(60vw, 500px)",
+            height: "min(60vw, 500px)",
+            background: "radial-gradient(circle, rgba(124,138,255,0.25) 0%, transparent 70%)",
+            filter: "blur(60px)",
+            animation: "float 14s ease-in-out infinite",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            bottom: "-10%",
+            right: "5%",
+            width: "min(50vw, 400px)",
+            height: "min(50vw, 400px)",
+            background: "radial-gradient(circle, rgba(167,139,250,0.2) 0%, transparent 70%)",
+            filter: "blur(60px)",
+            animation: "floatReverse 18s ease-in-out infinite",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Grid overlay */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            maskImage: "radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent)",
+            WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent)",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Top Nav */}
+        <nav
+          style={{
+            position: "relative",
+            zIndex: 10,
+            width: "100%",
+            padding: "20px clamp(16px, 4vw, 32px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            opacity: mounted ? 1 : 0,
+            transition: "opacity 0.6s ease",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: "linear-gradient(135deg, #7c8aff, #a78bfa)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 8px 24px -8px rgba(124,138,255,0.6)",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <span style={{ fontSize: 16, fontWeight: 700, color: "#fff", letterSpacing: "-0.01em" }}>
+              Karex
+            </span>
+          </div>
+
+          <div
+            style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              animation: "glow-pulse 4s ease-in-out infinite",
-            }}>
-              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5"/>
-                <path d="M2 12l10 5 10-5"/>
-              </svg>
-            </div>
-
-            <div style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: "#8A8F98",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              marginBottom: 12,
-            }}>
-              Karex
-            </div>
-
-            <h1 style={{
-              fontSize: 36,
-              fontWeight: 900,
-              lineHeight: 1.3,
-              color: "#EDEDEF",
-              direction: "rtl",
-            }}>
-              <span className="accent-text">هدایت مسیر</span>
-              <br />
-              <span className="glow-text">شغلی من</span>
-            </h1>
+              gap: 6,
+              padding: "6px 12px",
+              borderRadius: 999,
+              background: "rgba(34, 197, 94, 0.1)",
+              border: "1px solid rgba(34, 197, 94, 0.2)",
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "#22c55e",
+                boxShadow: "0 0 8px #22c55e",
+                animation: "pulse 2s ease-in-out infinite",
+              }}
+            />
+            <span style={{ fontSize: 11, color: "#86efac", fontWeight: 600 }}>آنلاین</span>
           </div>
+        </nav>
+
+        {/* Main content */}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 10,
+            flex: 1,
+            width: "100%",
+            maxWidth: 1100,
+            margin: "0 auto",
+            padding: "clamp(24px, 5vw, 48px) clamp(16px, 4vw, 32px) 40px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          {/* Top badge */}
+          <div
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transition: "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+              transitionDelay: "0.1s",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 16px",
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              marginBottom: 28,
+            }}
+          >
+            <span style={{ fontSize: 14 }}>✨</span>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>
+              مبتنی بر هوش مصنوعی
+            </span>
+          </div>
+
+          {/* Headline */}
+          <h1
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transition: "all 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+              transitionDelay: "0.2s",
+              fontSize: "clamp(34px, 7vw, 64px)",
+              fontWeight: 800,
+              lineHeight: 1.1,
+              letterSpacing: "-0.03em",
+              color: "#fff",
+              marginBottom: 20,
+              maxWidth: 800,
+            }}
+          >
+            مسیر شغلی‌ات را{" "}
+            <span
+              style={{
+                background: "linear-gradient(120deg, #7c8aff 0%, #a78bfa 50%, #7c8aff 100%)",
+                backgroundSize: "200% auto",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                animation: "shimmer 5s linear infinite",
+                display: "inline-block",
+              }}
+            >
+              هوشمندانه
+            </span>
+            <br />
+            کشف کن
+          </h1>
 
           {/* Subtitle */}
-          <div className={`fade-up delay-100 ${loaded ? '' : 'opacity-0'}`} style={{ textAlign: "center" }}>
-            <p style={{
-              fontSize: 15,
-              color: "#8A8F98",
-              lineHeight: 1.8,
-              direction: "rtl",
-            }}>
-              با پاسخ به چند سؤال هوشمند،
-              <br />
-              بهترین مسیر شغلی رو پیدا کن
-            </p>
-          </div>
+          <p
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transition: "all 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+              transitionDelay: "0.3s",
+              fontSize: "clamp(15px, 2.2vw, 18px)",
+              color: "rgba(255,255,255,0.6)",
+              lineHeight: 1.7,
+              maxWidth: 560,
+              marginBottom: 36,
+              padding: "0 8px",
+            }}
+          >
+            با چند سؤال ساده، علایق، مهارت‌ها و شخصیتت رو تحلیل می‌کنیم
+            تا بهترین مسیر شغلی رو پیشنهاد بدیم.
+          </p>
 
-          {/* Badges */}
-          <div className={`fade-up delay-200 ${loaded ? '' : 'opacity-0'}`} style={{
-            display: "flex",
-            gap: 12,
-            justifyContent: "center",
-          }}>
-            <span className="badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              رایگان
-            </span>
-            <span className="badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              نتیجه فوری
-            </span>
-          </div>
-
-          {/* Main Card */}
-          <div className={`card fade-up delay-300 ${loaded ? '' : 'opacity-0'}`} style={{
-            width: "100%",
-            padding: "40px 36px",
-          }}>
-
-            {/* Stats */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 16,
-              marginBottom: 28,
-            }}>
-              <div className="stat-box">
-                <div style={{ fontSize: 26, fontWeight: 800, color: "#EDEDEF", marginBottom: 4 }}>+2400</div>
-                <div style={{ fontSize: 11, color: "#8A8F98" }}>مسیر شغلی</div>
-              </div>
-              <div className="stat-box">
-                <div style={{ fontSize: 26, fontWeight: 800, color: "#EDEDEF", marginBottom: 4 }}>5 دقیقه</div>
-                <div style={{ fontSize: 11, color: "#8A8F98" }}>زمان تحلیل</div>
-              </div>
-              <div className="stat-box">
-                <div style={{ fontSize: 26, fontWeight: 800, color: "#EDEDEF", marginBottom: 4 }}>%94</div>
-                <div style={{ fontSize: 11, color: "#8A8F98" }}>دقت نتایج</div>
-              </div>
-            </div>
-
-            {/* Progress */}
-            <div style={{ marginBottom: 24 }}>
-              <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: 8,
-                direction: "rtl",
-              }}>
-                <span style={{ fontSize: 12, color: "#8A8F98" }}>آماده به تحلیل</span>
-                <span style={{ fontSize: 12, color: "#5E6AD2", fontWeight: 600 }}>آماده</span>
-              </div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: "100%" }} />
-              </div>
-            </div>
-
-            {/* CTA Button */}
+          {/* CTA Buttons */}
+          <div
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transition: "all 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+              transitionDelay: "0.4s",
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+              justifyContent: "center",
+              marginBottom: 48,
+              width: "100%",
+              maxWidth: 480,
+            }}
+          >
             <button
-              className="btn-primary"
-              onClick={handleStartAnalysis}
+              onClick={handleStart}
               disabled={isLoading}
-              style={{ width: "100%" }}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 20px 50px -12px rgba(124,138,255,0.7)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 10px 30px -8px rgba(124,138,255,0.5)";
+              }}
+              style={{
+                flex: "1 1 200px",
+                minWidth: 0,
+                padding: "16px 28px",
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#fff",
+                background: "linear-gradient(135deg, #7c8aff 0%, #a78bfa 100%)",
+                border: "none",
+                borderRadius: 14,
+                cursor: isLoading ? "wait" : "pointer",
+                boxShadow: "0 10px 30px -8px rgba(124,138,255,0.5)",
+                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                fontFamily: "inherit",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                opacity: isLoading ? 0.85 : 1,
+              }}
             >
               {isLoading ? (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}>
-                    <circle cx="12" cy="12" r="10" strokeOpacity="0.3" />
-                    <path d="M12 2a10 10 0 0 1 10 10" />
+                <>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: "spin 0.8s linear infinite" }}>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" strokeLinecap="round" />
                   </svg>
-                  در حال پردازش...
-                </span>
-              ) : "شروع تحلیل مسیر شغلی"}
+                  در حال آماده‌سازی...
+                </>
+              ) : (
+                <>
+                  شروع تحلیل
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 12H5" />
+                    <path d="M12 19l-7-7 7-7" />
+                  </svg>
+                </>
+              )}
+            </button>
+
+            <button
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+              }}
+              style={{
+                flex: "1 1 160px",
+                minWidth: 0,
+                padding: "16px 24px",
+                fontSize: 15,
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.9)",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 14,
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                fontFamily: "inherit",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+              }}
+            >
+              بیشتر بدانید
             </button>
           </div>
 
-          {/* Features */}
-          <div className={`fade-up delay-400 ${loaded ? '' : 'opacity-0'}`} style={{
-            width: "100%",
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 16,
-          }}>
-            <div className="feature-box">
-              <div style={{
-                width: 48, height: 48, borderRadius: 12,
-                background: "rgba(94,106,210,0.1)",
-                border: "1px solid rgba(94,106,210,0.15)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                margin: "0 auto 12px",
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="2">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#EDEDEF", marginBottom: 4 }}>تحلیل دقیق</div>
-              <div style={{ fontSize: 11, color: "#8A8F98" }}>بر اساس مهارت‌ها</div>
+          {/* Trust indicators */}
+          <div
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transition: "all 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+              transitionDelay: "0.5s",
+              display: "flex",
+              alignItems: "center",
+              gap: "clamp(16px, 4vw, 32px)",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              marginBottom: 56,
+              color: "rgba(255,255,255,0.5)",
+              fontSize: 13,
+            }}
+          >
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+              کاملاً رایگان
             </div>
-
-            <div className="feature-box">
-              <div style={{
-                width: 48, height: 48, borderRadius: 12,
-                background: "rgba(94,106,210,0.1)",
-                border: "1px solid rgba(94,106,210,0.15)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                margin: "0 auto 12px",
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#EDEDEF", marginBottom: 4 }}>نتایج مطمئن</div>
-              <div style={{ fontSize: 11, color: "#8A8F98" }}>94% صحت</div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+              بدون نیاز به ثبت‌نام
             </div>
-
-            <div className="feature-box">
-              <div style={{
-                width: 48, height: 48, borderRadius: 12,
-                background: "rgba(94,106,210,0.1)",
-                border: "1px solid rgba(94,106,210,0.15)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                margin: "0 auto 12px",
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8B92D9" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 6v6l4 2"/>
-                </svg>
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#EDEDEF", marginBottom: 4 }}>سریع</div>
-              <div style={{ fontSize: 11, color: "#8A8F98" }}>5 دقیقه زمان</div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+              فقط ۵ دقیقه
             </div>
           </div>
 
-          {/* Steps */}
-          <div className={`fade-up delay-500 ${loaded ? '' : 'opacity-0'}`} style={{ width: "100%" }}>
-            <div className="divider" style={{ marginBottom: 32 }} />
-            <div style={{
+          {/* Stats Cards */}
+          <div
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transition: "all 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+              transitionDelay: "0.6s",
+              width: "100%",
+              maxWidth: 900,
               display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 16,
-              alignItems: "start",
-            }}>
-              <div className="step-item">
-                <div className="step-number active">1</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#EDEDEF", textAlign: "center" }}>پاسخ به سؤالات</div>
+              gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+              gap: "clamp(12px, 2vw, 20px)",
+              marginBottom: 56,
+            }}
+          >
+            {[
+              { value: "+۲٬۴۰۰", label: "مسیر شغلی", icon: "🎯" },
+              { value: "٪۹۴", label: "دقت تحلیل", icon: "📊" },
+              { value: "۵۰K+", label: "کاربر فعال", icon: "👥" },
+              { value: "۴.۹", label: "امتیاز کاربران", icon: "⭐" },
+            ].map((stat, i) => (
+              <div
+                key={i}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.borderColor = "rgba(124,138,255,0.3)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                }}
+                style={{
+                  padding: "20px 16px",
+                  borderRadius: 16,
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                  cursor: "default",
+                }}
+              >
+                <div style={{ fontSize: 22, marginBottom: 8 }}>{stat.icon}</div>
+                <div
+                  style={{
+                    fontSize: "clamp(20px, 3vw, 26px)",
+                    fontWeight: 800,
+                    color: "#fff",
+                    letterSpacing: "-0.02em",
+                    marginBottom: 4,
+                  }}
+                >
+                  {stat.value}
+                </div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontWeight: 500 }}>
+                  {stat.label}
+                </div>
               </div>
-              <div className="step-item">
-                <div className="step-number inactive">2</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#8A8F98", textAlign: "center" }}>تحلیل</div>
-              </div>
-              <div className="step-item">
-                <div className="step-number inactive">3</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#8A8F98", textAlign: "center" }}>دریافت نتیجه</div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Footer */}
-          <div className={`fade-up delay-600 ${loaded ? '' : 'opacity-0'}`} style={{ textAlign: "center", paddingTop: 20 }}>
-            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)" }}>Powered by Karex</p>
+          {/* Features */}
+          <div
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transition: "all 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+              transitionDelay: "0.7s",
+              width: "100%",
+              maxWidth: 900,
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: 16,
+              marginBottom: 56,
+            }}
+          >
+            {[
+              {
+                title: "تحلیل شخصیت",
+                desc: "بر اساس مدل‌های روانشناسی شناخته‌شده، شخصیت شغلی‌ات رو تحلیل می‌کنیم.",
+                icon: (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                  </svg>
+                ),
+                gradient: "linear-gradient(135deg, #7c8aff, #6366f1)",
+              },
+              {
+                title: "پیشنهاد هوشمند",
+                desc: "از بین هزاران مسیر شغلی، بهترین‌ها رو برای تو انتخاب می‌کنیم.",
+                icon: (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                  </svg>
+                ),
+                gradient: "linear-gradient(135deg, #a78bfa, #8b5cf6)",
+              },
+              {
+                title: "نقشه راه",
+                desc: "گام‌به‌گام مسیر یادگیری و رشد برای هر شغل پیشنهادی رو دریافت کن.",
+                icon: (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                  </svg>
+                ),
+                gradient: "linear-gradient(135deg, #60a5fa, #3b82f6)",
+              },
+            ].map((feat, i) => (
+              <div
+                key={i}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-6px)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                  e.currentTarget.style.borderColor = "rgba(124,138,255,0.25)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                }}
+                style={{
+                  padding: 24,
+                  borderRadius: 20,
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                  textAlign: "right",
+                  cursor: "default",
+                }}
+              >
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    background: feat.gradient,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#fff",
+                    marginBottom: 16,
+                    boxShadow: "0 8px 20px -6px rgba(124,138,255,0.5)",
+                  }}
+                >
+                  {feat.icon}
+                </div>
+                <h3
+                  style={{
+                    fontSize: 17,
+                    fontWeight: 700,
+                    color: "#fff",
+                    marginBottom: 8,
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {feat.title}
+                </h3>
+                <p style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", lineHeight: 1.7 }}>
+                  {feat.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* How it works */}
+          <div
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transition: "all 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+              transitionDelay: "0.8s",
+              width: "100%",
+              maxWidth: 900,
+              marginBottom: 40,
+            }}
+          >
+            <h2
+              style={{
+                fontSize: "clamp(20px, 3vw, 26px)",
+                fontWeight: 700,
+                color: "#fff",
+                marginBottom: 28,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              فقط در <span style={{ color: "#a78bfa" }}>۳ قدم</span> ساده
+            </h2>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                gap: 16,
+                position: "relative",
+              }}
+            >
+              {[
+                { num: "۱", title: "پاسخ به سؤالات", desc: "به سؤالات کوتاه و هوشمند پاسخ بده" },
+                { num: "۲", title: "تحلیل هوشمند", desc: "هوش مصنوعی پاسخ‌هات رو تحلیل می‌کنه" },
+                { num: "۳", title: "دریافت نتیجه", desc: "بهترین مسیرهای شغلی رو ببین" },
+              ].map((step, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "24px 20px",
+                    borderRadius: 16,
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
+                    position: "relative",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      background: i === 0
+                        ? "linear-gradient(135deg, #7c8aff, #a78bfa)"
+                        : "rgba(124,138,255,0.1)",
+                      border: i === 0 ? "none" : "1px solid rgba(124,138,255,0.2)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 16,
+                      fontWeight: 800,
+                      color: i === 0 ? "#fff" : "#a78bfa",
+                      marginBottom: 14,
+                      boxShadow: i === 0 ? "0 8px 20px -6px rgba(124,138,255,0.6)" : "none",
+                    }}
+                  >
+                    {step.num}
+                  </div>
+                  <h4
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: "#fff",
+                      marginBottom: 6,
+                    }}
+                  >
+                    {step.title}
+                  </h4>
+                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
+                    {step.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Bottom Gradient */}
-        <div style={{
-          position: "fixed",
-          bottom: 0, left: 0, right: 0,
-          height: 150,
-          background: "linear-gradient(to top, rgba(5,5,7,0.8), transparent)",
-          pointerEvents: "none",
-        }} />
-      </div>
+        {/* Footer */}
+        <footer
+          style={{
+            position: "relative",
+            zIndex: 10,
+            width: "100%",
+            padding: "24px clamp(16px, 4vw, 32px)",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            textAlign: "center",
+            opacity: mounted ? 1 : 0,
+            transition: "opacity 0.8s ease",
+            transitionDelay: "1s",
+          }}
+        >
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
+            ساخته شده با ❤️ توسط <span style={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Karex</span>
+          </p>
+        </footer>
+      </main>
     </>
   );
 }
