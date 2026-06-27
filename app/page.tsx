@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export default function CareerHub() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false); 
 
   useEffect(() => {
     setMounted(true);
