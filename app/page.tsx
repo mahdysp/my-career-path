@@ -178,30 +178,6 @@ export default function CareerHub() {
               Karex
             </span>
           </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 12px",
-              borderRadius: 999,
-              background: "rgba(34, 197, 94, 0.1)",
-              border: "1px solid rgba(34, 197, 94, 0.2)",
-            }}
-          >
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: "#22c55e",
-                boxShadow: "0 0 8px #22c55e",
-                animation: "pulse 2s ease-in-out infinite",
-              }}
-            />
-            <span style={{ fontSize: 11, color: "#86efac", fontWeight: 600 }}>آنلاین</span>
-          </div>
         </nav>
 
         {/* Main content */}
@@ -221,31 +197,6 @@ export default function CareerHub() {
             textAlign: "center",
           }}
         >
-          {/* Top badge */}
-          <div
-            style={{
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? "translateY(0)" : "translateY(20px)",
-              transition: "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
-              transitionDelay: "0.1s",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "8px 16px",
-              borderRadius: 999,
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              marginBottom: 28,
-            }}
-          >
-            <span style={{ fontSize: 14 }}>✨</span>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>
-              مبتنی بر هوش مصنوعی
-            </span>
-          </div>
-
           {/* Headline */}
           <h1
             style={{
@@ -424,13 +375,7 @@ export default function CareerHub() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6L9 17l-5-5" />
               </svg>
-              بدون نیاز به ثبت‌نام
-            </div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
-              فقط ۵ دقیقه
+              کمتر از 5 دقیقه
             </div>
           </div>
 
@@ -447,13 +392,13 @@ export default function CareerHub() {
               gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
               gap: "clamp(12px, 2vw, 20px)",
               marginBottom: 56,
+              justifyContent: "center",
             }}
           >
             {[
-              { value: "+۲٬۴۰۰", label: "مسیر شغلی", icon: "🎯" },
-              { value: "٪۹۴", label: "دقت تحلیل", icon: "📊" },
-              { value: "۵۰K+", label: "کاربر فعال", icon: "👥" },
-              { value: "۴.۹", label: "امتیاز کاربران", icon: "⭐" },
+              { value: "+2400", label: "مسیر شغلی", icon: "🎯" },
+              { value: "94%", label: "دقت تحلیل", icon: "📊" },
+              { value: "4.9", label: "امتیاز کاربران", icon: "⭐" },
             ].map((stat, i) => (
               <div
                 key={i}
@@ -625,7 +570,7 @@ export default function CareerHub() {
                 letterSpacing: "-0.02em",
               }}
             >
-              فقط در <span style={{ color: "#a78bfa" }}>۳ قدم</span> ساده
+              فقط در <span style={{ color: "#a78bfa" }}>3 قدم</span> ساده
             </h2>
 
             <div
@@ -637,9 +582,9 @@ export default function CareerHub() {
               }}
             >
               {[
-                { num: "۱", title: "پاسخ به سؤالات", desc: "به سؤالات کوتاه و هوشمند پاسخ بده" },
-                { num: "۲", title: "تحلیل هوشمند", desc: "هوش مصنوعی پاسخ‌هات رو تحلیل می‌کنه" },
-                { num: "۳", title: "دریافت نتیجه", desc: "بهترین مسیرهای شغلی رو ببین" },
+                { num: "1", title: "پاسخ به سؤالات", desc: "به سؤالات کوتاه و هوشمند پاسخ بده" },
+                { num: "2", title: "تحلیل هوشمند", desc: "هوش مصنوعی پاسخ‌هات رو تحلیل می‌کنه" },
+                { num: "3", title: "دریافت نتیجه", desc: "بهترین مسیرهای شغلی رو ببین" },
               ].map((step, i) => (
                 <div
                   key={i}
@@ -708,7 +653,7 @@ export default function CareerHub() {
           }}
         >
           <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
-            ساخته شده با ❤️ توسط <span style={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Karex</span>
+            created by nova
           </p>
         </footer>
       </main>
