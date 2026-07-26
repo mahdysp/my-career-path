@@ -121,6 +121,19 @@ const styles = `
     transition: width 1s cubic-bezier(.16,1,.3,1);
   }
 
+  /* کارت پیشنهاد اصلی — از بقیه متمایز باشد */
+  .k2-top-pick {
+    border-color: var(--border-accent);
+    box-shadow: var(--card-shadow), 0 0 0 1px var(--border-accent), 0 8px 34px var(--accent-glow);
+  }
+  .k2-ribbon {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: #fff;
+    background: linear-gradient(90deg, var(--accent), #a855f7);
+    border-radius: 100px; padding: 5px 12px; margin-bottom: 14px;
+    box-shadow: 0 3px 12px var(--accent-glow);
+  }
+
   .k2-chip {
     display: inline-flex; align-items: center; gap: 5px;
     font-size: 11.5px; color: var(--foreground-muted);
@@ -520,58 +533,104 @@ export default function ResultClient() {
           {/* محتوای تب */}
           {tab === "paths" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {paths.map((p, i) => (
-                <div key={i} className="k2-card k2-f1 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "22px 24px" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14, marginBottom: 12 }}>
-                    <div style={{ display: "flex", gap: 12, minWidth: 0 }}>
-                      <span
-                        style={{
-                          fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--foreground-subtle)",
-                          paddingTop: 3, flexShrink: 0,
-                        }}
-                      >
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
+              {paths.map((p, i) => {
+                const isTop = i === 0;
+                return (
+                  <div
+                    key={i}
+                    className={`k2-card k2-f1 k2-card-pad-sm ${isTop ? "k2-top-pick" : ""}`}
+                    onMouseMove={spotlight}
+                    style={{ padding: isTop ? "26px 24px 22px" : "20px 22px" }}
+                  >
+                    {/* نشان «بهترین تطابق» — تا کاربر بداند از کجا شروع کند */}
+                    {isTop && (
+                      <div className="k2-ribbon">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 3l2.6 6.2L21 10l-5 4.6L17.4 21 12 17.3 6.6 21 8 14.6 3 10l6.4-.8z"
+                            stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                        </svg>
+                        بهترین گزینه برای شما
+                      </div>
+                    )}
+
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14, marginBottom: 12 }}>
                       <div style={{ minWidth: 0 }}>
-                        <h3 style={{ fontWeight: 700, fontSize: 16.5, color: "var(--foreground)", margin: 0, lineHeight: 1.5 }}>
+                        <h3
+                          style={{
+                            fontWeight: 700,
+                            fontSize: isTop ? 20 : 16,
+                            color: "var(--foreground)",
+                            margin: 0,
+                            lineHeight: 1.5,
+                            letterSpacing: "-.01em",
+                          }}
+                        >
                           {p.title}
                         </h3>
                         {p.avg_salary && (
-                          <span style={{ fontSize: 12, color: "var(--foreground-muted)", display: "block", marginTop: 4 }}>
+                          <span style={{ fontSize: 12.5, color: "var(--foreground-muted)", display: "block", marginTop: 5 }}>
                             درآمد تخمینی: {p.avg_salary}
                           </span>
                         )}
                       </div>
+
+                      {/* درصد تطابق — بزرگ و خوانا */}
+                      <div style={{ textAlign: "center", flexShrink: 0 }}>
+                        <div
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            fontSize: isTop ? 26 : 18,
+                            lineHeight: 1.1,
+                            color: isTop ? "var(--accent)" : "var(--foreground-muted)",
+                          }}
+                        >
+                          ٪{p.match_percentage}
+                        </div>
+                        <div style={{ fontSize: 10, color: "var(--foreground-subtle)", marginTop: 3 }}>
+                          تطابق
+                        </div>
+                      </div>
                     </div>
-                    <span
-                      style={{
-                        fontFamily: "var(--font-mono)", fontSize: 17,
-                        color: i === 0 ? "var(--accent)" : "var(--foreground-muted)", flexShrink: 0,
-                      }}
-                    >
-                      ٪{p.match_percentage}
-                    </span>
-                  </div>
 
-                  <div className="k2-bar" style={{ marginBottom: 14 }}>
-                    <i style={{ width: `${p.match_percentage}%` }} />
-                  </div>
-
-                  {p.description && (
-                    <p style={{ fontSize: 13.5, lineHeight: 2, color: "var(--foreground-muted)", margin: "0 0 14px" }}>
-                      {p.description}
-                    </p>
-                  )}
-
-                  {p.required_skills?.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                      {p.required_skills.map((s, j) => (
-                        <span key={j} className="k2-chip">{s}</span>
-                      ))}
+                    <div className="k2-bar" style={{ marginBottom: 14, height: isTop ? 8 : 6 }}>
+                      <i style={{ width: `${p.match_percentage}%` }} />
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {p.description && (
+                      <p style={{ fontSize: 13.5, lineHeight: 2, color: "var(--foreground-muted)", margin: "0 0 14px" }}>
+                        {p.description}
+                      </p>
+                    )}
+
+                    {p.required_skills?.length > 0 && (
+                      <div>
+                        <span style={{ fontSize: 11.5, color: "var(--foreground-subtle)", display: "block", marginBottom: 8 }}>
+                          مهارت‌های لازم
+                        </span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                          {p.required_skills.map((s, j) => (
+                            <span key={j} className="k2-chip">{s}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* فراخوان اقدام روی گزینه‌ی برتر */}
+                    {isTop && (
+                      <button
+                        className="k2-btn k2-btn-primary"
+                        onClick={() => setTab("roadmap")}
+                        style={{ width: "100%", height: 44, fontSize: 14, marginTop: 18 }}
+                      >
+                        نقشه راه رسیدن به این مسیر
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                          <path d="M14 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
