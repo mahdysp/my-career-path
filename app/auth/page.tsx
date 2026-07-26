@@ -1,148 +1,32 @@
+// مسیر فایل: app/auth/page.tsx
 "use client";
-import { useEffect, useRef, useState } from "react";
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
   const router = useRouter();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const animRef = useRef<number>(0);
 
+  const [mounted, setMounted] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [capsOn, setCapsOn] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
 
   useEffect(() => {
-    const cv = canvasRef.current;
-    const wrap = wrapRef.current;
-    if (!cv || !wrap) return;
-    const ctx = cv.getContext("2d");
-    if (!ctx) return;
+    setMounted(true);
+    router.prefetch("/quiz");
+    router.prefetch("/register");
+  }, [router]);
 
-    function resize() {
-      if (!cv || !wrap) return;
-      cv.width = wrap.offsetWidth;
-      cv.height = wrap.offsetHeight;
-    }
-    resize();
-    window.addEventListener("resize", resize);
-
-    const STAR_COUNT = 140;
-    const PARTICLE_COUNT = 45;
-
-    const stars = Array.from({ length: STAR_COUNT }, () => ({
-      x: Math.random() * cv.width,
-      y: Math.random() * cv.height,
-      r: Math.random() * 1.2 + 0.2,
-      a: Math.random(),
-      speed: Math.random() * 0.008 + 0.002,
-      phase: Math.random() * Math.PI * 2,
-    }));
-
-    type Particle = {
-      x: number; y: number; vx: number; vy: number;
-      r: number; color: string; a: number; life: number; maxLife: number;
-    };
-
-    function makeParticle(): Particle {
-      const colors = [
-        "rgba(59,130,246,",
-        "rgba(16,185,129,",
-        "rgba(245,158,11,",
-        "rgba(99,102,241,",
-      ];
-      const c = colors[Math.floor(Math.random() * colors.length)];
-      return {
-        x: Math.random() * cv!.width,
-        y: Math.random() * cv!.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        r: Math.random() * 2 + 1,
-        color: c,
-        a: Math.random() * 0.6 + 0.2,
-        life: 0,
-        maxLife: Math.random() * 300 + 200,
-      };
-    }
-
-    let particles: Particle[] = Array.from({ length: PARTICLE_COUNT }, makeParticle);
-    let t = 0;
-
-    function draw() {
-      if (!cv || !ctx) return;
-      t++;
-      ctx.clearRect(0, 0, cv.width, cv.height);
-
-      const g1 = ctx.createRadialGradient(cv.width * 0.15, cv.height * 0.4, 0, cv.width * 0.15, cv.height * 0.4, cv.width * 0.5);
-      g1.addColorStop(0, "rgba(29,78,216,0.08)");
-      g1.addColorStop(1, "transparent");
-      ctx.fillStyle = g1;
-      ctx.fillRect(0, 0, cv.width, cv.height);
-
-      const g2 = ctx.createRadialGradient(cv.width * 0.85, cv.height * 0.6, 0, cv.width * 0.85, cv.height * 0.6, cv.width * 0.45);
-      g2.addColorStop(0, "rgba(16,185,129,0.06)");
-      g2.addColorStop(1, "transparent");
-      ctx.fillStyle = g2;
-      ctx.fillRect(0, 0, cv.width, cv.height);
-
-      stars.forEach((s) => {
-        s.phase += s.speed;
-        const a = s.a * (0.6 + 0.4 * Math.sin(s.phase));
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(148,163,184,${a})`;
-        ctx.fill();
-      });
-
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 90) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(59,130,246,${0.08 * (1 - d / 90)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      }
-
-      particles.forEach((p, i) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life++;
-        if (p.life > p.maxLife || p.x < -10 || p.x > cv!.width + 10 || p.y < -10 || p.y > cv!.height + 10) {
-          particles[i] = makeParticle();
-          return;
-        }
-        const fade = p.life < 30 ? p.life / 30 : p.life > p.maxLife - 30 ? (p.maxLife - p.life) / 30 : 1;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color + p.a * fade + ")";
-        ctx.fill();
-      });
-
-      const scanY = (t * 0.4) % cv.height;
-      const sg = ctx.createLinearGradient(0, scanY - 40, 0, scanY + 40);
-      sg.addColorStop(0, "transparent");
-      sg.addColorStop(0.5, "rgba(59,130,246,0.02)");
-      sg.addColorStop(1, "transparent");
-      ctx.fillStyle = sg;
-      ctx.fillRect(0, scanY - 40, cv.width, 80);
-
-      animRef.current = requestAnimationFrame(draw);
-    }
-
-    draw();
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      cancelAnimationFrame(animRef.current);
-    };
+  const handleSpotlight = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -169,10 +53,10 @@ export default function AuthPage() {
         router.push("/quiz");
       } else {
         setIsLogin(true);
-        alert("ثبت‌نام موفقیت‌آمیز بود! اکنون وارد شوید.");
+        setError("");
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "مشکلی پیش آمده است.");
     } finally {
       setLoading(false);
     }
@@ -181,220 +65,584 @@ export default function AuthPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap');
-
-        @keyframes blink {
+        @keyframes k2Float1 {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          50% { transform: translate(20px, -30px) rotate(2deg); }
+        }
+        @keyframes k2Float2 {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          50% { transform: translate(-24px, 20px) rotate(-2deg); }
+        }
+        @keyframes k2Float3 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+          50% { transform: translate(10px, -14px); opacity: 0.8; }
+        }
+        @keyframes k2FadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes k2Swap {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes k2Pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(0.7); }
+          50% { opacity: 0.35; transform: scale(0.72); }
+        }
+        @keyframes k2Spin { to { transform: rotate(360deg); } }
+        @keyframes k2Shake {
+          10%, 90% { transform: translateX(-1px); }
+          20%, 80% { transform: translateX(2px); }
+          30%, 50%, 70% { transform: translateX(-3px); }
+          40%, 60% { transform: translateX(3px); }
         }
 
-        .auth-input {
-          width: 100%;
-          background: rgba(15,31,61,0.6);
-          border: 1px solid rgba(59,130,246,0.15);
-          border-radius: 12px;
-          padding: 12px 16px;
-          color: #e2e8f0;
-          font-size: 14px;
-          font-family: 'Vazirmatn', sans-serif;
+        .k2-fade-1 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.05s; }
+        .k2-fade-2 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.14s; }
+        .k2-swap { animation: k2Swap 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+
+        .k2-btn {
+          font-family: var(--font-sans);
           font-weight: 500;
+          border: none;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .k2-btn:active:not(:disabled) { transform: scale(0.98); }
+        .k2-btn:disabled { cursor: wait; opacity: 0.7; }
+
+        .k2-btn-primary {
+          background: var(--accent);
+          color: #fff;
+          border-radius: 8px;
+          box-shadow:
+            0 0 0 1px rgba(94,106,210,0.5),
+            0 4px 12px rgba(94,106,210,0.3),
+            inset 0 1px 0 0 rgba(255,255,255,0.2);
+        }
+        .k2-btn-primary:hover:not(:disabled) {
+          background: var(--accent-bright);
+          box-shadow:
+            0 0 0 1px rgba(94,106,210,0.7),
+            0 6px 24px rgba(94,106,210,0.45),
+            inset 0 1px 0 0 rgba(255,255,255,0.25);
+          transform: translateY(-2px);
+        }
+
+        .k2-btn-ghost {
+          background: transparent;
+          color: var(--foreground-muted);
+          border-radius: 8px;
+        }
+        .k2-btn-ghost:hover { background: var(--surface); color: var(--foreground); }
+
+        .k2-grid-overlay {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+          background-size: 64px 64px;
+          pointer-events: none;
+          mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+        }
+
+        .k2-noise {
+          position: fixed;
+          inset: 0;
+          opacity: 0.02;
+          pointer-events: none;
+          z-index: 1;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        .k2-gradient-text {
+          background: linear-gradient(to bottom, #ffffff, rgba(255,255,255,0.72));
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+
+        .k2-card {
+          position: relative;
+          background: linear-gradient(to bottom, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+          border: 1px solid var(--border-default);
+          border-radius: 16px;
+          box-shadow:
+            0 0 0 1px rgba(255,255,255,0.03),
+            0 2px 20px rgba(0,0,0,0.4),
+            0 0 40px rgba(0,0,0,0.15);
+        }
+        .k2-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(94,106,210,0.14), transparent 60%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+        }
+        .k2-card:hover::before { opacity: 1; }
+
+        .k2-icon-box {
+          width: 44px; height: 44px;
+          border-radius: 12px;
+          border: 1px solid var(--border-hover);
+          background: var(--surface);
+          display: flex; align-items: center; justify-content: center;
+          color: var(--accent);
+          flex-shrink: 0;
+        }
+
+        .k2-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-family: var(--font-mono);
+          font-size: 11px;
+          letter-spacing: 0.08em;
+          color: var(--foreground-subtle);
+          background: var(--surface);
+          border: 1px solid var(--border-default);
+          border-radius: 100px;
+          padding: 6px 14px;
+        }
+        .k2-badge-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: var(--accent);
+          box-shadow: 0 0 8px var(--accent-glow);
+          animation: k2Pulse 2s ease-in-out infinite;
+        }
+
+        /* ── فرم ── */
+        .k2-field { display: flex; flex-direction: column; gap: 7px; }
+        .k2-label {
+          font-size: 12.5px;
+          color: var(--foreground-muted);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .k2-input-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid var(--border-default);
+          border-radius: 10px;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+        .k2-input-wrap.focused {
+          border-color: var(--border-accent);
+          background: rgba(255,255,255,0.055);
+          box-shadow: 0 0 0 3px rgba(94,106,210,0.12);
+        }
+        .k2-input-wrap svg.lead { margin: 0 12px; color: var(--foreground-subtle); flex-shrink: 0; transition: color 0.2s ease; }
+        .k2-input-wrap.focused svg.lead { color: var(--accent); }
+        .k2-input-wrap input {
+          flex: 1;
+          min-width: 0;
+          background: transparent;
+          border: none;
           outline: none;
-          transition: all 0.2s;
+          color: var(--foreground);
+          font-family: var(--font-sans);
+          font-size: 14px;
+          padding: 12px 0;
         }
-        .auth-input:focus {
-          border-color: rgba(59,130,246,0.5);
-          box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
+        .k2-input-wrap input::placeholder { color: #55585f; }
+        .k2-eye {
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: var(--foreground-subtle);
+          padding: 8px 12px;
+          display: flex;
+          align-items: center;
+          transition: color 0.2s ease;
         }
-        .auth-input::placeholder { color: #475569; }
+        .k2-eye:hover { color: var(--foreground); }
 
-        .auth-submit:hover:not(:disabled) {
-          transform: translateY(-2px) scale(1.01);
-          box-shadow: 0 12px 40px rgba(29,78,216,0.5) !important;
+        .k2-alert {
+          display: flex;
+          align-items: flex-start;
+          gap: 9px;
+          text-align: right;
+          background: rgba(248,113,113,0.08);
+          border: 1px solid rgba(248,113,113,0.25);
+          color: #fca5a5;
+          font-size: 13px;
+          line-height: 1.7;
+          padding: 11px 13px;
+          border-radius: 10px;
+          animation: k2Swap 0.3s cubic-bezier(0.16,1,0.3,1) both, k2Shake 0.4s ease both;
         }
-        .auth-submit:active:not(:disabled) { transform: scale(0.98); }
-        .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .auth-switch:hover { color: #60a5fa !important; }
+        .k2-hint {
+          font-family: var(--font-mono);
+          font-size: 10.5px;
+          color: #fbbf24;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+        }
 
-        @media (max-width: 768px) {
-          .auth-card { padding: 32px 24px !important; }
-          .auth-wrap { padding: 16px !important; }
+        .k2-spinner {
+          width: 15px; height: 15px;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: k2Spin 0.7s linear infinite;
+        }
+
+        .k2-divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin: 22px 0 18px;
+          font-family: var(--font-mono);
+          font-size: 10.5px;
+          color: var(--foreground-subtle);
+        }
+        .k2-divider::before, .k2-divider::after {
+          content: "";
+          flex: 1;
+          height: 1px;
+          background: var(--border-default);
+        }
+
+        .k2-link {
+          color: var(--accent);
+          text-decoration: none;
+          font-weight: 500;
+          transition: color 0.2s ease;
+        }
+        .k2-link:hover { color: var(--accent-bright); text-decoration: underline; }
+
+        .k2-back {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 13px;
+          color: var(--foreground-muted);
+          text-decoration: none;
+          padding: 8px 12px;
+          border-radius: 8px;
+          transition: color 0.2s ease, background 0.2s ease;
+        }
+        .k2-back:hover { color: var(--foreground); background: var(--surface); }
+
+        .k2-trust {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          margin-top: 20px;
+          font-size: 11px;
+          color: var(--foreground-subtle);
+        }
+
+        @media (max-width: 560px) {
+          .k2-card-pad { padding: 30px 22px !important; }
         }
       `}</style>
 
-      <div
-        ref={wrapRef}
-        className="auth-wrap"
+      <main
+        dir="rtl"
         style={{
-          minHeight: "100vh", width: "100%", background: "#070d1a",
-          fontFamily: "Vazirmatn, sans-serif", direction: "rtl",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          position: "relative", overflow: "hidden", padding: 24,
+          position: "relative",
+          minHeight: "100vh",
+          width: "100%",
+          background:
+            "radial-gradient(ellipse 1200px 800px at 50% -10%, #0e0e16 0%, #050506 55%, #020203 100%)",
+          fontFamily: "var(--font-sans)",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <canvas
-          ref={canvasRef}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
-        />
-
+        {/* Ambient blobs */}
         <div
-          className="auth-card"
           style={{
-            position: "relative", zIndex: 10,
-            width: "100%", maxWidth: 440, textAlign: "center",
-            background: "linear-gradient(145deg,rgba(15,31,61,0.95),rgba(7,13,26,0.98))",
-            border: "1px solid rgba(59,130,246,0.18)",
-            borderRadius: 24, padding: "44px 40px",
-            boxShadow: "0 0 60px rgba(29,78,216,0.12), 0 0 0 1px rgba(255,255,255,0.04) inset",
+            position: "absolute", top: "-240px", left: "50%", transform: "translateX(-50%)",
+            width: 1100, height: 700, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(94,106,210,0.26), transparent 70%)",
+            filter: "blur(140px)", pointerEvents: "none", animation: "k2Float1 9s ease-in-out infinite",
           }}
-        >
-          {/* بج */}
-          <div style={{ marginBottom: 20 }}>
-            <span style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)",
-              color: "#fcd34d", fontSize: 12, fontWeight: 700,
-              padding: "5px 14px", borderRadius: 100,
-            }}>
-              <span style={{
-                width: 6, height: 6, background: "#f59e0b", borderRadius: "50%",
-                animation: "blink 1.8s ease-in-out infinite", display: "inline-block",
-              }} />
-              سامانه هوشمند مسیریابی شغلی
-            </span>
-          </div>
+        />
+        <div
+          style={{
+            position: "absolute", top: "25%", left: "-220px",
+            width: 600, height: 800, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(168,85,247,0.13), transparent 70%)",
+            filter: "blur(120px)", pointerEvents: "none", animation: "k2Float2 10s ease-in-out infinite",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute", top: "40%", right: "-180px",
+            width: 500, height: 700, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(94,106,210,0.11), transparent 70%)",
+            filter: "blur(100px)", pointerEvents: "none", animation: "k2Float3 8s ease-in-out infinite",
+          }}
+        />
+        <div className="k2-grid-overlay" />
+        <div className="k2-noise" />
 
-          {/* آیکون */}
-          <div style={{
-            width: 64, height: 64, borderRadius: 18, margin: "0 auto 20px",
-            background: "linear-gradient(135deg,rgba(29,78,216,0.3),rgba(16,185,129,0.2))",
-            border: "1px solid rgba(59,130,246,0.3)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 26, boxShadow: "0 0 24px rgba(59,130,246,0.2)",
-          }}>
-            {isLogin ? "🔐" : "✨"}
-          </div>
+        <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+          {/* Nav */}
+          <nav
+            style={{
+              height: 64, flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "0 clamp(16px, 4vw, 40px)",
+              borderBottom: "1px solid var(--border-default)",
+            }}
+          >
+            <Link
+              href="/"
+              style={{ fontWeight: 700, fontSize: 19, letterSpacing: "-0.02em", color: "var(--foreground)", textDecoration: "none" }}
+            >
+              Karex
+            </Link>
+            <Link href="/" className="k2-back">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <path d="M14 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              بازگشت به خانه
+            </Link>
+          </nav>
 
-          {/* تیتر */}
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: "#f8fafc", marginBottom: 8 }}>
-            {isLogin ? (
-              <>ورود به <span style={{
-                background: "linear-gradient(90deg,#3b82f6,#10b981)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              }}>حساب کاربری</span></>
-            ) : (
-              <>ساخت <span style={{
-                background: "linear-gradient(90deg,#3b82f6,#10b981)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              }}>حساب کاربری</span></>
-            )}
-          </h1>
+          {/* Card */}
+          <div
+            style={{
+              flex: 1,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: "clamp(32px, 7vw, 72px) clamp(16px, 4vw, 40px)",
+            }}
+          >
+            <div style={{ width: "100%", maxWidth: 424 }}>
+              <div
+                className={`k2-card k2-card-pad ${mounted ? "k2-fade-1" : ""}`}
+                onMouseMove={handleSpotlight}
+                style={{ padding: "34px 32px", textAlign: "right" }}
+              >
+                {/* Badge */}
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 22 }}>
+                  <span className="k2-badge">
+                    <span className="k2-badge-dot" />
+                    سامانه هوشمند مسیریابی شغلی
+                  </span>
+                </div>
 
-          <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.7, marginBottom: 28 }}>
-            {isLogin
-              ? "برای ادامه مسیر شغلی‌ات وارد حساب خود شو"
-              : "چند ثانیه تا شروع مسیر شغلی‌ات فاصله داری"}
-          </p>
+                {/* Icon + title */}
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
+                  <div className="k2-icon-box">
+                    {isLogin ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <rect x="4" y="10" width="16" height="10" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M8 10V7.5a4 4 0 1 1 8 0V10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 4v16M4 12h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    )}
+                  </div>
+                  <div key={isLogin ? "login" : "signup"} className="k2-swap" style={{ minWidth: 0 }}>
+                    <h1
+                      className="k2-gradient-text"
+                      style={{ fontWeight: 700, fontSize: 22, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.35 }}
+                    >
+                      {isLogin ? "ورود به حساب کاربری" : "ساخت حساب کاربری"}
+                    </h1>
+                    <p style={{ fontSize: 13, color: "var(--foreground-muted)", margin: "4px 0 0", lineHeight: 1.7 }}>
+                      {isLogin
+                        ? "برای ادامه مسیر شغلی‌تان وارد شوید"
+                        : "چند ثانیه تا شروع مسیر شغلی‌تان فاصله دارید"}
+                    </p>
+                  </div>
+                </div>
 
-          {/* خطا */}
-          {error && (
-            <div style={{
-              background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
-              color: "#f87171", fontSize: 13, padding: "10px 14px",
-              borderRadius: 12, marginBottom: 16, textAlign: "center",
-            }}>
-              {error}
-            </div>
-          )}
+                {/* Error */}
+                {error && (
+                  <div className="k2-alert" style={{ marginBottom: 16 }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                      <path d="M12 7.5v5.5M12 16.2v.3" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                    </svg>
+                    <span>{error}</span>
+                  </div>
+                )}
 
-          {/* فرم */}
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "right" }}>
-            {!isLogin && (
-              <div>
-                <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                  نام و نام خانوادگی
-                </label>
-                <input
-                  type="text"
-                  required
-                  className="auth-input"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
+                {/* Form */}
+                <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 15 }}>
+                  {!isLogin && (
+                    <div className="k2-field">
+                      <label className="k2-label" htmlFor="name">نام و نام خانوادگی</label>
+                      <div className={`k2-input-wrap ${focused === "name" ? "focused" : ""}`}>
+                        <svg className="lead" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.7" />
+                          <path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                        </svg>
+                        <input
+                          id="name"
+                          type="text"
+                          required
+                          autoComplete="name"
+                          placeholder="نام کامل شما"
+                          value={formData.name}
+                          onFocus={() => setFocused("name")}
+                          onBlur={() => setFocused(null)}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="k2-field">
+                    <label className="k2-label" htmlFor="email">ایمیل</label>
+                    <div className={`k2-input-wrap ${focused === "email" ? "focused" : ""}`}>
+                      <svg className="lead" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="5.5" width="18" height="13" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
+                        <path d="M4 8l8 5.5L20 8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <input
+                        id="email"
+                        type="email"
+                        required
+                        autoComplete="email"
+                        dir="ltr"
+                        placeholder="you@example.com"
+                        style={{ textAlign: "left" }}
+                        value={formData.email}
+                        onFocus={() => setFocused("email")}
+                        onBlur={() => setFocused(null)}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="k2-field">
+                    <label className="k2-label" htmlFor="password">
+                      <span>رمز عبور</span>
+                      {capsOn && (
+                        <span className="k2-hint">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 4l7 8h-4v5H9v-5H5l7-8z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                          </svg>
+                          Caps Lock روشن است
+                        </span>
+                      )}
+                    </label>
+                    <div className={`k2-input-wrap ${focused === "password" ? "focused" : ""}`}>
+                      <svg className="lead" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <rect x="4.5" y="10.5" width="15" height="9" rx="2.2" stroke="currentColor" strokeWidth="1.7" />
+                        <path d="M8 10.5V7.8a4 4 0 1 1 8 0v2.7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                      </svg>
+                      <input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        autoComplete={isLogin ? "current-password" : "new-password"}
+                        dir="ltr"
+                        placeholder="••••••••"
+                        style={{ textAlign: "left" }}
+                        value={formData.password}
+                        onFocus={() => setFocused("password")}
+                        onBlur={() => { setFocused(null); setCapsOn(false); }}
+                        onKeyUp={(e) => setCapsOn(e.getModifierState?.("CapsLock") ?? false)}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      />
+                      <button
+                        type="button"
+                        className="k2-eye"
+                        onClick={() => setShowPassword((v) => !v)}
+                        aria-label={showPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
+                        title={showPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
+                      >
+                        {showPassword ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                            <path d="M10.6 6.2A9.6 9.6 0 0 1 12 6c5 0 9 6 9 6a17 17 0 0 1-2.7 3.2M6.5 7.6C4.2 9.2 3 12 3 12s4 6 9 6a9 9 0 0 0 3.6-.75" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                            <path d="M9.9 10.1a3 3 0 0 0 4.1 4.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M3 12s4-6 9-6 9 6 9 6-4 6-9 6-9-6-9-6z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                            <circle cx="12" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.7" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="k2-btn k2-btn-primary"
+                    style={{ width: "100%", height: 46, fontSize: 15, marginTop: 5 }}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="k2-spinner" />
+                        در حال پردازش...
+                      </>
+                    ) : isLogin ? (
+                      "ورود"
+                    ) : (
+                      "ثبت‌نام"
+                    )}
+                  </button>
+                </form>
+
+                {/* Switch */}
+                <div className="k2-divider">یا</div>
+
+                <div style={{ textAlign: "center", fontSize: 13.5, color: "var(--foreground-muted)" }}>
+                  {isLogin ? "هنوز حساب کاربری ندارید؟ " : "قبلاً ثبت‌نام کرده‌اید؟ "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isLogin) {
+                        router.push("/register");
+                      } else {
+                        setIsLogin(true);
+                        setError("");
+                      }
+                    }}
+                    className="k2-link"
+                    style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-sans)", fontSize: 13.5, padding: 0 }}
+                  >
+                    {isLogin ? "ساخت حساب رایگان" : "ورود به حساب"}
+                  </button>
+                </div>
               </div>
-            )}
 
-            <div>
-              <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                ایمیل
-              </label>
-              <input
-                type="email"
-                required
-                className="auth-input"
-                style={{ textAlign: "left", direction: "ltr" }}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
+              {/* Trust line */}
+              <div className={`k2-trust ${mounted ? "k2-fade-2" : ""}`}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M12 3l7.5 3v5.5c0 4.4-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5.1-7.5-9.5V6L12 3z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                  <path d="M9 12l2.2 2.2L15.5 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                اطلاعات شما رمزنگاری شده و محرمانه باقی می‌ماند
+              </div>
             </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                رمز عبور
-              </label>
-              <input
-                type="password"
-                required
-                className="auth-input"
-                style={{ textAlign: "left", direction: "ltr" }}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="auth-submit"
-              style={{
-                width: "100%", marginTop: 6,
-                background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
-                color: "#fff", border: "none", borderRadius: 14,
-                padding: "14px 20px",
-                fontFamily: "Vazirmatn, sans-serif", fontSize: 16, fontWeight: 900,
-                cursor: "pointer",
-                boxShadow: "0 8px 32px rgba(29,78,216,0.35)",
-                transition: "transform 0.18s, box-shadow 0.18s",
-              }}
-            >
-              {loading ? "در حال پردازش..." : isLogin ? "ورود" : "ثبت‌نام"}
-            </button>
-          </form>
-
-          {/* سوییچ بین ورود و ثبت‌نام */}
-          <div style={{ marginTop: 24, fontSize: 13, color: "#64748b" }}>
-            {isLogin ? "هنوز ثبت‌نام نکرده‌ای؟ " : "قبلاً ثبت‌نام کرده‌ای؟ "}
-            <button
-              onClick={() => {
-                if (isLogin) {
-                  router.push("/register");
-                } else {
-                  setIsLogin(true);
-                  setError("");
-                }
-              }}
-              className="auth-switch"
-              style={{
-                color: "#3b82f6", fontWeight: 700, background: "none",
-                border: "none", cursor: "pointer", fontFamily: "Vazirmatn, sans-serif",
-                fontSize: 13, transition: "color 0.15s",
-              }}
-            >
-              {isLogin ? "ایجاد حساب جدید" : "ورود به حساب"}
-            </button>
           </div>
+
+          {/* Footer */}
+          <footer style={{ flexShrink: 0, borderTop: "1px solid var(--border-default)", padding: "22px clamp(16px, 4vw, 40px)", textAlign: "center" }}>
+            <p style={{ fontSize: 12, color: "var(--foreground-subtle)", fontFamily: "var(--font-mono)", margin: 0 }}>
+              © Karex — تمامی حقوق محفوظ است
+            </p>
+          </footer>
         </div>
-      </div>
+      </main>
     </>
   );
 }
