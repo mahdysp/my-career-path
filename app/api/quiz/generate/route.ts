@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/route-error";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    // فقط کاربران واردشده — این مسیر به سرویس پولی وصل است
+    if (!req.cookies.get("sb-access-token")?.value) {
+      return NextResponse.json(
+        { message: "برای شروع آزمون ابتدا وارد حساب خود شوید." },
+        { status: 401 }
+      );
+    }
+
+    const limited = checkRateLimit(req, { name: "generate", limit: 8, windowMs: 60_000 });
+    if (limited) return limited;
+
     const { query, count } = await req.json();
 
     if (!query || !count) {

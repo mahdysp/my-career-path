@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/route-error";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { createClient } from "@supabase/supabase-js";
 
 export async function POST(req: NextRequest) {
   try {
+    if (!req.cookies.get("sb-access-token")?.value) {
+      return NextResponse.json(
+        { message: "برای دیدن تحلیل ابتدا وارد حساب خود شوید." },
+        { status: 401 }
+      );
+    }
+
+    const limited = checkRateLimit(req, { name: "analyze", limit: 6, windowMs: 60_000 });
+    if (limited) return limited;
+
     const { query, questions, answers } = await req.json();
 
     if (!query || !questions || !answers) {

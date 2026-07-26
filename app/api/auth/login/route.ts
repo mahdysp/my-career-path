@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/route-error";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { supabase } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = checkRateLimit(req, { name: "login", limit: 10, windowMs: 60_000 });
+    if (limited) return limited;
+
     const { email, password } = await req.json();
 
     if (!email || !password) {
