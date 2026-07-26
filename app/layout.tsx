@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_Arabic, JetBrains_Mono } from "next/font/google";
+import { Vazirmatn, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const plexArabic = IBM_Plex_Sans_Arabic({
-  variable: "--font-plex-arabic",
+const vazirmatn = Vazirmatn({
+  variable: "--font-vazirmatn",
   subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -31,7 +30,7 @@ export default function RootLayout({
     <html
       lang="fa"
       dir="rtl"
-      className={`${plexArabic.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${vazirmatn.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
