@@ -1,7 +1,7 @@
 // مسیر فایل: app/quiz/page.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -64,6 +64,124 @@ export default function QuizLanding() {
 
   const tags = ["برنامه‌نویسی", "طراحی UI/UX", "بازاریابی", "داده‌کاوی", "مدیریت محصول"];
 
+  /* ── پروفایل شایستگی نمونه برای هر حوزه (پیش‌نمای زنده) ── */
+  const profiles = useMemo(
+    () => ({
+      "برنامه‌نویسی": {
+        role: "توسعه‌دهنده نرم‌افزار",
+        match: 92,
+        axes: [
+          { label: "حل مسئله", v: 0.92 },
+          { label: "منطق و الگوریتم", v: 0.86 },
+          { label: "یادگیری ابزار", v: 0.78 },
+          { label: "کار تیمی", v: 0.62 },
+          { label: "دقت و جزئیات", v: 0.83 },
+          { label: "خلاقیت", v: 0.58 },
+        ],
+      },
+      "طراحی UI/UX": {
+        role: "طراح تجربه کاربری",
+        match: 88,
+        axes: [
+          { label: "حل مسئله", v: 0.7 },
+          { label: "منطق و الگوریتم", v: 0.48 },
+          { label: "یادگیری ابزار", v: 0.75 },
+          { label: "کار تیمی", v: 0.82 },
+          { label: "دقت و جزئیات", v: 0.9 },
+          { label: "خلاقیت", v: 0.95 },
+        ],
+      },
+      "بازاریابی": {
+        role: "متخصص بازاریابی دیجیتال",
+        match: 84,
+        axes: [
+          { label: "حل مسئله", v: 0.66 },
+          { label: "منطق و الگوریتم", v: 0.55 },
+          { label: "یادگیری ابزار", v: 0.7 },
+          { label: "کار تیمی", v: 0.9 },
+          { label: "دقت و جزئیات", v: 0.6 },
+          { label: "خلاقیت", v: 0.88 },
+        ],
+      },
+      "داده‌کاوی": {
+        role: "تحلیل‌گر داده",
+        match: 90,
+        axes: [
+          { label: "حل مسئله", v: 0.88 },
+          { label: "منطق و الگوریتم", v: 0.95 },
+          { label: "یادگیری ابزار", v: 0.8 },
+          { label: "کار تیمی", v: 0.55 },
+          { label: "دقت و جزئیات", v: 0.92 },
+          { label: "خلاقیت", v: 0.5 },
+        ],
+      },
+      "مدیریت محصول": {
+        role: "مدیر محصول",
+        match: 86,
+        axes: [
+          { label: "حل مسئله", v: 0.85 },
+          { label: "منطق و الگوریتم", v: 0.6 },
+          { label: "یادگیری ابزار", v: 0.65 },
+          { label: "کار تیمی", v: 0.95 },
+          { label: "دقت و جزئیات", v: 0.72 },
+          { label: "خلاقیت", v: 0.8 },
+        ],
+      },
+    }),
+    []
+  );
+
+  const profileKeys = useMemo(() => Object.keys(profiles) as (keyof typeof profiles)[], [profiles]);
+
+  // اگر کاربر چیزی تایپ نکرده، بین حوزه‌ها می‌چرخد؛ به‌محض تایپ، روی همان حوزه قفل می‌شود.
+  const [cycleIndex, setCycleIndex] = useState(0);
+  const matchedKey = useMemo(() => {
+    const q = searchQuery.trim();
+    if (!q) return null;
+    return profileKeys.find((k) => k.includes(q) || q.includes(k)) ?? null;
+  }, [searchQuery, profileKeys]);
+
+  useEffect(() => {
+    if (searchQuery.trim()) return;
+    const id = setInterval(() => setCycleIndex((i) => (i + 1) % profileKeys.length), 3200);
+    return () => clearInterval(id);
+  }, [searchQuery, profileKeys.length]);
+
+  const activeKey = matchedKey ?? profileKeys[cycleIndex];
+  const active = profiles[activeKey];
+  const isCustom = !!searchQuery.trim() && !matchedKey;
+
+  // انیمیشن نرم بین پروفایل‌ها
+  const [shape, setShape] = useState(active.axes.map((a) => a.v));
+  const shapeRef = useRef(shape);
+  const rafRef = useRef(0);
+
+  useEffect(() => {
+    const target = active.axes.map((a) => a.v);
+    cancelAnimationFrame(rafRef.current);
+    const step = () => {
+      const cur = shapeRef.current;
+      const next = cur.map((v, i) => v + (target[i] - v) * 0.12);
+      const done = next.every((v, i) => Math.abs(target[i] - v) < 0.002);
+      shapeRef.current = done ? target : next;
+      setShape(shapeRef.current);
+      if (!done) rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [active]);
+
+  // هندسه‌ی نمودار رادار
+  const R = 96;
+  const CX = 150;
+  const CY = 148;
+  const axisPoint = (i: number, r: number) => {
+    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / active.axes.length;
+    return [CX + Math.cos(angle) * r, CY + Math.sin(angle) * r] as const;
+  };
+  const polygon = (values: number[], scale = 1) =>
+    values.map((v, i) => axisPoint(i, R * v * scale).join(",")).join(" ");
+
   const stats = [
     { num: "۲۴۰۰+", lbl: "مسیر شغلی" },
     { num: "٪۹۴", lbl: "دقت نتایج" },
@@ -103,8 +221,13 @@ export default function QuizLanding() {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        @keyframes k2Dash {
-          to { stroke-dashoffset: -26; }
+        @keyframes k2Pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.35; transform: scale(0.72); }
+        }
+        @keyframes k2Swap {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .k2-fade-1 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.05s; }
@@ -333,9 +456,36 @@ export default function QuizLanding() {
           align-items: center;
         }
 
-        .k2-viz-path {
-          stroke-dasharray: 7 6;
-          animation: k2Dash 2.2s linear infinite;
+        .k2-live-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          font-family: var(--font-mono);
+          font-size: 10.5px;
+          letter-spacing: 0.06em;
+          color: var(--foreground-subtle);
+        }
+        .k2-live-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: #4ade80;
+          box-shadow: 0 0 8px rgba(74,222,128,0.55);
+          animation: k2Pulse 1.7s ease-in-out infinite;
+        }
+
+        .k2-swap { animation: k2Swap 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+
+        .k2-meter {
+          height: 6px;
+          border-radius: 100px;
+          background: rgba(255,255,255,0.06);
+          overflow: hidden;
+        }
+        .k2-meter-fill {
+          height: 100%;
+          border-radius: 100px;
+          background: linear-gradient(90deg, #5e6ad2, #a855f7);
+          box-shadow: 0 0 12px rgba(94,106,210,0.5);
+          transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
         }
 
         @media (max-width: 860px) {
@@ -343,7 +493,7 @@ export default function QuizLanding() {
           .k2-hamburger { display: flex !important; }
           .k2-desktop-actions { display: none !important; }
           .k2-hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
-          .k2-viz-col { display: none !important; }
+          .k2-viz-col { order: 2; }
           .k2-hero-title { font-size: 38px !important; }
           .k2-search { flex-direction: column !important; align-items: stretch !important; }
           .k2-search input { width: 100% !important; }
@@ -639,71 +789,87 @@ export default function QuizLanding() {
                 </div>
               </div>
 
-              {/* ستون تصویری */}
+              {/* ستون تصویری — پیش‌نمای زنده پروفایل شایستگی */}
               <div className={`k2-viz-col ${mounted ? "k2-fade-4" : ""}`} style={{ display: "flex", justifyContent: "center" }}>
-                <div className="k2-card" onMouseMove={handleSpotlight} style={{ width: "100%", maxWidth: 440, padding: 24 }}>
-                  <svg viewBox="0 0 400 320" style={{ width: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg">
+                <div className="k2-card" onMouseMove={handleSpotlight} style={{ width: "100%", maxWidth: 420, padding: 22 }}>
+                  {/* سربرگ کارت */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span className="k2-live-label">
+                      <span className="k2-live-dot" />
+                      پیش‌نمای نتیجه
+                    </span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--foreground-subtle)", letterSpacing: "0.06em" }}>
+                      نمونه
+                    </span>
+                  </div>
+
+                  <div style={{ minHeight: 52, textAlign: "right", marginBottom: 4 }}>
+                    <div key={activeKey} className="k2-swap" style={{ fontSize: 12.5, color: "var(--foreground-muted)" }}>
+                      {isCustom ? "حوزه دلخواه شما" : activeKey}
+                    </div>
+                    <div key={`${activeKey}-r`} className="k2-swap" style={{ fontWeight: 700, fontSize: 17, color: "var(--foreground)", letterSpacing: "-0.01em", marginTop: 2 }}>
+                      {isCustom ? searchQuery.trim() : active.role}
+                    </div>
+                  </div>
+
+                  {/* نمودار رادار شایستگی */}
+                  <svg viewBox="0 0 300 300" style={{ width: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg">
                     <defs>
-                      <linearGradient id="k2Line" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#5e6ad2" stopOpacity="0.9" />
-                        <stop offset="100%" stopColor="#a855f7" stopOpacity="0.6" />
-                      </linearGradient>
-                      <linearGradient id="k2Bar" x1="0%" y1="100%" x2="0%" y2="0%">
-                        <stop offset="0%" stopColor="#5e6ad2" stopOpacity="0.15" />
-                        <stop offset="100%" stopColor="#5e6ad2" stopOpacity="0.75" />
-                      </linearGradient>
+                      <radialGradient id="k2Fill" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stopColor="#5e6ad2" stopOpacity="0.42" />
+                        <stop offset="100%" stopColor="#a855f7" stopOpacity="0.14" />
+                      </radialGradient>
                     </defs>
 
-                    {/* grid */}
-                    {[0, 1, 2, 3, 4].map((i) => (
-                      <line
-                        key={i}
-                        x1="24" y1={60 + i * 52} x2="376" y2={60 + i * 52}
-                        stroke="rgba(255,255,255,0.05)" strokeWidth="1"
+                    {/* حلقه‌های راهنما */}
+                    {[0.25, 0.5, 0.75, 1].map((k) => (
+                      <polygon
+                        key={k}
+                        points={polygon(active.axes.map(() => 1), k)}
+                        fill="none"
+                        stroke="rgba(255,255,255,0.055)"
+                        strokeWidth="1"
                       />
                     ))}
 
-                    {/* bars */}
-                    {[
-                      { x: 60, h: 70 },
-                      { x: 124, h: 116 },
-                      { x: 188, h: 92 },
-                      { x: 252, h: 150 },
-                      { x: 316, h: 128 },
-                    ].map((b, i) => (
-                      <rect
-                        key={i}
-                        x={b.x - 16} y={268 - b.h} width="32" height={b.h}
-                        rx="7" fill="url(#k2Bar)" stroke="rgba(255,255,255,0.06)"
-                      />
-                    ))}
+                    {/* محورها + برچسب‌ها */}
+                    {active.axes.map((a, i) => {
+                      const [x, y] = axisPoint(i, R);
+                      const [lx, ly] = axisPoint(i, R + 26);
+                      return (
+                        <g key={a.label}>
+                          <line x1={CX} y1={CY} x2={x} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                          <text
+                            x={lx} y={ly + 4}
+                            textAnchor={Math.abs(lx - CX) < 6 ? "middle" : lx > CX ? "start" : "end"}
+                            fill="#8a8f98" fontSize="10.5" fontFamily="var(--font-sans)"
+                          >
+                            {a.label}
+                          </text>
+                        </g>
+                      );
+                    })}
 
-                    {/* progress path */}
-                    <path
-                      className="k2-viz-path"
-                      d="M 44 236 C 110 210, 150 168, 200 150 S 300 112, 366 76"
-                      fill="none" stroke="url(#k2Line)" strokeWidth="2" strokeLinecap="round"
-                    />
-                    {[
-                      { cx: 44, cy: 236 },
-                      { cx: 200, cy: 150 },
-                      { cx: 366, cy: 76 },
-                    ].map((p, i) => (
-                      <g key={i}>
-                        <circle cx={p.cx} cy={p.cy} r="7" fill="#08080b" stroke="#5e6ad2" strokeWidth="1.6" />
-                        <circle cx={p.cx} cy={p.cy} r="2.6" fill="#5e6ad2" />
-                      </g>
-                    ))}
-
-                    <line x1="24" y1="268" x2="376" y2="268" stroke="rgba(255,255,255,0.09)" strokeWidth="1" />
-                    <text x="376" y="42" textAnchor="end" fill="#8a8f98" fontSize="11" fontFamily="JetBrains Mono, monospace">
-                      skill growth
-                    </text>
+                    {/* شکل شایستگی (متحرک) */}
+                    <polygon points={polygon(shape)} fill="url(#k2Fill)" stroke="#5e6ad2" strokeWidth="1.8" strokeLinejoin="round" />
+                    {shape.map((v, i) => {
+                      const [x, y] = axisPoint(i, R * v);
+                      return <circle key={i} cx={x} cy={y} r="3.2" fill="#08080b" stroke="#5e6ad2" strokeWidth="1.5" />;
+                    })}
+                    <circle cx={CX} cy={CY} r="2" fill="rgba(255,255,255,0.18)" />
                   </svg>
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--border-default)" }}>
-                    <span style={{ fontSize: 13, color: "var(--foreground-muted)" }}>میانگین رشد مهارت کاربران</span>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--accent)" }}>+٪۳۸</span>
+                  {/* میزان تطابق */}
+                  <div style={{ marginTop: 6, paddingTop: 16, borderTop: "1px solid var(--border-default)" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 9 }}>
+                      <span style={{ fontSize: 12.5, color: "var(--foreground-muted)" }}>میزان تطابق با این مسیر</span>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--accent)" }}>
+                        ٪{active.match}
+                      </span>
+                    </div>
+                    <div className="k2-meter">
+                      <div className="k2-meter-fill" style={{ width: `${active.match}%` }} />
+                    </div>
                   </div>
                 </div>
               </div>
