@@ -1,13 +1,18 @@
+// مسیر فایل: app/register/page.tsx
 "use client";
-import { useEffect, useRef, useState } from "react";
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PasswordLamp from "@/app/components/PasswordLamp";
+import { passwordLampStyles } from "@/app/components/passwordLampStyles";
+
+type EmailStatus = "idle" | "checking" | "valid" | "invalid" | "exists";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const animRef = useRef<number>(0);
 
+  const [mounted, setMounted] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -19,139 +24,22 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const [emailStatus, setEmailStatus] = useState<"idle" | "checking" | "valid" | "invalid" | "exists">("idle");
+  const [emailStatus, setEmailStatus] = useState<EmailStatus>("idle");
   const [emailMessage, setEmailMessage] = useState("");
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [capsOn, setCapsOn] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
+
   useEffect(() => {
-    const cv = canvasRef.current;
-    const wrap = wrapRef.current;
-    if (!cv || !wrap) return;
-    const ctx = cv.getContext("2d");
-    if (!ctx) return;
+    setMounted(true);
+    router.prefetch("/auth");
+  }, [router]);
 
-    function resize() {
-      if (!cv || !wrap) return;
-      cv.width = wrap.offsetWidth;
-      cv.height = wrap.offsetHeight;
-    }
-    resize();
-    window.addEventListener("resize", resize);
-
-    const STAR_COUNT = 140;
-    const PARTICLE_COUNT = 45;
-
-    const stars = Array.from({ length: STAR_COUNT }, () => ({
-      x: Math.random() * cv.width,
-      y: Math.random() * cv.height,
-      r: Math.random() * 1.2 + 0.2,
-      a: Math.random(),
-      speed: Math.random() * 0.008 + 0.002,
-      phase: Math.random() * Math.PI * 2,
-    }));
-
-    type Particle = {
-      x: number; y: number; vx: number; vy: number;
-      r: number; color: string; a: number; life: number; maxLife: number;
-    };
-
-    function makeParticle(): Particle {
-      const colors = [
-        "rgba(59,130,246,",
-        "rgba(16,185,129,",
-        "rgba(245,158,11,",
-        "rgba(99,102,241,",
-      ];
-      const c = colors[Math.floor(Math.random() * colors.length)];
-      return {
-        x: Math.random() * cv!.width,
-        y: Math.random() * cv!.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        r: Math.random() * 2 + 1,
-        color: c,
-        a: Math.random() * 0.6 + 0.2,
-        life: 0,
-        maxLife: Math.random() * 300 + 200,
-      };
-    }
-
-    let particles: Particle[] = Array.from({ length: PARTICLE_COUNT }, makeParticle);
-    let t = 0;
-
-    function draw() {
-      if (!cv || !ctx) return;
-      t++;
-      ctx.clearRect(0, 0, cv.width, cv.height);
-
-      const g1 = ctx.createRadialGradient(cv.width * 0.15, cv.height * 0.4, 0, cv.width * 0.15, cv.height * 0.4, cv.width * 0.5);
-      g1.addColorStop(0, "rgba(29,78,216,0.08)");
-      g1.addColorStop(1, "transparent");
-      ctx.fillStyle = g1;
-      ctx.fillRect(0, 0, cv.width, cv.height);
-
-      const g2 = ctx.createRadialGradient(cv.width * 0.85, cv.height * 0.6, 0, cv.width * 0.85, cv.height * 0.6, cv.width * 0.45);
-      g2.addColorStop(0, "rgba(16,185,129,0.06)");
-      g2.addColorStop(1, "transparent");
-      ctx.fillStyle = g2;
-      ctx.fillRect(0, 0, cv.width, cv.height);
-
-      stars.forEach((s) => {
-        s.phase += s.speed;
-        const a = s.a * (0.6 + 0.4 * Math.sin(s.phase));
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(148,163,184,${a})`;
-        ctx.fill();
-      });
-
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 90) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(59,130,246,${0.08 * (1 - d / 90)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      }
-
-      particles.forEach((p, i) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life++;
-        if (p.life > p.maxLife || p.x < -10 || p.x > cv!.width + 10 || p.y < -10 || p.y > cv!.height + 10) {
-          particles[i] = makeParticle();
-          return;
-        }
-        const fade = p.life < 30 ? p.life / 30 : p.life > p.maxLife - 30 ? (p.maxLife - p.life) / 30 : 1;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color + p.a * fade + ")";
-        ctx.fill();
-      });
-
-      const scanY = (t * 0.4) % cv.height;
-      const sg = ctx.createLinearGradient(0, scanY - 40, 0, scanY + 40);
-      sg.addColorStop(0, "transparent");
-      sg.addColorStop(0.5, "rgba(59,130,246,0.02)");
-      sg.addColorStop(1, "transparent");
-      ctx.fillStyle = sg;
-      ctx.fillRect(0, scanY - 40, cv.width, 80);
-
-      animRef.current = requestAnimationFrame(draw);
-    }
-
-    draw();
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      cancelAnimationFrame(animRef.current);
-    };
+  const handleSpotlight = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
   }, []);
 
   const checkEmail = async () => {
@@ -207,7 +95,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-  
+
     if (emailStatus === "exists") {
       setError("این ایمیل قبلاً ثبت شده است. لطفاً وارد حساب خود شوید.");
       return;
@@ -216,385 +104,741 @@ export default function RegisterPage() {
       setError("لطفاً یک ایمیل معتبر وارد کنید.");
       return;
     }
-  
+
     setLoading(true);
-  
+
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-  
+
       const data = await res.json();
-  
+
       if (!res.ok) {
         throw new Error(data.message || "مشکلی پیش آمده است.");
       }
-  
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message);
+
+      setSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "مشکلی پیش آمده است.");
     } finally {
       setLoading(false);
     }
   };
 
-  const emailStatusStyles: Record<string, { color: string; icon: string }> = {
-    idle: { color: "#64748b", icon: "" },
-    checking: { color: "#fbbf24", icon: "⏳" },
-    valid: { color: "#10b981", icon: "✓" },
-    invalid: { color: "#f87171", icon: "✕" },
-    exists: { color: "#f87171", icon: "✕" },
+  // ── قدرت رمز عبور ──
+  const pwd = formData.password;
+  const pwdScore = [
+    pwd.length >= 8,
+    /[a-z]/.test(pwd) && /[A-Z]/.test(pwd),
+    /\d/.test(pwd),
+    /[^A-Za-z0-9]/.test(pwd),
+  ].filter(Boolean).length;
+  const pwdLabels = ["خیلی ضعیف", "ضعیف", "متوسط", "خوب", "قوی"];
+  const pwdColors = ["#f87171", "#f87171", "#fbbf24", "#60a5fa", "#4ade80"];
+
+  const emailTone: Record<EmailStatus, string> = {
+    idle: "var(--foreground-subtle)",
+    checking: "#fbbf24",
+    valid: "#4ade80",
+    invalid: "#f87171",
+    exists: "#f87171",
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap');
-
-        @keyframes blink {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(0.7); }
+        @keyframes k2Float1 {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          50% { transform: translate(20px, -30px) rotate(2deg); }
         }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        @keyframes k2Float2 {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          50% { transform: translate(-24px, 20px) rotate(-2deg); }
+        }
+        @keyframes k2Float3 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+          50% { transform: translate(10px, -14px); opacity: 0.8; }
+        }
+        @keyframes k2FadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes k2Swap {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes k2Spin { to { transform: rotate(360deg); } }
+        @keyframes k2Shake {
+          10%, 90% { transform: translateX(-1px); }
+          20%, 80% { transform: translateX(2px); }
+          30%, 50%, 70% { transform: translateX(-3px); }
+          40%, 60% { transform: translateX(3px); }
+        }
+        @keyframes k2Pop {
+          from { opacity: 0; transform: scale(0.86); }
+          to { opacity: 1; transform: scale(1); }
         }
 
-        .auth-input {
-          width: 100%;
-          background: rgba(15,31,61,0.6);
-          border: 1px solid rgba(59,130,246,0.15);
-          border-radius: 12px;
-          padding: 12px 16px;
-          color: #e2e8f0;
-          font-size: 14px;
-          font-family: 'Vazirmatn', sans-serif;
+        .k2-fade-1 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.05s; }
+        .k2-fade-2 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.14s; }
+        .k2-swap { animation: k2Swap 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+
+        .k2-btn {
+          font-family: var(--font-sans);
           font-weight: 500;
+          border: none;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .k2-btn:active:not(:disabled) { transform: scale(0.98); }
+        .k2-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+
+        .k2-btn-primary {
+          background: var(--accent);
+          color: #fff;
+          border-radius: 8px;
+          box-shadow:
+            0 0 0 1px rgba(94,106,210,0.5),
+            0 4px 12px rgba(94,106,210,0.3),
+            inset 0 1px 0 0 rgba(255,255,255,0.2);
+        }
+        .k2-btn-primary:hover:not(:disabled) {
+          background: var(--accent-bright);
+          box-shadow:
+            0 0 0 1px rgba(94,106,210,0.7),
+            0 6px 24px rgba(94,106,210,0.45),
+            inset 0 1px 0 0 rgba(255,255,255,0.25);
+          transform: translateY(-2px);
+        }
+
+        .k2-grid-overlay {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+          background-size: 64px 64px;
+          pointer-events: none;
+          mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+        }
+
+        .k2-noise {
+          position: fixed;
+          inset: 0;
+          opacity: 0.02;
+          pointer-events: none;
+          z-index: 1;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        .k2-gradient-text {
+          background: linear-gradient(to bottom, #ffffff, rgba(255,255,255,0.72));
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+
+        .k2-card {
+          position: relative;
+          background: linear-gradient(to bottom, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+          border: 1px solid var(--border-default);
+          border-radius: 16px;
+          box-shadow:
+            0 0 0 1px rgba(255,255,255,0.03),
+            0 2px 20px rgba(0,0,0,0.4),
+            0 0 40px rgba(0,0,0,0.15);
+        }
+        .k2-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(94,106,210,0.14), transparent 60%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+        }
+        .k2-card:hover::before { opacity: 1; }
+
+        .k2-icon-box {
+          width: 44px; height: 44px;
+          border-radius: 12px;
+          border: 1px solid var(--border-hover);
+          background: var(--surface);
+          display: flex; align-items: center; justify-content: center;
+          color: var(--accent);
+          flex-shrink: 0;
+        }
+
+        .k2-field { display: flex; flex-direction: column; gap: 7px; }
+        .k2-label {
+          font-size: 12.5px;
+          color: var(--foreground-muted);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+        .k2-input-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid var(--border-default);
+          border-radius: 10px;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+        .k2-input-wrap.focused {
+          border-color: var(--border-accent);
+          background: rgba(255,255,255,0.055);
+          box-shadow: 0 0 0 3px rgba(94,106,210,0.12);
+        }
+        .k2-input-wrap.ok      { border-color: rgba(74,222,128,0.42); }
+        .k2-input-wrap.bad     { border-color: rgba(248,113,113,0.45); }
+        .k2-input-wrap.pending { border-color: rgba(251,191,36,0.42); }
+
+        .k2-input-wrap svg.lead { margin: 0 12px; color: var(--foreground-subtle); flex-shrink: 0; transition: color 0.2s ease; }
+        .k2-input-wrap.focused svg.lead { color: var(--accent); }
+        .k2-input-wrap input,
+        .k2-input-wrap select {
+          flex: 1;
+          min-width: 0;
+          background: transparent;
+          border: none;
           outline: none;
-          transition: all 0.2s;
-          box-sizing: border-box;
+          color: var(--foreground);
+          font-family: var(--font-sans);
+          font-size: 14px;
+          padding: 12px 0;
         }
-        .auth-input:focus {
-          border-color: rgba(59,130,246,0.5);
-          box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
-        }
-        .auth-input::placeholder { color: #475569; }
-
-        .auth-input.email-valid { border-color: rgba(16,185,129,0.5); }
-        .auth-input.email-invalid { border-color: rgba(248,113,113,0.5); }
-        .auth-input.email-checking { border-color: rgba(251,191,36,0.5); }
-
-        select.auth-input {
+        .k2-input-wrap input::placeholder { color: #55585f; }
+        .k2-input-wrap select {
           appearance: none;
           -webkit-appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2393c5fd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-          background-repeat: no-repeat;
-          background-position: left 14px center;
-          padding-left: 38px;
           cursor: pointer;
+          padding-left: 34px;
         }
-        select.auth-input option {
-          background: #0f1f3d;
-          color: #e2e8f0;
+        .k2-input-wrap select option { background: #0d0d12; color: var(--foreground); }
+        .k2-select-caret {
+          position: absolute;
+          left: 13px;
+          pointer-events: none;
+          color: var(--foreground-subtle);
+          display: flex;
         }
-
-        .auth-submit:hover:not(:disabled) {
-          transform: translateY(-2px) scale(1.01);
-          box-shadow: 0 12px 40px rgba(29,78,216,0.5) !important;
-        }
-        .auth-submit:active:not(:disabled) { transform: scale(0.98); }
-        .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        .auth-switch:hover { color: #60a5fa !important; }
-
-        .email-icon-checking {
-          display: inline-block;
-          animation: spin 0.8s linear infinite;
+        .k2-tail {
+          display: flex;
+          align-items: center;
+          padding: 0 12px;
+          flex-shrink: 0;
         }
 
-        @media (max-width: 768px) {
-          .auth-card { padding: 32px 24px !important; }
-          .auth-wrap { padding: 16px !important; }
-          .auth-grid-2 { grid-template-columns: 1fr !important; }
+        .k2-alert {
+          display: flex;
+          align-items: flex-start;
+          gap: 9px;
+          text-align: right;
+          background: rgba(248,113,113,0.08);
+          border: 1px solid rgba(248,113,113,0.25);
+          color: #fca5a5;
+          font-size: 13px;
+          line-height: 1.7;
+          padding: 11px 13px;
+          border-radius: 10px;
+          animation: k2Swap 0.3s cubic-bezier(0.16,1,0.3,1) both, k2Shake 0.4s ease both;
         }
+
+        .k2-hint {
+          font-family: var(--font-mono);
+          font-size: 10.5px;
+          color: #fbbf24;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .k2-spinner {
+          width: 15px; height: 15px;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: k2Spin 0.7s linear infinite;
+        }
+        .k2-spinner.sm {
+          width: 12px; height: 12px;
+          border-width: 1.8px;
+          border-color: rgba(251,191,36,0.3);
+          border-top-color: #fbbf24;
+        }
+
+        .k2-meter {
+          display: flex;
+          gap: 4px;
+          margin-top: 2px;
+        }
+        .k2-meter i {
+          flex: 1;
+          height: 3px;
+          border-radius: 100px;
+          background: rgba(255,255,255,0.08);
+          transition: background 0.3s ease;
+        }
+
+        .k2-divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin: 22px 0 18px;
+          font-family: var(--font-mono);
+          font-size: 10.5px;
+          color: var(--foreground-subtle);
+        }
+        .k2-divider::before, .k2-divider::after {
+          content: "";
+          flex: 1;
+          height: 1px;
+          background: var(--border-default);
+        }
+
+        .k2-link {
+          color: var(--accent);
+          text-decoration: none;
+          font-weight: 500;
+          transition: color 0.2s ease;
+        }
+        .k2-link:hover { color: var(--accent-bright); text-decoration: underline; }
+
+        .k2-back {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 13px;
+          color: var(--foreground-muted);
+          text-decoration: none;
+          padding: 8px 12px;
+          border-radius: 8px;
+          transition: color 0.2s ease, background 0.2s ease;
+        }
+        .k2-back:hover { color: var(--foreground); background: var(--surface); }
+
+        .k2-trust {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          margin-top: 20px;
+          font-size: 11px;
+          color: var(--foreground-subtle);
+        }
+
+        .k2-row-2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        @media (max-width: 560px) {
+          .k2-card-pad { padding: 30px 22px !important; }
+          .k2-row-2 { grid-template-columns: 1fr !important; }
+        }
+
+        ${passwordLampStyles}
       `}</style>
 
-      <div
-        ref={wrapRef}
-        className="auth-wrap"
+      <main
+        dir="rtl"
         style={{
-          minHeight: "100vh", width: "100%", background: "#070d1a",
-          fontFamily: "Vazirmatn, sans-serif", direction: "rtl",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          position: "relative", overflow: "hidden", padding: 24,
+          position: "relative",
+          minHeight: "100vh",
+          width: "100%",
+          background:
+            "radial-gradient(ellipse 1200px 800px at 50% -10%, #0e0e16 0%, #050506 55%, #020203 100%)",
+          fontFamily: "var(--font-sans)",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <canvas
-          ref={canvasRef}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
-        />
-
+        {/* Ambient blobs */}
         <div
-          className="auth-card"
           style={{
-            position: "relative", zIndex: 10,
-            width: "100%", maxWidth: 480, textAlign: "center",
-            background: "linear-gradient(145deg,rgba(15,31,61,0.95),rgba(7,13,26,0.98))",
-            border: "1px solid rgba(59,130,246,0.18)",
-            borderRadius: 24, padding: "44px 40px",
-            boxShadow: "0 0 60px rgba(29,78,216,0.12), 0 0 0 1px rgba(255,255,255,0.04) inset",
+            position: "absolute", top: "-240px", left: "50%", transform: "translateX(-50%)",
+            width: 1100, height: 700, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(94,106,210,0.26), transparent 70%)",
+            filter: "blur(140px)", pointerEvents: "none", animation: "k2Float1 9s ease-in-out infinite",
           }}
-        >
-          {/* بج */}
-          <div style={{ marginBottom: 20 }}>
-            <span style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)",
-              color: "#fcd34d", fontSize: 12, fontWeight: 700,
-              padding: "5px 14px", borderRadius: 100,
-            }}>
-              <span style={{
-                width: 6, height: 6, background: "#f59e0b", borderRadius: "50%",
-                animation: "blink 1.8s ease-in-out infinite", display: "inline-block",
-              }} />
-              سامانه هوشمند مسیریابی شغلی
-            </span>
+        />
+        <div
+          style={{
+            position: "absolute", top: "25%", left: "-220px",
+            width: 600, height: 800, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(168,85,247,0.13), transparent 70%)",
+            filter: "blur(120px)", pointerEvents: "none", animation: "k2Float2 10s ease-in-out infinite",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute", top: "40%", right: "-180px",
+            width: 500, height: 700, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(94,106,210,0.11), transparent 70%)",
+            filter: "blur(100px)", pointerEvents: "none", animation: "k2Float3 8s ease-in-out infinite",
+          }}
+        />
+        <div className="k2-grid-overlay" />
+        <div className="k2-noise" />
+
+        <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+          {/* Nav */}
+          <nav
+            style={{
+              height: 64, flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "0 clamp(16px, 4vw, 40px)",
+              borderBottom: "1px solid var(--border-default)",
+            }}
+          >
+            <Link
+              href="/"
+              style={{ fontWeight: 700, fontSize: 19, letterSpacing: "-0.02em", color: "var(--foreground)", textDecoration: "none" }}
+            >
+              Karex
+            </Link>
+            <Link href="/" className="k2-back">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <path d="M14 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              بازگشت به خانه
+            </Link>
+          </nav>
+
+          {/* Card */}
+          <div
+            style={{
+              flex: 1,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: "clamp(32px, 6vw, 64px) clamp(16px, 4vw, 40px)",
+            }}
+          >
+            <div style={{ width: "100%", maxWidth: 470 }}>
+              <div
+                className={`k2-card k2-card-pad ${mounted ? "k2-fade-1" : ""}`}
+                onMouseMove={handleSpotlight}
+                style={{ padding: "34px 32px", textAlign: "right" }}
+              >
+                {success ? (
+                  /* ── حالت موفقیت ── */
+                  <div style={{ textAlign: "center", animation: "k2Pop 0.4s cubic-bezier(0.16,1,0.3,1) both" }}>
+                    <div
+                      className="k2-icon-box"
+                      style={{ margin: "0 auto 18px", width: 52, height: 52, color: "#4ade80", borderColor: "rgba(74,222,128,0.3)", background: "rgba(74,222,128,0.08)" }}
+                    >
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="5.5" width="18" height="13" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
+                        <path d="M4 8l8 5.5L20 8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+
+                    <h1
+                      className="k2-gradient-text"
+                      style={{ fontWeight: 700, fontSize: 22, letterSpacing: "-0.02em", margin: "0 0 10px" }}
+                    >
+                      ایمیل خود را تایید کنید
+                    </h1>
+
+                    <p style={{ fontSize: 13.5, color: "var(--foreground-muted)", lineHeight: 1.9, margin: "0 0 8px" }}>
+                      لینک تایید به این آدرس ارسال شد:
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--foreground)",
+                        direction: "ltr", background: "var(--surface)", border: "1px solid var(--border-default)",
+                        borderRadius: 8, padding: "9px 12px", margin: "0 0 18px", wordBreak: "break-all",
+                      }}
+                    >
+                      {formData.email}
+                    </p>
+                    <p style={{ fontSize: 13, color: "var(--foreground-muted)", lineHeight: 1.9, margin: "0 0 24px" }}>
+                      برای فعال‌سازی حساب، روی لینک داخل ایمیل کلیک کنید و سپس وارد شوید.
+                      اگر ایمیل را نمی‌بینید، پوشه‌ی اسپم را بررسی کنید.
+                    </p>
+
+                    <button
+                      onClick={() => router.push("/auth")}
+                      className="k2-btn k2-btn-primary"
+                      style={{ width: "100%", height: 46, fontSize: 15 }}
+                    >
+                      رفتن به صفحه ورود
+                    </button>
+                  </div>
+                ) : (
+                  /* ── فرم ثبت‌نام ── */
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
+                      <div className="k2-icon-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <circle cx="10" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+                          <path d="M3.5 20c0-3.3 2.9-5.5 6.5-5.5 1.2 0 2.3.2 3.2.7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                          <path d="M18 14v6M15 17h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <h1
+                          className="k2-gradient-text"
+                          style={{ fontWeight: 700, fontSize: 22, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.35 }}
+                        >
+                          ساخت حساب کاربری
+                        </h1>
+                        <p style={{ fontSize: 13, color: "var(--foreground-muted)", margin: "4px 0 0", lineHeight: 1.7 }}>
+                          اطلاعات زیر را کامل کنید تا مسیر شغلی‌تان را بسازیم
+                        </p>
+                      </div>
+                    </div>
+
+                    {error && (
+                      <div className="k2-alert" style={{ marginBottom: 16 }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
+                          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                          <path d="M12 7.5v5.5M12 16.2v.3" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                        </svg>
+                        <span>{error}</span>
+                      </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 15 }}>
+                      {/* نام و نام خانوادگی */}
+                      <div className="k2-row-2">
+                        <div className="k2-field">
+                          <label className="k2-label" htmlFor="firstName">نام</label>
+                          <div className={`k2-input-wrap ${focused === "firstName" ? "focused" : ""}`}>
+                            <svg className="lead" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                              <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.7" />
+                              <path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                            </svg>
+                            <input
+                              id="firstName"
+                              type="text"
+                              required
+                              autoComplete="given-name"
+                              placeholder="مثلاً علی"
+                              value={formData.firstName}
+                              onFocus={() => setFocused("firstName")}
+                              onBlur={() => setFocused(null)}
+                              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="k2-field">
+                          <label className="k2-label" htmlFor="lastName">نام خانوادگی</label>
+                          <div className={`k2-input-wrap ${focused === "lastName" ? "focused" : ""}`}>
+                            <input
+                              id="lastName"
+                              type="text"
+                              required
+                              autoComplete="family-name"
+                              placeholder="مثلاً محمدی"
+                              style={{ paddingRight: 13 }}
+                              value={formData.lastName}
+                              onFocus={() => setFocused("lastName")}
+                              onBlur={() => setFocused(null)}
+                              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* وضعیت تحصیلی */}
+                      <div className="k2-field">
+                        <label className="k2-label" htmlFor="education">وضعیت تحصیلی</label>
+                        <div className={`k2-input-wrap ${focused === "education" ? "focused" : ""}`}>
+                          <svg className="lead" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M3 9l9-4.5L21 9l-9 4.5L3 9z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                            <path d="M7 11v4.5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                          </svg>
+                          <select
+                            id="education"
+                            required
+                            value={formData.education}
+                            onFocus={() => setFocused("education")}
+                            onBlur={() => setFocused(null)}
+                            onChange={(e) => setFormData({ ...formData, education: e.target.value })}
+                            style={{ color: formData.education ? "var(--foreground)" : "#55585f" }}
+                          >
+                            <option value="">انتخاب کنید…</option>
+                            <option value="student">دانش‌آموز</option>
+                            <option value="university">دانشجو</option>
+                            <option value="graduate">فارغ‌التحصیل</option>
+                          </select>
+                          <span className="k2-select-caret">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* ایمیل */}
+                      <div className="k2-field">
+                        <label className="k2-label" htmlFor="email">ایمیل</label>
+                        <div
+                          className={`k2-input-wrap ${focused === "email" ? "focused" : ""} ${
+                            emailStatus === "valid" ? "ok" :
+                            emailStatus === "invalid" || emailStatus === "exists" ? "bad" :
+                            emailStatus === "checking" ? "pending" : ""
+                          }`}
+                        >
+                          <svg className="lead" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <rect x="3" y="5.5" width="18" height="13" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
+                            <path d="M4 8l8 5.5L20 8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <input
+                            id="email"
+                            type="email"
+                            required
+                            autoComplete="email"
+                            dir="ltr"
+                            placeholder="you@example.com"
+                            style={{ textAlign: "left" }}
+                            value={formData.email}
+                            onFocus={() => setFocused("email")}
+                            onChange={(e) => {
+                              setFormData({ ...formData, email: e.target.value });
+                              setEmailStatus("idle");
+                              setEmailMessage("");
+                            }}
+                            onBlur={() => { setFocused(null); checkEmail(); }}
+                          />
+                          {emailStatus !== "idle" && (
+                            <span className="k2-tail" style={{ color: emailTone[emailStatus] }}>
+                              {emailStatus === "checking" ? (
+                                <span className="k2-spinner sm" />
+                              ) : emailStatus === "valid" ? (
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                                  <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              ) : (
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                                  <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
+                                </svg>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                        {emailMessage && (
+                          <span className="k2-swap" style={{ fontSize: 11.5, color: emailTone[emailStatus] }}>
+                            {emailMessage}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* رمز عبور + چراغ */}
+                      <div className="k2-pass-row">
+                        <div className="k2-field">
+                          <label className="k2-label" htmlFor="password">
+                            <span>رمز عبور</span>
+                            {capsOn && (
+                              <span className="k2-hint">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                                  <path d="M12 4l7 8h-4v5H9v-5H5l7-8z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                                </svg>
+                                Caps Lock روشن است
+                              </span>
+                            )}
+                          </label>
+                          <div className={`k2-input-wrap ${focused === "password" ? "focused" : ""} ${showPassword ? "lit" : ""}`}>
+                            <svg className="lead" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                              <rect x="4.5" y="10.5" width="15" height="9" rx="2.2" stroke="currentColor" strokeWidth="1.7" />
+                              <path d="M8 10.5V7.8a4 4 0 1 1 8 0v2.7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                            </svg>
+                            <input
+                              id="password"
+                              type={showPassword ? "text" : "password"}
+                              required
+                              autoComplete="new-password"
+                              dir="ltr"
+                              placeholder="••••••••"
+                              style={{ textAlign: "left", paddingLeft: 12 }}
+                              value={formData.password}
+                              onFocus={() => setFocused("password")}
+                              onBlur={() => { setFocused(null); setCapsOn(false); }}
+                              onKeyUp={(e) => setCapsOn(e.getModifierState?.("CapsLock") ?? false)}
+                              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            />
+                          </div>
+
+                          {/* نوار قدرت رمز */}
+                          <div className="k2-meter">
+                            {[0, 1, 2, 3].map((i) => (
+                              <i key={i} style={{ background: pwd && i < pwdScore ? pwdColors[pwdScore] : undefined }} />
+                            ))}
+                          </div>
+                          <span style={{ fontSize: 11, color: pwd ? pwdColors[pwdScore] : "var(--foreground-subtle)" }}>
+                            {pwd
+                              ? `قدرت رمز: ${pwdLabels[pwdScore]}`
+                              : showPassword
+                                ? "چراغ روشن است — رمز دیده می‌شود"
+                                : "برای دیدن رمز، چراغ را روشن کنید"}
+                          </span>
+                        </div>
+
+                        <PasswordLamp on={showPassword} onToggle={() => setShowPassword((v) => !v)} />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading || emailStatus === "exists" || emailStatus === "invalid"}
+                        className="k2-btn k2-btn-primary"
+                        style={{ width: "100%", height: 46, fontSize: 15, marginTop: 5 }}
+                      >
+                        {loading ? (
+                          <>
+                            <span className="k2-spinner" />
+                            در حال پردازش...
+                          </>
+                        ) : (
+                          "ثبت‌نام"
+                        )}
+                      </button>
+                    </form>
+
+                    <div className="k2-divider">یا</div>
+
+                    <div style={{ textAlign: "center", fontSize: 13.5, color: "var(--foreground-muted)" }}>
+                      قبلاً ثبت‌نام کرده‌اید؟{" "}
+                      <Link href="/auth" className="k2-link">
+                        ورود به حساب
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Trust line */}
+              <div className={`k2-trust ${mounted ? "k2-fade-2" : ""}`}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M12 3l7.5 3v5.5c0 4.4-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5.1-7.5-9.5V6L12 3z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                  <path d="M9 12l2.2 2.2L15.5 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                اطلاعات شما رمزنگاری شده و محرمانه باقی می‌ماند
+              </div>
+            </div>
           </div>
 
-          {success ? (
-            <>
-              <div style={{
-                width: 64, height: 64, borderRadius: 18, margin: "0 auto 20px",
-                background: "linear-gradient(135deg,rgba(16,185,129,0.3),rgba(59,130,246,0.2))",
-                border: "1px solid rgba(16,185,129,0.3)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 26, boxShadow: "0 0 24px rgba(16,185,129,0.2)",
-              }}>
-                📩
-              </div>
-
-              <h1 style={{ fontSize: 24, fontWeight: 900, color: "#f8fafc", marginBottom: 8 }}>
-                ایمیل خود را{" "}
-                <span style={{
-                  background: "linear-gradient(90deg,#3b82f6,#10b981)",
-                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-                }}>
-                  تایید کنید
-                </span>
-              </h1>
-
-              <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.8, marginBottom: 28 }}>
-                لینک تایید به آدرس <strong style={{ color: "#e2e8f0" }}>{formData.email}</strong> ارسال شد.
-                برای فعال‌سازی حساب کاربری، روی لینک داخل ایمیل کلیک کنید و سپس وارد حساب خود شوید.
-              </p>
-
-              <button
-                onClick={() => router.push("/auth")}
-                className="auth-submit"
-                style={{
-                  width: "100%",
-                  background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
-                  color: "#fff", border: "none", borderRadius: 14,
-                  padding: "14px 20px",
-                  fontFamily: "Vazirmatn, sans-serif", fontSize: 16, fontWeight: 900,
-                  cursor: "pointer",
-                  boxShadow: "0 8px 32px rgba(29,78,216,0.35)",
-                  transition: "transform 0.18s, box-shadow 0.18s",
-                }}
-              >
-                رفتن به صفحه ورود
-              </button>
-            </>
-          ) : (
-            <>
-              {/* آیکون */}
-              <div style={{
-                width: 64, height: 64, borderRadius: 18, margin: "0 auto 20px",
-                background: "linear-gradient(135deg,rgba(29,78,216,0.3),rgba(16,185,129,0.2))",
-                border: "1px solid rgba(59,130,246,0.3)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 26, boxShadow: "0 0 24px rgba(59,130,246,0.2)",
-              }}>
-                ✨
-              </div>
-
-              {/* تیتر */}
-              <h1 style={{ fontSize: 26, fontWeight: 900, color: "#f8fafc", marginBottom: 8 }}>
-                عضویت در{" "}
-                <span style={{
-                  background: "linear-gradient(90deg,#3b82f6,#10b981)",
-                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-                }}>
-                  سامانه
-                </span>
-              </h1>
-
-              <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.7, marginBottom: 28 }}>
-                با تکمیل اطلاعات زیر، حساب کاربری‌ات رو بساز و مسیر شغلی‌ات رو کشف کن
-              </p>
-
-              {/* خطا */}
-              {error && (
-                <div style={{
-                  background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
-                  color: "#f87171", fontSize: 13, padding: "10px 14px",
-                  borderRadius: 12, marginBottom: 16, textAlign: "center",
-                }}>
-                  {error}
-                </div>
-              )}
-
-              {/* فرم */}
-              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "right" }}>
-
-                <div className="auth-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                      نام
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="مثلاً علی"
-                      className="auth-input"
-                      required
-                      value={formData.firstName}
-                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                      نام خانوادگی
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="مثلاً محمدی"
-                      className="auth-input"
-                      required
-                      value={formData.lastName}
-                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                    وضعیت تحصیلی
-                  </label>
-                  <select
-                    className="auth-input"
-                    required
-                    value={formData.education}
-                    onChange={(e) => setFormData({ ...formData, education: e.target.value })}
-                  >
-                    <option value="">وضعیت تحصیلی خود را انتخاب کن</option>
-                    <option value="student">دانش‌آموز</option>
-                    <option value="university">دانشجو</option>
-                    <option value="graduate">فارغ‌التحصیل</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                    ایمیل
-                  </label>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      type="email"
-                      placeholder="example@email.com"
-                      className={`auth-input ${
-                        emailStatus === "valid" ? "email-valid" :
-                        emailStatus === "invalid" || emailStatus === "exists" ? "email-invalid" :
-                        emailStatus === "checking" ? "email-checking" : ""
-                      }`}
-                      required
-                      style={{ textAlign: "left", direction: "ltr", paddingLeft: 38 }}
-                      value={formData.email}
-                      onChange={(e) => {
-                        setFormData({ ...formData, email: e.target.value });
-                        setEmailStatus("idle");
-                        setEmailMessage("");
-                      }}
-                      onBlur={checkEmail}
-                    />
-                    {emailStatus !== "idle" && (
-                      <span style={{
-                        position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
-                        fontSize: 14, color: emailStatusStyles[emailStatus].color,
-                      }}>
-                        {emailStatus === "checking" ? (
-                          <span className="email-icon-checking">⏳</span>
-                        ) : (
-                          emailStatusStyles[emailStatus].icon
-                        )}
-                      </span>
-                    )}
-                  </div>
-                  {emailMessage && (
-                    <div style={{
-                      fontSize: 12, marginTop: 6, textAlign: "right",
-                      color: emailStatusStyles[emailStatus].color,
-                    }}>
-                      {emailMessage}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: 13, color: "#94a3b8", marginBottom: 6, fontWeight: 600 }}>
-                    رمز عبور
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    className="auth-input"
-                    required
-                    style={{ textAlign: "left", direction: "ltr" }}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading || emailStatus === "exists" || emailStatus === "invalid"}
-                  className="auth-submit"
-                  style={{
-                    width: "100%", marginTop: 6,
-                    background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
-                    color: "#fff", border: "none", borderRadius: 14,
-                    padding: "14px 20px",
-                    fontFamily: "Vazirmatn, sans-serif", fontSize: 16, fontWeight: 900,
-                    cursor: "pointer",
-                    boxShadow: "0 8px 32px rgba(29,78,216,0.35)",
-                    transition: "transform 0.18s, box-shadow 0.18s",
-                  }}
-                >
-                  {loading ? "در حال پردازش..." : "ثبت‌نام نهایی"}
-                </button>
-              </form>
-
-              {/* لینک ورود */}
-              <div style={{ marginTop: 24, fontSize: 13, color: "#64748b" }}>
-                قبلاً ثبت‌نام کرده‌ای؟{" "}
-                <button
-                  onClick={() => router.push("/auth")}
-                  className="auth-switch"
-                  style={{
-                    color: "#3b82f6", fontWeight: 700, background: "none",
-                    border: "none", cursor: "pointer", fontFamily: "Vazirmatn, sans-serif",
-                    fontSize: 13, transition: "color 0.15s",
-                  }}
-                >
-                  ورود به حساب
-                </button>
-              </div>
-            </>
-          )}
-
+          {/* Footer */}
+          <footer style={{ flexShrink: 0, borderTop: "1px solid var(--border-default)", padding: "22px clamp(16px, 4vw, 40px)", textAlign: "center" }}>
+            <p style={{ fontSize: 12, color: "var(--foreground-subtle)", fontFamily: "var(--font-mono)", margin: 0 }}>
+              © Karex — تمامی حقوق محفوظ است
+            </p>
+          </footer>
         </div>
-      </div>
+      </main>
     </>
   );
 }

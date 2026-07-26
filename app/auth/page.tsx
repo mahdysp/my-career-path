@@ -4,6 +4,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PasswordLamp from "@/app/components/PasswordLamp";
+import { passwordLampStyles } from "@/app/components/passwordLampStyles";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -199,26 +201,6 @@ export default function AuthPage() {
           flex-shrink: 0;
         }
 
-        .k2-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-family: var(--font-mono);
-          font-size: 11px;
-          letter-spacing: 0.08em;
-          color: var(--foreground-subtle);
-          background: var(--surface);
-          border: 1px solid var(--border-default);
-          border-radius: 100px;
-          padding: 6px 14px;
-        }
-        .k2-badge-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: var(--accent);
-          box-shadow: 0 0 8px var(--accent-glow);
-          animation: k2Pulse 2s ease-in-out infinite;
-        }
-
         /* ── فرم ── */
         .k2-field { display: flex; flex-direction: column; gap: 7px; }
         .k2-label {
@@ -256,18 +238,6 @@ export default function AuthPage() {
           padding: 12px 0;
         }
         .k2-input-wrap input::placeholder { color: #55585f; }
-        .k2-eye {
-          background: none;
-          border: none;
-          cursor: pointer;
-          color: var(--foreground-subtle);
-          padding: 8px 12px;
-          display: flex;
-          align-items: center;
-          transition: color 0.2s ease;
-        }
-        .k2-eye:hover { color: var(--foreground); }
-
         .k2-alert {
           display: flex;
           align-items: flex-start;
@@ -350,6 +320,8 @@ export default function AuthPage() {
         @media (max-width: 560px) {
           .k2-card-pad { padding: 30px 22px !important; }
         }
+
+        ${passwordLampStyles}
       `}</style>
 
       <main
@@ -432,14 +404,6 @@ export default function AuthPage() {
                 onMouseMove={handleSpotlight}
                 style={{ padding: "34px 32px", textAlign: "right" }}
               >
-                {/* Badge */}
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: 22 }}>
-                  <span className="k2-badge">
-                    <span className="k2-badge-dot" />
-                    سامانه هوشمند مسیریابی شغلی
-                  </span>
-                </div>
-
                 {/* Icon + title */}
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
                   <div className="k2-icon-box">
@@ -528,58 +492,45 @@ export default function AuthPage() {
                     </div>
                   </div>
 
-                  <div className="k2-field">
-                    <label className="k2-label" htmlFor="password">
-                      <span>رمز عبور</span>
-                      {capsOn && (
-                        <span className="k2-hint">
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 4l7 8h-4v5H9v-5H5l7-8z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                          </svg>
-                          Caps Lock روشن است
-                        </span>
-                      )}
-                    </label>
-                    <div className={`k2-input-wrap ${focused === "password" ? "focused" : ""}`}>
-                      <svg className="lead" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <rect x="4.5" y="10.5" width="15" height="9" rx="2.2" stroke="currentColor" strokeWidth="1.7" />
-                        <path d="M8 10.5V7.8a4 4 0 1 1 8 0v2.7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                      </svg>
-                      <input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        required
-                        autoComplete={isLogin ? "current-password" : "new-password"}
-                        dir="ltr"
-                        placeholder="••••••••"
-                        style={{ textAlign: "left" }}
-                        value={formData.password}
-                        onFocus={() => setFocused("password")}
-                        onBlur={() => { setFocused(null); setCapsOn(false); }}
-                        onKeyUp={(e) => setCapsOn(e.getModifierState?.("CapsLock") ?? false)}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      />
-                      <button
-                        type="button"
-                        className="k2-eye"
-                        onClick={() => setShowPassword((v) => !v)}
-                        aria-label={showPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
-                        title={showPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
-                      >
-                        {showPassword ? (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                            <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                            <path d="M10.6 6.2A9.6 9.6 0 0 1 12 6c5 0 9 6 9 6a17 17 0 0 1-2.7 3.2M6.5 7.6C4.2 9.2 3 12 3 12s4 6 9 6a9 9 0 0 0 3.6-.75" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                            <path d="M9.9 10.1a3 3 0 0 0 4.1 4.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                          </svg>
-                        ) : (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                            <path d="M3 12s4-6 9-6 9 6 9 6-4 6-9 6-9-6-9-6z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-                            <circle cx="12" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.7" />
-                          </svg>
+                  <div className="k2-pass-row">
+                    <div className="k2-field">
+                      <label className="k2-label" htmlFor="password">
+                        <span>رمز عبور</span>
+                        {capsOn && (
+                          <span className="k2-hint">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 4l7 8h-4v5H9v-5H5l7-8z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                            </svg>
+                            Caps Lock روشن است
+                          </span>
                         )}
-                      </button>
+                      </label>
+                      <div className={`k2-input-wrap ${focused === "password" ? "focused" : ""} ${showPassword ? "lit" : ""}`}>
+                        <svg className="lead" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <rect x="4.5" y="10.5" width="15" height="9" rx="2.2" stroke="currentColor" strokeWidth="1.7" />
+                          <path d="M8 10.5V7.8a4 4 0 1 1 8 0v2.7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                        </svg>
+                        <input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          required
+                          autoComplete={isLogin ? "current-password" : "new-password"}
+                          dir="ltr"
+                          placeholder="••••••••"
+                          style={{ textAlign: "left", paddingLeft: 12 }}
+                          value={formData.password}
+                          onFocus={() => setFocused("password")}
+                          onBlur={() => { setFocused(null); setCapsOn(false); }}
+                          onKeyUp={(e) => setCapsOn(e.getModifierState?.("CapsLock") ?? false)}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        />
+                      </div>
+                      <span style={{ fontSize: 11, color: "var(--foreground-subtle)", marginTop: 1 }}>
+                        {showPassword ? "چراغ روشن است — رمز شما دیده می‌شود" : "برای دیدن رمز، چراغ را روشن کنید"}
+                      </span>
                     </div>
+
+                    <PasswordLamp on={showPassword} onToggle={() => setShowPassword((v) => !v)} />
                   </div>
 
                   <button
