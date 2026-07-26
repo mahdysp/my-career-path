@@ -210,13 +210,15 @@ export default function CareerHub() {
         .k2-step-row:last-child { border-bottom: none; }
         .k2-step-row:hover { background: rgba(255,255,255,0.02); }
 
+        .k2-mobile-actions { display: none; gap: 8px; align-items: center; }
+
         .k2-mobile-menu {
           overflow: hidden;
           max-height: 0;
           opacity: 0;
           transition: max-height 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease;
         }
-        .k2-mobile-menu.open { max-height: 320px; opacity: 1; }
+        .k2-mobile-menu.open { max-height: 70vh; opacity: 1; overflow-y: auto; }
 
         .k2-bento {
           display: grid;
@@ -229,7 +231,7 @@ export default function CareerHub() {
           .k2-hero-title { font-size: 42px !important; }
           .k2-hero-sub { font-size: 15px !important; }
           .k2-stats-row { gap: 28px !important; flex-wrap: wrap; }
-          .k2-hamburger { display: flex !important; }
+          .k2-mobile-actions { display: flex !important; }
           .k2-desktop-actions { display: none !important; }
           .k2-bento {
             grid-template-columns: 1fr !important;
@@ -296,8 +298,7 @@ export default function CareerHub() {
           <nav
             style={{
               position: "sticky", top: 0, zIndex: 50,
-              height: 64, display: "flex", flexDirection: "column",
-              justifyContent: "center",
+              display: "flex", flexDirection: "column", justifyContent: "center",
               padding: "0 clamp(16px, 4vw, 40px)",
               background: "var(--nav-bg)",
               backdropFilter: "blur(16px)",
@@ -325,23 +326,25 @@ export default function CareerHub() {
                 </button>
               </div>
 
-              <span className="k2-hamburger" style={{ display: "none", gap: 8, alignItems: "center" }}>
+              <div className="k2-mobile-actions">
                 <ThemeToggle />
-              </span>
-
-              <button
-                className="k2-hamburger"
-                onClick={() => setMenuOpen((v) => !v)}
-                style={{
-                  display: "none", width: 36, height: 36, alignItems: "center", justifyContent: "center",
-                  background: "var(--surface)", border: "1px solid var(--border-default)", borderRadius: 8, color: "var(--foreground)",
-                }}
-              >
-                {menuOpen ? "✕" : "☰"}
-              </button>
+                <button
+                  onClick={() => setMenuOpen((v) => !v)}
+                  aria-expanded={menuOpen}
+                  aria-controls="k2-main-menu"
+                  aria-label={menuOpen ? "بستن منو" : "باز کردن منو"}
+                  style={{
+                    width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "var(--surface)", border: "1px solid var(--border-default)",
+                    borderRadius: 8, color: "var(--foreground)", cursor: "pointer",
+                  }}
+                >
+                  {menuOpen ? "✕" : "☰"}
+                </button>
+              </div>
             </div>
 
-            <div className={`k2-mobile-menu ${menuOpen ? "open" : ""}`}>
+            <div id="k2-main-menu" className={`k2-mobile-menu ${menuOpen ? "open" : ""}`}>
               <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 0 20px" }}>
                 <a href="#features" className="k2-nav-link" onClick={() => setMenuOpen(false)}>ویژگی‌ها</a>
                 <a href="#how-it-works" className="k2-nav-link" onClick={() => setMenuOpen(false)}>روش کار</a>

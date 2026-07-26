@@ -402,13 +402,15 @@ export default function QuizLanding() {
         .k2-step-row:last-child { border-bottom: none; }
         .k2-step-row:hover { background: rgba(255,255,255,0.02); }
 
+        .k2-mobile-actions { display: none; gap: 8px; align-items: center; }
+
         .k2-mobile-menu {
           overflow: hidden;
           max-height: 0;
           opacity: 0;
           transition: max-height 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease;
         }
-        .k2-mobile-menu.open { max-height: 320px; opacity: 1; }
+        .k2-mobile-menu.open { max-height: 70vh; opacity: 1; overflow-y: auto; }
 
         .k2-hero-grid {
           display: grid;
@@ -504,7 +506,7 @@ export default function QuizLanding() {
 
         @media (max-width: 860px) {
           .k2-nav-links { display: none !important; }
-          .k2-hamburger { display: flex !important; }
+          .k2-mobile-actions { display: flex !important; }
           .k2-desktop-actions { display: none !important; }
           .k2-hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
           .k2-viz-col { order: 2; }
@@ -689,23 +691,25 @@ export default function QuizLanding() {
                 )}
               </div>
 
-              <span className="k2-hamburger" style={{ display: "none", gap: 8, alignItems: "center" }}>
+              <div className="k2-mobile-actions">
                 <ThemeToggle />
-              </span>
-
-              <button
-                className="k2-hamburger"
-                onClick={() => setMenuOpen((v) => !v)}
-                style={{
-                  display: "none", width: 36, height: 36, alignItems: "center", justifyContent: "center",
-                  background: "var(--surface)", border: "1px solid var(--border-default)", borderRadius: 8, color: "var(--foreground)",
-                }}
-              >
-                {menuOpen ? "✕" : "☰"}
-              </button>
+                <button
+                  onClick={() => setMenuOpen((v) => !v)}
+                  aria-expanded={menuOpen}
+                  aria-controls="k2-quiz-menu"
+                  aria-label={menuOpen ? "بستن منو" : "باز کردن منو"}
+                  style={{
+                    width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "var(--surface)", border: "1px solid var(--border-default)",
+                    borderRadius: 8, color: "var(--foreground)", cursor: "pointer",
+                  }}
+                >
+                  {menuOpen ? "✕" : "☰"}
+                </button>
+              </div>
             </div>
 
-            <div className={`k2-mobile-menu ${menuOpen ? "open" : ""}`}>
+            <div id="k2-quiz-menu" className={`k2-mobile-menu ${menuOpen ? "open" : ""}`}>
               <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 0 20px" }}>
                 <Link href="/" className="k2-nav-link" onClick={() => setMenuOpen(false)}>خانه</Link>
                 <a href="#how" className="k2-nav-link" onClick={() => setMenuOpen(false)}>روش کار</a>
