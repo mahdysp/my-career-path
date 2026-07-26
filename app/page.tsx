@@ -380,26 +380,7 @@ export default function CareerHub() {
               </a>
             </div>
 
-            <div
-              className={`k2-stats-row ${mounted ? "k2-fade-4" : ""}`}
-              style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 56, paddingBottom: 72, borderBottom: "1px solid var(--border-default)" }}
-            >
-              {[
-                { num: "2,400+", lbl: "مسیر شغلی" },
-                { num: "94%", lbl: "دقت تحلیل" },
-                { num: "4.9", lbl: "امتیاز کاربران" },
-              ].map((s, i) => (
-                <div key={s.lbl} style={{ display: "flex", alignItems: "center", gap: 56 }}>
-                  <div style={{ textAlign: "center" }}>
-                    <div className="k2-gradient-text" style={{ fontFamily: "var(--font-mono)", fontWeight: 600, fontSize: 30, letterSpacing: "-0.01em" }}>
-                      {s.num}
-                    </div>
-                    <div style={{ fontSize: 12, color: "var(--foreground-muted)", marginTop: 4 }}>{s.lbl}</div>
-                  </div>
-                  {i < 2 && <div style={{ width: 1, height: 36, background: "var(--border-default)" }} />}
-                </div>
-              ))}
-            </div>
+            
           </section>
 
           {/* Features — Bento */}
