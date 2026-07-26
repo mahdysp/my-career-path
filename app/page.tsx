@@ -409,7 +409,7 @@ export default function CareerHub() {
                 ویژگی‌ها
               </span>
               <h2 style={{ fontWeight: 700, fontSize: 34, letterSpacing: "-0.02em", color: "var(--foreground)", marginTop: 8 }}>
-                چه امکاناتی دریافت می‌کنید؟
+                چرا کارکس؟
               </h2>
             </div>
 
