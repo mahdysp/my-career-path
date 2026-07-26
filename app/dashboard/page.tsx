@@ -195,13 +195,36 @@ const styles = `
   }
 
   /* تقویم فعالیت */
-  .k2-heat { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 3px; direction: ltr; }
-  .k2-heat i {
-    width: 11px; height: 11px; border-radius: 3px; display: block;
-    background: rgba(255,255,255,.045);
-    transition: transform .15s ease;
+  /* تقویم فعالیت */
+  .k2-heat-wrap { display: flex; gap: 7px; direction: rtl; }
+  .k2-heat-dows {
+    display: grid; grid-template-rows: repeat(7, 13px); gap: 3px;
+    font-size: 9px; color: var(--foreground-subtle); flex-shrink: 0;
   }
-  .k2-heat i:hover { transform: scale(1.35); }
+  .k2-heat-dows span { line-height: 13px; height: 13px; text-align: left; }
+  .k2-heat-scroll { overflow-x: auto; padding-bottom: 2px; }
+  .k2-heat-months {
+    display: grid; gap: 3px; direction: rtl;
+    font-size: 9.5px; color: var(--foreground-subtle); margin-bottom: 4px; height: 13px;
+  }
+  .k2-heat-months span { white-space: nowrap; line-height: 13px; }
+  .k2-heat {
+    display: grid; grid-template-rows: repeat(7, 13px);
+    grid-auto-flow: column; gap: 3px; direction: rtl;
+  }
+  .k2-heat i {
+    width: 13px; height: 13px; border-radius: 3px; display: block;
+    background: var(--heat-0);
+    box-shadow: inset 0 0 0 1px var(--heat-edge);
+    transition: transform .14s ease, filter .14s ease;
+  }
+  .k2-heat i:hover { transform: scale(1.25); filter: brightness(1.12); }
+  .k2-heat i.is-future { background: transparent; box-shadow: none; }
+  .k2-heat i.is-today { box-shadow: inset 0 0 0 1.4px var(--foreground-muted); }
+  .k2-legend i {
+    width: 11px; height: 11px; border-radius: 2.5px; display: inline-block;
+    box-shadow: inset 0 0 0 1px var(--heat-edge);
+  }
 
   /* اسکلت بارگذاری */
   .k2-skel {
@@ -253,9 +276,38 @@ const EDU_LABEL: Record<string, string> = {
   graduate: "فارغ‌التحصیل",
 };
 
+/** اعداد لاتین → فارسی */
+function toFa(n: number | string) {
+  return String(n).replace(/[0-9]/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]);
+}
+
+/** تاریخ کامل شمسی همراه نام روز — مثل «یکشنبه ۴ مرداد ۱۴۰۵»
+ *  از formatToParts استفاده می‌شود چون خروجی پیش‌فرض fa-IR ترتیب
+ *  نامتعارف «۱۴۰۵ مرداد ۴, یکشنبه» می‌دهد. */
+function faDate(d: Date) {
+  try {
+    const parts = new Intl.DateTimeFormat("fa-IR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).formatToParts(d);
+    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+    return `${get("weekday")} ${get("day")} ${get("month")} ${get("year")}`;
+  } catch {
+    return d.toLocaleDateString("fa-IR");
+  }
+}
+
 function fmtDate(iso: string) {
   try {
-    return new Date(iso).toLocaleDateString("fa-IR", { year: "numeric", month: "long", day: "numeric" });
+    const parts = new Intl.DateTimeFormat("fa-IR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).formatToParts(new Date(iso));
+    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+    return `${get("day")} ${get("month")} ${get("year")}`;
   } catch {
     return iso;
   }
@@ -392,27 +444,62 @@ export default function DashboardPage() {
     return [...map.entries()].sort((x, y) => y[1] - x[1]).slice(0, 6).map(([t]) => t);
   }, [attempts]);
 
-  /* ── تقویم فعالیت: ۱۷ هفته اخیر ── */
+  /* ── تقویم فعالیت ──
+     نکته‌ها:
+     • کلید روز به وقت محلی ساخته می‌شود؛ toISOString() چون UTC است در ایران
+       (UTC+3:30) فعالیت‌های بعدازظهر را به روز بعد منتقل می‌کرد.
+     • هفته از «شنبه» شروع می‌شود (تقویم ایرانی)، نه یکشنبه.                       */
   const heat = useMemo(() => {
-    const WEEKS = 17;
-    const days = WEEKS * 7;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const dayKey = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    // شنبه = ۰ … جمعه = ۶
+    const persianDow = (d: Date) => (d.getDay() + 1) % 7;
 
     const counts = new Map<string, number>();
     for (const a of attempts) {
-      const d = new Date(a.created_at);
-      d.setHours(0, 0, 0, 0);
-      const k = d.toISOString().slice(0, 10);
-      counts.set(k, (counts.get(k) ?? 0) + 1);
+      counts.set(dayKey(new Date(a.created_at)), (counts.get(dayKey(new Date(a.created_at))) ?? 0) + 1);
     }
 
-    return Array.from({ length: days }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() - (days - 1 - i));
-      const k = d.toISOString().slice(0, 10);
-      return { key: k, date: d, n: counts.get(k) ?? 0 };
-    });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // آخرین ستون کامل شود: تا پایان همین هفته جلو می‌رویم
+    const end = new Date(today);
+    end.setDate(end.getDate() + (6 - persianDow(today)));
+
+    const WEEKS = 18;
+    const start = new Date(end);
+    start.setDate(start.getDate() - (WEEKS * 7 - 1));
+
+    const cells: { key: string; date: Date; n: number; future: boolean; isToday: boolean }[] = [];
+    for (let i = 0; i < WEEKS * 7; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      cells.push({
+        key: dayKey(d),
+        date: d,
+        n: counts.get(dayKey(d)) ?? 0,
+        future: d.getTime() > today.getTime(),
+        isToday: d.getTime() === today.getTime(),
+      });
+    }
+
+    // برچسب ماه شمسی بالای هر ستونی که ماه در آن عوض می‌شود
+    const monthOf = (d: Date) =>
+      new Intl.DateTimeFormat("fa-IR", { month: "long" }).format(d);
+    const months: { col: number; label: string }[] = [];
+    for (let w = 0; w < WEEKS; w++) {
+      const first = cells[w * 7];
+      const label = monthOf(first.date);
+      if (w === 0 || label !== months[months.length - 1]?.label) {
+        months.push({ col: w, label });
+      }
+    }
+
+    const total = attempts.length;
+    const activeDays = [...counts.values()].filter(Boolean).length;
+
+    return { cells, months, weeks: WEEKS, total, activeDays };
   }, [attempts]);
 
   const uniqueFields = useMemo(
@@ -746,32 +833,63 @@ export default function DashboardPage() {
 
                 {/* تقویم فعالیت */}
                 <div className="k2-card k2-f3" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
-                  <span className="k2-sec-label">۴ ماه اخیر</span>
-                  <h2 className="k2-sec-title" style={{ marginBottom: 14 }}>فعالیت شما</h2>
-                  <div style={{ overflowX: "auto", paddingBottom: 4 }}>
-                    <div className="k2-heat">
-                      {heat.map((d) => (
-                        <i
-                          key={d.key}
-                          title={`${fmtDate(d.date.toISOString())}${d.n ? ` — ${d.n} آزمون` : ""}`}
-                          style={
-                            d.n
-                              ? {
-                                  background: d.n >= 3 ? "#a855f7" : d.n === 2 ? "#6872d9" : "#5e6ad2",
-                                  boxShadow: "0 0 8px rgba(94,106,210,.5)",
-                                }
-                              : undefined
-                          }
-                        />
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
+                    <div>
+                      <span className="k2-sec-label">۱۸ هفته اخیر</span>
+                      <h2 className="k2-sec-title">فعالیت شما</h2>
+                    </div>
+                    {heat.total > 0 && (
+                      <span className="k2-chip" style={{ flexShrink: 0 }}>
+                        {toFa(heat.total)} آزمون در {toFa(heat.activeDays)} روز
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="k2-heat-wrap">
+                    {/* روزهای هفته — شنبه بالا */}
+                    <div className="k2-heat-dows" aria-hidden="true">
+                      {["ش", "", "د", "", "چ", "", "ج"].map((d, i) => (
+                        <span key={i}>{d}</span>
                       ))}
                     </div>
+
+                    <div className="k2-heat-scroll">
+                      {/* برچسب ماه‌های شمسی */}
+                      <div
+                        className="k2-heat-months"
+                        style={{ gridTemplateColumns: `repeat(${heat.weeks}, 13px)` }}
+                        aria-hidden="true"
+                      >
+                        {heat.months.map((m) => (
+                          <span key={`${m.col}-${m.label}`} style={{ gridColumn: `${m.col + 1} / span 4` }}>
+                            {m.label}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="k2-heat" role="img" aria-label={`تقویم فعالیت: ${heat.total} آزمون در ${heat.activeDays} روز`}>
+                        {heat.cells.map((d) => (
+                          <i
+                            key={d.key}
+                            className={d.future ? "is-future" : d.isToday ? "is-today" : undefined}
+                            title={d.future ? undefined : `${faDate(d.date)}${d.n ? ` — ${toFa(d.n)} آزمون` : " — بدون فعالیت"}`}
+                            style={d.n ? { background: `var(--heat-${Math.min(d.n, 4)})` } : undefined}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 5, marginTop: 10, fontSize: 10.5, color: "var(--foreground-subtle)" }}>
+
+                  <div
+                    className="k2-legend"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 5, marginTop: 12, fontSize: 10.5, color: "var(--foreground-subtle)" }}
+                  >
                     <span>کمتر</span>
-                    <i style={{ width: 9, height: 9, borderRadius: 2.5, background: "rgba(255,255,255,.045)" }} />
-                    <i style={{ width: 9, height: 9, borderRadius: 2.5, background: "#5e6ad2" }} />
-                    <i style={{ width: 9, height: 9, borderRadius: 2.5, background: "#6872d9" }} />
-                    <i style={{ width: 9, height: 9, borderRadius: 2.5, background: "#a855f7" }} />
+                    <i style={{ background: "var(--heat-0)" }} />
+                    <i style={{ background: "var(--heat-1)" }} />
+                    <i style={{ background: "var(--heat-2)" }} />
+                    <i style={{ background: "var(--heat-3)" }} />
+                    <i style={{ background: "var(--heat-4)" }} />
                     <span>بیشتر</span>
                   </div>
                 </div>

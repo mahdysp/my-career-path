@@ -55,6 +55,14 @@
   --warning: #fbbf24;
   --heading-gradient: linear-gradient(to bottom, #ffffff, rgba(255, 255, 255, 0.72));
 
+  /* تقویم فعالیت */
+  --heat-0: rgba(255, 255, 255, 0.05);
+  --heat-1: #313a7a;
+  --heat-2: #4650b0;
+  --heat-3: #6b6ee0;
+  --heat-4: #c084fc;
+  --heat-edge: rgba(255, 255, 255, 0.06);
+
   --font-sans: var(--font-vazirmatn), Vazirmatn, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", var(--font-vazirmatn),
     Vazirmatn, monospace;
@@ -112,6 +120,14 @@
   --danger: #dc2626;
   --warning: #b45309;
   --heading-gradient: linear-gradient(to bottom, #0e1018, #3a4059);
+
+  /* تقویم فعالیت — جدول در حالت روز باید دیده شود */
+  --heat-0: #e6e9f5;
+  --heat-1: #c3c9ee;
+  --heat-2: #8f97dd;
+  --heat-3: #5f68c9;
+  --heat-4: #3f2a9e;
+  --heat-edge: rgba(16, 20, 40, 0.13);
 
   --background: var(--background-base);
   --foreground-token: var(--foreground);
