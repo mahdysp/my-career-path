@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/route-error";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { setSessionCookies } from "@/lib/auth-cookies";
 import { supabase } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
@@ -58,20 +59,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    response.cookies.set("sb-access-token", data.session.access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: data.session.expires_in,
-    });
-
-    response.cookies.set("sb-refresh-token", data.session.refresh_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 روز
+    setSessionCookies(response, {
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+      expires_in: data.session.expires_in,
     });
 
     return response;

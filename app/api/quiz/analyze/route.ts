@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/route-error";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getSession } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { createClient } from "@supabase/supabase-js";
 
 export async function POST(req: NextRequest) {
   try {
@@ -122,41 +122,35 @@ ${qaText}
       );
     }
 
-    // ذخیره در quiz_attempts اگر کاربر لاگین است
-    const accessToken = req.cookies.get("sb-access-token")?.value;
-    let attemptId = null;
+    // ذخیره در quiz_attempts — نشست در صورت نیاز تازه می‌شود تا نتیجه‌ی
+    // تحلیل‌شده به‌خاطر انقضای توکن از دست نرود.
+    let attemptId: string | null = null;
+    let applyCookies: (r: NextResponse) => NextResponse = (r) => r;
 
-    if (accessToken) {
-      try {
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          { global: { headers: { Authorization: `Bearer ${accessToken}` } } }
-        );
+    try {
+      const session = await getSession(req);
+      applyCookies = session.applyCookies;
 
-        const { data: userData } = await supabase.auth.getUser(accessToken);
+      if (session.user) {
+        const { data: attempt } = await supabaseAdmin
+          .from("quiz_attempts")
+          .insert({
+            user_id: session.user.id,
+            query,
+            answers,
+            result_summary: result.summary,
+            result_data: result,
+          })
+          .select("id")
+          .single();
 
-        if (userData.user) {
-          const { data: attempt } = await supabaseAdmin
-            .from("quiz_attempts")
-            .insert({
-              user_id: userData.user.id,
-              query,
-              answers,
-              result_summary: result.summary,
-              result_data: result,
-            })
-            .select("id")
-            .single();
-
-          attemptId = attempt?.id || null;
-        }
-      } catch (e) {
-        console.error("DB save error:", e);
+        attemptId = attempt?.id || null;
       }
+    } catch (e) {
+      console.error("DB save error:", e);
     }
 
-    return NextResponse.json({ result, attemptId });
+    return applyCookies(NextResponse.json({ result, attemptId }));
   } catch (err) {
     return handleRouteError(err);
   }

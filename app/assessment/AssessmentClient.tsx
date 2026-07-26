@@ -235,8 +235,10 @@ export default function AssessmentClient() {
 
   /* ── دریافت سوالات ── */
   useEffect(() => {
-    if (!query) {
-      router.push("/quiz");
+    // بدون انتخاب حوزه نمی‌توان سوال ساخت. قبلاً فقط router.push صدا زده
+    // می‌شد و چون phase در حالت loading می‌ماند، کاربر اسپینر بی‌پایان می‌دید.
+    if (!query.trim()) {
+      setError("ابتدا حوزه‌ی تخصصی خود را انتخاب کنید.");
       return;
     }
 

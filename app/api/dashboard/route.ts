@@ -1,57 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { requirePublicConfig } from "@/lib/supabase-env";
+import { getSession } from "@/lib/session";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    const accessToken = req.cookies.get("sb-access-token")?.value;
+    const { user, supabase, applyCookies } = await getSession(req);
 
-    if (!accessToken) {
-      return NextResponse.json({ user: null, attempts: [] }, { status: 200 });
+    if (!user || !supabase) {
+      return applyCookies(NextResponse.json({ user: null, attempts: [] }, { status: 200 }));
     }
 
-    const { url, anonKey } = requirePublicConfig();
-
-    const supabase = createClient(url, anonKey, {
-      global: { headers: { Authorization: `Bearer ${accessToken}` } },
-    });
-
-    const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
-
-    if (userError || !userData.user) {
-      return NextResponse.json({ user: null, attempts: [] }, { status: 200 });
-    }
-
-    // گرفتن پروفایل
     const { data: profile } = await supabase
       .from("profiles")
       .select("first_name, last_name, education, email, created_at")
-      .eq("id", userData.user.id)
+      .eq("id", user.id)
       .maybeSingle();
 
-    // گرفتن لیست آزمون‌ها (جدیدترین اول)
-    // نکته: result_data هم برگردانده می‌شود تا داشبورد بتواند تحلیل تجمیعی نشان دهد.
+    // result_data هم برمی‌گردد تا داشبورد تحلیل تجمیعی نشان دهد
     const { data: attempts, error: attemptsError } = await supabase
       .from("quiz_attempts")
       .select("id, created_at, query, result_summary, result_data")
-      .eq("user_id", userData.user.id)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (attemptsError) {
       console.error("Attempts fetch error:", attemptsError);
     }
 
-    return NextResponse.json({
-      user: {
-        id: userData.user.id,
-        email: userData.user.email,
-        firstName: profile?.first_name || "",
-        lastName: profile?.last_name || "",
-        education: profile?.education || "",
-        memberSince: profile?.created_at || userData.user.created_at || null,
-      },
-      attempts: attempts || [],
-    });
+    return applyCookies(
+      NextResponse.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: profile?.first_name || "",
+          lastName: profile?.last_name || "",
+          education: profile?.education || "",
+          memberSince: profile?.created_at || user.created_at || null,
+        },
+        attempts: attempts || [],
+      })
+    );
   } catch (err) {
     console.error(err);
     return NextResponse.json({ user: null, attempts: [] }, { status: 200 });

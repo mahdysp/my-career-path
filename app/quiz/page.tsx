@@ -27,6 +27,8 @@ export default function QuizLanding() {
 
   // مودال اخطار ورود
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingTarget, setPendingTarget] = useState("/assessment");
+  const [searchError, setSearchError] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -53,15 +55,25 @@ export default function QuizLanding() {
   };
 
   const handleSearch = () => {
+    const q = searchQuery.trim();
+
+    // بدون حوزه، آزمون معنا ندارد
+    if (!q) {
+      setSearchError("لطفاً حوزه‌ی تخصصی خود را وارد یا انتخاب کنید.");
+      return;
+    }
+    setSearchError("");
+
+    const target = `/assessment?q=${encodeURIComponent(q)}`;
+
+    // مهمان: مودال را نشان بده و مقصد را نگه دار تا بعد از ورود برگردد
     if (!user) {
+      setPendingTarget(target);
       setShowAuthModal(true);
       return;
     }
-    if (searchQuery.trim()) {
-      router.push(`/assessment?q=${encodeURIComponent(searchQuery)}`);
-    } else {
-      router.push("/assessment");
-    }
+
+    router.push(target);
   };
 
   const handleSpotlight = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -587,7 +599,7 @@ export default function QuizLanding() {
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <button
                   className="k2-btn k2-btn-primary"
-                  onClick={() => router.push("/auth")}
+                  onClick={() => router.push(`/auth?next=${encodeURIComponent(pendingTarget)}`)}
                   style={{ fontSize: 14.5, height: 44, width: "100%" }}
                 >
                   ورود به حساب کاربری
@@ -751,7 +763,7 @@ export default function QuizLanding() {
                       type="text"
                       placeholder="جستجوی حوزه تخصصی..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => { setSearchQuery(e.target.value); if (searchError) setSearchError(""); }}
                       onFocus={() => setInputFocused(true)}
                       onBlur={() => setInputFocused(false)}
                       onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -765,6 +777,22 @@ export default function QuizLanding() {
                     </button>
                   </div>
 
+                  {searchError && (
+                    <div
+                      role="alert"
+                      style={{
+                        display: "flex", alignItems: "center", gap: 7, marginTop: 10,
+                        fontSize: 12.5, color: "var(--danger)",
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M12 7.5v5.5M12 16.2v.3" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                      </svg>
+                      {searchError}
+                    </div>
+                  )}
+
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 16, alignItems: "center" }}>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--foreground-subtle)", marginLeft: 4 }}>
                       پیشنهادی
@@ -773,7 +801,7 @@ export default function QuizLanding() {
                       <button
                         key={tag}
                         className={`k2-tag ${searchQuery === tag ? "active" : ""}`}
-                        onClick={() => setSearchQuery(tag)}
+                        onClick={() => { setSearchQuery(tag); setSearchError(""); }}
                       >
                         {tag}
                       </button>
