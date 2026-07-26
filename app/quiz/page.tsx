@@ -4,6 +4,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  ONET_PROFILES,
+  RIASEC_AXES,
+  hollandCode,
+  matchProfile,
+  scoreVector,
+} from "@/lib/onet-profiles";
 
 export default function QuizLanding() {
   const router = useRouter();
@@ -64,123 +71,64 @@ export default function QuizLanding() {
 
   const tags = ["برنامه‌نویسی", "طراحی UI/UX", "بازاریابی", "داده‌کاوی", "مدیریت محصول"];
 
-  /* ── پروفایل شایستگی نمونه برای هر حوزه (پیش‌نمای زنده) ── */
-  const profiles = useMemo(
-    () => ({
-      "برنامه‌نویسی": {
-        role: "توسعه‌دهنده نرم‌افزار",
-        match: 92,
-        axes: [
-          { label: "حل مسئله", v: 0.92 },
-          { label: "منطق و الگوریتم", v: 0.86 },
-          { label: "یادگیری ابزار", v: 0.78 },
-          { label: "کار تیمی", v: 0.62 },
-          { label: "دقت و جزئیات", v: 0.83 },
-          { label: "خلاقیت", v: 0.58 },
-        ],
-      },
-      "طراحی UI/UX": {
-        role: "طراح تجربه کاربری",
-        match: 88,
-        axes: [
-          { label: "حل مسئله", v: 0.7 },
-          { label: "منطق و الگوریتم", v: 0.48 },
-          { label: "یادگیری ابزار", v: 0.75 },
-          { label: "کار تیمی", v: 0.82 },
-          { label: "دقت و جزئیات", v: 0.9 },
-          { label: "خلاقیت", v: 0.95 },
-        ],
-      },
-      "بازاریابی": {
-        role: "متخصص بازاریابی دیجیتال",
-        match: 84,
-        axes: [
-          { label: "حل مسئله", v: 0.66 },
-          { label: "منطق و الگوریتم", v: 0.55 },
-          { label: "یادگیری ابزار", v: 0.7 },
-          { label: "کار تیمی", v: 0.9 },
-          { label: "دقت و جزئیات", v: 0.6 },
-          { label: "خلاقیت", v: 0.88 },
-        ],
-      },
-      "داده‌کاوی": {
-        role: "تحلیل‌گر داده",
-        match: 90,
-        axes: [
-          { label: "حل مسئله", v: 0.88 },
-          { label: "منطق و الگوریتم", v: 0.95 },
-          { label: "یادگیری ابزار", v: 0.8 },
-          { label: "کار تیمی", v: 0.55 },
-          { label: "دقت و جزئیات", v: 0.92 },
-          { label: "خلاقیت", v: 0.5 },
-        ],
-      },
-      "مدیریت محصول": {
-        role: "مدیر محصول",
-        match: 86,
-        axes: [
-          { label: "حل مسئله", v: 0.85 },
-          { label: "منطق و الگوریتم", v: 0.6 },
-          { label: "یادگیری ابزار", v: 0.65 },
-          { label: "کار تیمی", v: 0.95 },
-          { label: "دقت و جزئیات", v: 0.72 },
-          { label: "خلاقیت", v: 0.8 },
-        ],
-      },
-    }),
-    []
-  );
+  /* ───────── پیش‌نمای زنده پروفایل علاقه شغلی (داده واقعی O*NET) ───────── */
 
-  const profileKeys = useMemo(() => Object.keys(profiles) as (keyof typeof profiles)[], [profiles]);
-
-  // اگر کاربر چیزی تایپ نکرده، بین حوزه‌ها می‌چرخد؛ به‌محض تایپ، روی همان حوزه قفل می‌شود.
+  // اگر کاربر چیزی تایپ نکرده، بین مشاغل می‌چرخد؛ به‌محض تایپ روی همان شغل قفل می‌شود.
   const [cycleIndex, setCycleIndex] = useState(0);
-  const matchedKey = useMemo(() => {
-    const q = searchQuery.trim();
-    if (!q) return null;
-    return profileKeys.find((k) => k.includes(q) || q.includes(k)) ?? null;
-  }, [searchQuery, profileKeys]);
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  const matched = useMemo(() => matchProfile(searchQuery), [searchQuery]);
+  const isCustom = !!searchQuery.trim() && !matched;
 
   useEffect(() => {
-    if (searchQuery.trim()) return;
-    const id = setInterval(() => setCycleIndex((i) => (i + 1) % profileKeys.length), 3200);
+    if (matched) return;
+    const id = setInterval(() => setCycleIndex((i) => (i + 1) % ONET_PROFILES.length), 3600);
     return () => clearInterval(id);
-  }, [searchQuery, profileKeys.length]);
+  }, [matched]);
 
-  const activeKey = matchedKey ?? profileKeys[cycleIndex];
-  const active = profiles[activeKey];
-  const isCustom = !!searchQuery.trim() && !matchedKey;
+  const active = matched ?? ONET_PROFILES[cycleIndex];
+  const target = useMemo(() => scoreVector(active), [active]);
+  const code = useMemo(() => hollandCode(active), [active]);
 
-  // انیمیشن نرم بین پروفایل‌ها
-  const [shape, setShape] = useState(active.axes.map((a) => a.v));
-  const shapeRef = useRef(shape);
+  // مورف نرم بین پروفایل‌ها
+  const [shape, setShape] = useState<number[]>(target);
+  const shapeRef = useRef<number[]>(target);
   const rafRef = useRef(0);
 
   useEffect(() => {
-    const target = active.axes.map((a) => a.v);
     cancelAnimationFrame(rafRef.current);
     const step = () => {
       const cur = shapeRef.current;
-      const next = cur.map((v, i) => v + (target[i] - v) * 0.12);
-      const done = next.every((v, i) => Math.abs(target[i] - v) < 0.002);
+      const next = cur.map((v, i) => v + (target[i] - v) * 0.11);
+      const done = next.every((v, i) => Math.abs(target[i] - v) < 0.25);
       shapeRef.current = done ? target : next;
       setShape(shapeRef.current);
       if (!done) rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [active]);
+  }, [target]);
 
-  // هندسه‌ی نمودار رادار
-  const R = 96;
+  // هندسه نمودار رادار
+  const R = 84;
   const CX = 150;
-  const CY = 148;
-  const axisPoint = (i: number, r: number) => {
-    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / active.axes.length;
-    return [CX + Math.cos(angle) * r, CY + Math.sin(angle) * r] as const;
-  };
-  const polygon = (values: number[], scale = 1) =>
-    values.map((v, i) => axisPoint(i, R * v * scale).join(",")).join(" ");
+  const CY = 138;
+  const N = RIASEC_AXES.length;
+  const axisPoint = useCallback(
+    (i: number, r: number) => {
+      const angle = -Math.PI / 2 + (i * 2 * Math.PI) / N;
+      return [CX + Math.cos(angle) * r, CY + Math.sin(angle) * r] as const;
+    },
+    [N]
+  );
+  const polygon = useCallback(
+    (values: number[]) => values.map((v, i) => axisPoint(i, (R * v) / 100).join(",")).join(" "),
+    [axisPoint]
+  );
+
+  const fmtWage = (n: number) => `$${Math.round(n / 1000)}K`;
+  const fmtCount = (n: number) =>
+    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${Math.round(n / 1000)}K`;
 
   const stats = [
     { num: "۲۴۰۰+", lbl: "مسیر شغلی" },
@@ -474,19 +422,72 @@ export default function QuizLanding() {
 
         .k2-swap { animation: k2Swap 0.35s cubic-bezier(0.16,1,0.3,1) both; }
 
-        .k2-meter {
-          height: 6px;
-          border-radius: 100px;
-          background: rgba(255,255,255,0.06);
-          overflow: hidden;
+        .k2-holland {
+          display: flex;
+          gap: 4px;
         }
-        .k2-meter-fill {
-          height: 100%;
-          border-radius: 100px;
-          background: linear-gradient(90deg, #5e6ad2, #a855f7);
-          box-shadow: 0 0 12px rgba(94,106,210,0.5);
-          transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+        .k2-holland span {
+          width: 22px; height: 22px;
+          display: flex; align-items: center; justify-content: center;
+          font-family: var(--font-mono);
+          font-size: 11px;
+          color: var(--foreground);
+          background: rgba(94,106,210,0.16);
+          border: 1px solid var(--border-accent);
+          border-radius: 6px;
         }
+        .k2-holland span:first-child {
+          background: rgba(94,106,210,0.34);
+          box-shadow: 0 0 10px rgba(94,106,210,0.3);
+        }
+
+        .k2-axis-hint {
+          min-height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          font-size: 11.5px;
+          line-height: 1.7;
+          color: var(--foreground-muted);
+          padding: 0 4px;
+          margin-top: 2px;
+        }
+
+        .k2-stat-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+          padding: 13px 0 12px;
+          margin-top: 4px;
+          border-top: 1px solid var(--border-default);
+          border-bottom: 1px solid var(--border-default);
+          text-align: center;
+        }
+        .k2-stat-num {
+          font-family: var(--font-mono);
+          font-size: 15px;
+          color: var(--foreground);
+        }
+        .k2-stat-lbl {
+          font-size: 10.5px;
+          color: var(--foreground-subtle);
+          margin-top: 4px;
+        }
+
+        .k2-source {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 11px;
+          font-size: 10.5px;
+          line-height: 1.6;
+          color: var(--foreground-subtle);
+          text-decoration: none;
+          transition: color 0.2s ease;
+        }
+        .k2-source:hover { color: var(--foreground-muted); }
+        .k2-source b { font-weight: 600; }
 
         @media (max-width: 860px) {
           .k2-nav-links { display: none !important; }
@@ -789,88 +790,193 @@ export default function QuizLanding() {
                 </div>
               </div>
 
-              {/* ستون تصویری — پیش‌نمای زنده پروفایل شایستگی */}
+              {/* ستون تصویری — پروفایل علاقه شغلی بر پایه داده واقعی O*NET */}
               <div className={`k2-viz-col ${mounted ? "k2-fade-4" : ""}`} style={{ display: "flex", justifyContent: "center" }}>
-                <div className="k2-card" onMouseMove={handleSpotlight} style={{ width: "100%", maxWidth: 420, padding: 22 }}>
-                  {/* سربرگ کارت */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span className="k2-live-label">
-                      <span className="k2-live-dot" />
-                      پیش‌نمای نتیجه
-                    </span>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--foreground-subtle)", letterSpacing: "0.06em" }}>
-                      نمونه
-                    </span>
+                <div className="k2-card" onMouseMove={handleSpotlight} style={{ width: "100%", maxWidth: 430, padding: "20px 20px 18px" }}>
+
+                  {/* سربرگ */}
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                    <div style={{ textAlign: "right", minWidth: 0 }}>
+                      <span className="k2-live-label">
+                        <span className="k2-live-dot" />
+                        پروفایل علاقه شغلی
+                      </span>
+                      <div key={active.code} className="k2-swap" style={{ marginTop: 7 }}>
+                        <div style={{ fontWeight: 700, fontSize: 16.5, color: "var(--foreground)", letterSpacing: "-0.01em" }}>
+                          {isCustom ? searchQuery.trim() : active.role}
+                        </div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--foreground-subtle)", marginTop: 3, direction: "ltr", textAlign: "right" }}>
+                          {active.englishTitle}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* کد هالند */}
+                    <div key={`${active.code}-hc`} className="k2-swap" style={{ textAlign: "center", flexShrink: 0 }}>
+                      <div className="k2-holland">
+                        {code.map((a) => (
+                          <span key={a.key}>{a.key}</span>
+                        ))}
+                      </div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--foreground-subtle)", marginTop: 5, letterSpacing: "0.05em" }}>
+                        کد هالند
+                      </div>
+                    </div>
                   </div>
 
-                  <div style={{ minHeight: 52, textAlign: "right", marginBottom: 4 }}>
-                    <div key={activeKey} className="k2-swap" style={{ fontSize: 12.5, color: "var(--foreground-muted)" }}>
-                      {isCustom ? "حوزه دلخواه شما" : activeKey}
-                    </div>
-                    <div key={`${activeKey}-r`} className="k2-swap" style={{ fontWeight: 700, fontSize: 17, color: "var(--foreground)", letterSpacing: "-0.01em", marginTop: 2 }}>
-                      {isCustom ? searchQuery.trim() : active.role}
-                    </div>
-                  </div>
-
-                  {/* نمودار رادار شایستگی */}
-                  <svg viewBox="0 0 300 300" style={{ width: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg">
+                  {/* نمودار رادار RIASEC */}
+                  <svg
+                    viewBox="-8 0 316 262"
+                    style={{ width: "100%", display: "block", marginTop: 4, overflow: "visible" }}
+                    xmlns="http://www.w3.org/2000/svg"
+                    role="img"
+                    aria-label={`نمودار شش‌ضلعی علاقه شغلی برای ${active.role}`}
+                  >
                     <defs>
                       <radialGradient id="k2Fill" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor="#5e6ad2" stopOpacity="0.42" />
-                        <stop offset="100%" stopColor="#a855f7" stopOpacity="0.14" />
+                        <stop offset="0%" stopColor="#5e6ad2" stopOpacity="0.45" />
+                        <stop offset="70%" stopColor="#7c6ad2" stopOpacity="0.24" />
+                        <stop offset="100%" stopColor="#a855f7" stopOpacity="0.1" />
                       </radialGradient>
+                      <filter id="k2Glow" x="-40%" y="-40%" width="180%" height="180%">
+                        <feGaussianBlur stdDeviation="4" result="b" />
+                        <feMerge>
+                          <feMergeNode in="b" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
                     </defs>
 
-                    {/* حلقه‌های راهنما */}
-                    {[0.25, 0.5, 0.75, 1].map((k) => (
+                    {/* حلقه‌های راهنما ۲۵/۵۰/۷۵/۱۰۰ */}
+                    {[25, 50, 75, 100].map((k) => (
                       <polygon
                         key={k}
-                        points={polygon(active.axes.map(() => 1), k)}
+                        points={polygon(RIASEC_AXES.map(() => k))}
                         fill="none"
-                        stroke="rgba(255,255,255,0.055)"
+                        stroke="rgba(255,255,255,0.06)"
                         strokeWidth="1"
                       />
                     ))}
+                    <text x={CX + 3} y={CY - R + 3} fill="#4b4f57" fontSize="8" fontFamily="JetBrains Mono, monospace">100</text>
+                    <text x={CX + 3} y={CY - R / 2 + 3} fill="#4b4f57" fontSize="8" fontFamily="JetBrains Mono, monospace">50</text>
 
-                    {/* محورها + برچسب‌ها */}
-                    {active.axes.map((a, i) => {
+                    {/* محورها و برچسب‌ها */}
+                    {RIASEC_AXES.map((a, i) => {
                       const [x, y] = axisPoint(i, R);
-                      const [lx, ly] = axisPoint(i, R + 26);
+                      const [lx, ly] = axisPoint(i, R + 24);
+                      const isTop = code[0].key === a.key;
+                      const isHot = hovered === i;
+                      const anchor = Math.abs(lx - CX) < 8 ? "middle" : lx > CX ? "start" : "end";
                       return (
-                        <g key={a.label}>
-                          <line x1={CX} y1={CY} x2={x} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                        <g
+                          key={a.key}
+                          onMouseEnter={() => setHovered(i)}
+                          onMouseLeave={() => setHovered(null)}
+                          style={{ cursor: "default" }}
+                        >
+                          <line x1={CX} y1={CY} x2={x} y2={y} stroke="rgba(255,255,255,0.055)" strokeWidth="1" />
+                          {/* ناحیه بزرگ‌تر برای hover */}
+                          <circle cx={lx} cy={ly - 4} r="22" fill="transparent" />
                           <text
-                            x={lx} y={ly + 4}
-                            textAnchor={Math.abs(lx - CX) < 6 ? "middle" : lx > CX ? "start" : "end"}
-                            fill="#8a8f98" fontSize="10.5" fontFamily="var(--font-sans)"
+                            x={lx} y={ly}
+                            textAnchor={anchor}
+                            fill={isHot || isTop ? "#ededef" : "#8a8f98"}
+                            fontSize="10.5"
+                            fontWeight={isTop ? 700 : 400}
+                            style={{ transition: "fill 0.2s ease" }}
                           >
                             {a.label}
+                          </text>
+                          <text
+                            x={lx} y={ly + 12}
+                            textAnchor={anchor}
+                            fill={isHot ? "#5e6ad2" : "#5a5e66"}
+                            fontSize="9"
+                            fontFamily="JetBrains Mono, monospace"
+                            style={{ transition: "fill 0.2s ease" }}
+                          >
+                            {active.scores[a.key]}
                           </text>
                         </g>
                       );
                     })}
 
-                    {/* شکل شایستگی (متحرک) */}
-                    <polygon points={polygon(shape)} fill="url(#k2Fill)" stroke="#5e6ad2" strokeWidth="1.8" strokeLinejoin="round" />
+                    {/* چندضلعی داده (متحرک) */}
+                    <polygon
+                      points={polygon(shape)}
+                      fill="url(#k2Fill)"
+                      stroke="#6872d9"
+                      strokeWidth="1.9"
+                      strokeLinejoin="round"
+                      filter="url(#k2Glow)"
+                    />
+
+                    {/* رئوس */}
                     {shape.map((v, i) => {
-                      const [x, y] = axisPoint(i, R * v);
-                      return <circle key={i} cx={x} cy={y} r="3.2" fill="#08080b" stroke="#5e6ad2" strokeWidth="1.5" />;
+                      const [x, y] = axisPoint(i, (R * v) / 100);
+                      const isHot = hovered === i;
+                      return (
+                        <circle
+                          key={i}
+                          cx={x} cy={y}
+                          r={isHot ? 5 : 3.3}
+                          fill="#08080b"
+                          stroke={isHot ? "#a855f7" : "#5e6ad2"}
+                          strokeWidth="1.7"
+                          style={{ transition: "r 0.18s ease, stroke 0.18s ease" }}
+                        />
+                      );
                     })}
-                    <circle cx={CX} cy={CY} r="2" fill="rgba(255,255,255,0.18)" />
+                    <circle cx={CX} cy={CY} r="1.8" fill="rgba(255,255,255,0.2)" />
                   </svg>
 
-                  {/* میزان تطابق */}
-                  <div style={{ marginTop: 6, paddingTop: 16, borderTop: "1px solid var(--border-default)" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 9 }}>
-                      <span style={{ fontSize: 12.5, color: "var(--foreground-muted)" }}>میزان تطابق با این مسیر</span>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--accent)" }}>
-                        ٪{active.match}
+                  {/* توضیح محور زیر نشانگر */}
+                  <div className="k2-axis-hint">
+                    {hovered !== null ? (
+                      <span key={hovered} className="k2-swap">
+                        <b style={{ color: "var(--foreground)" }}>{RIASEC_AXES[hovered].label}</b>
+                        {" — "}
+                        {RIASEC_AXES[hovered].hint}
                       </span>
+                    ) : (
+                      <span style={{ color: "var(--foreground-subtle)" }}>
+                        نشانگر را روی هر محور ببرید
+                      </span>
+                    )}
+                  </div>
+
+                  {/* آمار واقعی بازار کار */}
+                  <div key={`${active.code}-st`} className="k2-swap k2-stat-grid">
+                    <div>
+                      <div className="k2-stat-num">{fmtWage(active.medianWage)}</div>
+                      <div className="k2-stat-lbl">میانه درآمد سالانه</div>
                     </div>
-                    <div className="k2-meter">
-                      <div className="k2-meter-fill" style={{ width: `${active.match}%` }} />
+                    <div>
+                      <div className="k2-stat-num">{fmtCount(active.employment)}</div>
+                      <div className="k2-stat-lbl">شاغل فعلی</div>
+                    </div>
+                    <div>
+                      <div className="k2-stat-num" style={{ color: "#4ade80" }}>+{fmtCount(active.openings)}</div>
+                      <div className="k2-stat-lbl">فرصت تا ۲۰۳۴</div>
                     </div>
                   </div>
+
+                  {/* منبع */}
+                  <a
+                    href={active.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="k2-source"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+                      <path d="M12 11v5M12 7.6v.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                    <span>
+                      داده‌ها از <b>O*NET</b> — پایگاه مشاغل وزارت کار آمریکا
+                      <span style={{ fontFamily: "var(--font-mono)", opacity: 0.75 }}> · {active.code}</span>
+                    </span>
+                  </a>
                 </div>
               </div>
             </div>
