@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PasswordLamp from "@/app/components/PasswordLamp";
 import { passwordLampStyles } from "@/app/components/passwordLampStyles";
+import ThemeToggle from "@/app/components/ThemeToggle";
 
 type EmailStatus = "idle" | "checking" | "valid" | "invalid" | "exists";
 
@@ -222,8 +223,8 @@ export default function RegisterPage() {
           position: absolute;
           inset: 0;
           background-image:
-            linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+            linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
           background-size: 64px 64px;
           pointer-events: none;
           mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
@@ -232,14 +233,14 @@ export default function RegisterPage() {
         .k2-noise {
           position: fixed;
           inset: 0;
-          opacity: 0.02;
+          opacity: var(--noise-opacity);
           pointer-events: none;
           z-index: 1;
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
         .k2-gradient-text {
-          background: linear-gradient(to bottom, #ffffff, rgba(255,255,255,0.72));
+          background: var(--heading-gradient);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
@@ -247,7 +248,7 @@ export default function RegisterPage() {
 
         .k2-card {
           position: relative;
-          background: linear-gradient(to bottom, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+          background: var(--card-gradient);
           border: 1px solid var(--border-default);
           border-radius: 16px;
           box-shadow:
@@ -298,7 +299,7 @@ export default function RegisterPage() {
         .k2-input-wrap.focused {
           border-color: var(--border-accent);
           background: rgba(255,255,255,0.055);
-          box-shadow: 0 0 0 3px rgba(94,106,210,0.12);
+          box-shadow: 0 0 0 3px var(--blob-3);
         }
         .k2-input-wrap.ok      { border-color: rgba(74,222,128,0.42); }
         .k2-input-wrap.bad     { border-color: rgba(248,113,113,0.45); }
@@ -318,14 +319,14 @@ export default function RegisterPage() {
           font-size: 14px;
           padding: 12px 0;
         }
-        .k2-input-wrap input::placeholder { color: #55585f; }
+        .k2-input-wrap input::placeholder { color: var(--placeholder); }
         .k2-input-wrap select {
           appearance: none;
           -webkit-appearance: none;
           cursor: pointer;
           padding-left: 34px;
         }
-        .k2-input-wrap select option { background: #0d0d12; color: var(--foreground); }
+        .k2-input-wrap select option { background: var(--option-bg); color: var(--foreground); }
         .k2-select-caret {
           position: absolute;
           left: 13px;
@@ -459,7 +460,7 @@ export default function RegisterPage() {
           minHeight: "100vh",
           width: "100%",
           background:
-            "radial-gradient(ellipse 1200px 800px at 50% -10%, #0e0e16 0%, #050506 55%, #020203 100%)",
+            "var(--page-gradient)",
           fontFamily: "var(--font-sans)",
           overflow: "hidden",
           display: "flex",
@@ -510,12 +511,15 @@ export default function RegisterPage() {
             >
               Karex
             </Link>
-            <Link href="/" className="k2-back">
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <ThemeToggle />
+              <Link href="/" className="k2-back">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
                 <path d="M14 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              بازگشت به خانه
-            </Link>
+                بازگشت به خانه
+              </Link>
+            </div>
           </nav>
 
           {/* Card */}
@@ -669,7 +673,7 @@ export default function RegisterPage() {
                             onFocus={() => setFocused("education")}
                             onBlur={() => setFocused(null)}
                             onChange={(e) => setFormData({ ...formData, education: e.target.value })}
-                            style={{ color: formData.education ? "var(--foreground)" : "#55585f" }}
+                            style={{ color: formData.education ? "var(--foreground)" : "var(--placeholder)" }}
                           >
                             <option value="">انتخاب کنید…</option>
                             <option value="student">دانش‌آموز</option>

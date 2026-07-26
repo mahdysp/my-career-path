@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Vazirmatn, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { themeInitScript } from "./components/ThemeToggle";
 
 const vazirmatn = Vazirmatn({
   variable: "--font-vazirmatn",
@@ -30,8 +31,12 @@ export default function RootLayout({
     <html
       lang="fa"
       dir="rtl"
+      suppressHydrationWarning
       className={`${vazirmatn.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

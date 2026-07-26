@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "@/app/components/ThemeToggle";
 import {
   ONET_PROFILES,
   RIASEC_AXES,
@@ -246,8 +247,8 @@ export default function QuizLanding() {
           position: absolute;
           inset: 0;
           background-image:
-            linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+            linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
           background-size: 64px 64px;
           pointer-events: none;
           mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
@@ -256,14 +257,14 @@ export default function QuizLanding() {
         .k2-noise {
           position: fixed;
           inset: 0;
-          opacity: 0.02;
+          opacity: var(--noise-opacity);
           pointer-events: none;
           z-index: 1;
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
         .k2-gradient-text {
-          background: linear-gradient(to bottom, #ffffff, rgba(255,255,255,0.72));
+          background: var(--heading-gradient);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
@@ -271,7 +272,7 @@ export default function QuizLanding() {
 
         .k2-card {
           position: relative;
-          background: linear-gradient(to bottom, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+          background: var(--card-gradient);
           border: 1px solid var(--border-default);
           border-radius: 16px;
           overflow: hidden;
@@ -299,7 +300,7 @@ export default function QuizLanding() {
           box-shadow:
             0 0 0 1px rgba(255,255,255,0.08),
             0 12px 40px rgba(0,0,0,0.5),
-            0 0 60px rgba(94,106,210,0.12);
+            0 0 60px var(--blob-3);
         }
 
         .k2-icon-box {
@@ -344,7 +345,7 @@ export default function QuizLanding() {
         .k2-search.focused {
           border-color: var(--border-accent);
           background: rgba(255,255,255,0.055);
-          box-shadow: 0 0 0 3px rgba(94,106,210,0.12);
+          box-shadow: 0 0 0 3px var(--blob-3);
         }
         .k2-search input {
           flex: 1;
@@ -510,7 +511,7 @@ export default function QuizLanding() {
           minHeight: "100vh",
           width: "100%",
           background:
-            "radial-gradient(ellipse 1200px 800px at 50% -10%, #0e0e16 0%, #050506 55%, #020203 100%)",
+            "var(--page-gradient)",
           fontFamily: "var(--font-sans)",
           overflow: "hidden",
         }}
@@ -520,7 +521,7 @@ export default function QuizLanding() {
           style={{
             position: "absolute", top: "-200px", left: "50%", transform: "translateX(-50%)",
             width: 1100, height: 700, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(94,106,210,0.28), transparent 70%)",
+            background: "radial-gradient(circle, var(--blob-1), transparent 70%)",
             filter: "blur(140px)", pointerEvents: "none", animation: "k2Float1 9s ease-in-out infinite",
           }}
         />
@@ -528,7 +529,7 @@ export default function QuizLanding() {
           style={{
             position: "absolute", top: "20%", left: "-200px",
             width: 600, height: 800, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(168,85,247,0.14), transparent 70%)",
+            background: "radial-gradient(circle, var(--blob-2), transparent 70%)",
             filter: "blur(120px)", pointerEvents: "none", animation: "k2Float2 10s ease-in-out infinite",
           }}
         />
@@ -536,7 +537,7 @@ export default function QuizLanding() {
           style={{
             position: "absolute", top: "35%", right: "-160px",
             width: 500, height: 700, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(94,106,210,0.12), transparent 70%)",
+            background: "radial-gradient(circle, var(--blob-3), transparent 70%)",
             filter: "blur(100px)", pointerEvents: "none", animation: "k2Float3 8s ease-in-out infinite",
           }}
         />
@@ -549,7 +550,7 @@ export default function QuizLanding() {
             onClick={() => setShowAuthModal(false)}
             style={{
               position: "fixed", inset: 0, zIndex: 100,
-              background: "rgba(2,2,3,0.72)",
+              background: "var(--overlay)",
               backdropFilter: "blur(8px)",
               WebkitBackdropFilter: "blur(8px)",
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -565,7 +566,7 @@ export default function QuizLanding() {
                 width: "100%", maxWidth: 400, textAlign: "right",
                 padding: "32px 30px",
                 animation: "k2ModalIn 0.28s cubic-bezier(0.16,1,0.3,1) both",
-                background: "linear-gradient(to bottom, #101017, #08080b)",
+                background: "var(--card-solid)",
               }}
             >
               <div className="k2-icon-box" style={{ marginBottom: 18 }}>
@@ -617,7 +618,7 @@ export default function QuizLanding() {
               position: "sticky", top: 0, zIndex: 50,
               display: "flex", flexDirection: "column", justifyContent: "center",
               padding: "0 clamp(16px, 4vw, 40px)",
-              background: "rgba(5,5,6,0.7)",
+              background: "var(--nav-bg)",
               backdropFilter: "blur(16px)",
               WebkitBackdropFilter: "blur(16px)",
               borderBottom: "1px solid var(--border-default)",
@@ -637,6 +638,7 @@ export default function QuizLanding() {
               </div>
 
               <div className="k2-desktop-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <ThemeToggle />
                 {userLoading ? (
                   <div style={{ width: 132, height: 38, borderRadius: 8, background: "var(--surface)" }} />
                 ) : user ? (
@@ -662,6 +664,10 @@ export default function QuizLanding() {
                   </>
                 )}
               </div>
+
+              <span className="k2-hamburger" style={{ display: "none", gap: 8, alignItems: "center" }}>
+                <ThemeToggle />
+              </span>
 
               <button
                 className="k2-hamburger"
@@ -857,8 +863,8 @@ export default function QuizLanding() {
                         strokeWidth="1"
                       />
                     ))}
-                    <text x={CX + 3} y={CY - R + 3} fill="#4b4f57" fontSize="8" fontFamily="JetBrains Mono, monospace">100</text>
-                    <text x={CX + 3} y={CY - R / 2 + 3} fill="#4b4f57" fontSize="8" fontFamily="JetBrains Mono, monospace">50</text>
+                    <text x={CX + 3} y={CY - R + 3} fill="var(--foreground-subtle)" fontSize="8" fontFamily="JetBrains Mono, monospace">100</text>
+                    <text x={CX + 3} y={CY - R / 2 + 3} fill="var(--foreground-subtle)" fontSize="8" fontFamily="JetBrains Mono, monospace">50</text>
 
                     {/* محورها و برچسب‌ها */}
                     {RIASEC_AXES.map((a, i) => {
@@ -880,7 +886,7 @@ export default function QuizLanding() {
                           <text
                             x={lx} y={ly}
                             textAnchor={anchor}
-                            fill={isHot || isTop ? "#ededef" : "#8a8f98"}
+                            fill={isHot || isTop ? "var(--foreground)" : "var(--foreground-muted)"}
                             fontSize="10.5"
                             fontWeight={isTop ? 700 : 400}
                             style={{ transition: "fill 0.2s ease" }}
@@ -890,7 +896,7 @@ export default function QuizLanding() {
                           <text
                             x={lx} y={ly + 12}
                             textAnchor={anchor}
-                            fill={isHot ? "#5e6ad2" : "#5a5e66"}
+                            fill={isHot ? "#5e6ad2" : "var(--foreground-subtle)"}
                             fontSize="9"
                             fontFamily="JetBrains Mono, monospace"
                             style={{ transition: "fill 0.2s ease" }}
@@ -920,7 +926,7 @@ export default function QuizLanding() {
                           key={i}
                           cx={x} cy={y}
                           r={isHot ? 5 : 3.3}
-                          fill="#08080b"
+                          fill="var(--node-fill)"
                           stroke={isHot ? "#a855f7" : "#5e6ad2"}
                           strokeWidth="1.7"
                           style={{ transition: "r 0.18s ease, stroke 0.18s ease" }}

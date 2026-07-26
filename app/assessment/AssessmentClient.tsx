@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import ThemeToggle from "@/app/components/ThemeToggle";
 
 type MultipleChoiceQuestion = {
   id: number;
@@ -43,17 +44,17 @@ const styles = `
     .k2-grid-overlay {
       position: absolute; inset: 0; pointer-events: none;
       background-image:
-        linear-gradient(to right, rgba(255,255,255,.025) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255,255,255,.025) 1px, transparent 1px);
+        linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
       background-size: 64px 64px;
       mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
     }
     .k2-noise {
-      position: fixed; inset: 0; opacity: .02; pointer-events: none; z-index: 1;
+      position: fixed; inset: 0; opacity: var(--noise-opacity); pointer-events: none; z-index: 1;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
     .k2-gradient-text {
-      background: linear-gradient(to bottom,#fff,rgba(255,255,255,.72));
+      background: var(--heading-gradient);
       -webkit-background-clip: text; background-clip: text; color: transparent;
     }
 
@@ -82,13 +83,13 @@ const styles = `
 
     .k2-card {
       position: relative;
-      background: linear-gradient(to bottom, rgba(255,255,255,.07), rgba(255,255,255,.015));
+      background: var(--card-gradient);
       border: 1px solid var(--border-default); border-radius: 16px;
-      box-shadow: 0 0 0 1px rgba(255,255,255,.03), 0 2px 20px rgba(0,0,0,.4), 0 0 40px rgba(0,0,0,.15);
+      box-shadow: var(--card-shadow);
     }
 
     /* ── نوار پیشرفت ── */
-    .k2-rail { height: 2px; background: rgba(255,255,255,.06); position: relative; overflow: hidden; }
+    .k2-rail { height: 2px; background: var(--track); position: relative; overflow: hidden; }
     .k2-rail > i {
       position: absolute; inset: 0 auto 0 0; display: block; height: 100%;
       background: linear-gradient(90deg,#5e6ad2,#a855f7);
@@ -114,7 +115,7 @@ const styles = `
       border-radius: 12px; padding: 15px 16px; cursor: pointer;
       transition: all .18s cubic-bezier(.16,1,.3,1);
     }
-    .k2-opt:hover { background: rgba(255,255,255,.055); border-color: var(--border-hover); transform: translateX(-3px); }
+    .k2-opt:hover { background: var(--input-bg-focus); border-color: var(--border-hover); transform: translateX(-3px); }
     .k2-opt.on {
       background: rgba(94,106,210,.14); border-color: var(--border-accent);
       box-shadow: 0 0 0 3px rgba(94,106,210,.1);
@@ -140,7 +141,7 @@ const styles = `
       transition: all .18s cubic-bezier(.16,1,.3,1);
       display: flex; align-items: center; justify-content: center;
     }
-    .k2-scale button:hover { background: rgba(255,255,255,.06); color: var(--foreground); transform: translateY(-3px); }
+    .k2-scale button:hover { background: var(--track); color: var(--foreground); transform: translateY(-3px); }
     .k2-scale button.on {
       background: var(--accent); border-color: var(--accent); color: #fff;
       box-shadow: 0 0 0 3px rgba(94,106,210,.14), 0 6px 18px rgba(94,106,210,.35);
@@ -185,7 +186,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       minHeight: "100vh",
       width: "100%",
       background:
-        "radial-gradient(ellipse 1200px 800px at 50% -10%, #0e0e16 0%, #050506 55%, #020203 100%)",
+        "var(--page-gradient)",
       fontFamily: "var(--font-sans)",
       overflow: "hidden",
     }}
@@ -194,7 +195,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       style={{
         position: "absolute", top: "-240px", left: "50%", transform: "translateX(-50%)",
         width: 1100, height: 700, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(94,106,210,.24), transparent 70%)",
+        background: "radial-gradient(circle, var(--blob-1), transparent 70%)",
         filter: "blur(140px)", pointerEvents: "none", animation: "k2Float1 9s ease-in-out infinite",
       }}
     />
@@ -202,7 +203,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       style={{
         position: "absolute", top: "35%", left: "-220px",
         width: 600, height: 800, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(168,85,247,.12), transparent 70%)",
+        background: "radial-gradient(circle, var(--blob-2), transparent 70%)",
         filter: "blur(120px)", pointerEvents: "none", animation: "k2Float2 10s ease-in-out infinite",
       }}
     />
@@ -463,7 +464,7 @@ export default function AssessmentClient() {
             onClick={() => setConfirmExit(false)}
             style={{
               position: "fixed", inset: 0, zIndex: 100,
-              background: "rgba(2,2,3,.72)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+              background: "var(--overlay)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
               display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
               animation: "k2Overlay .2s ease both",
             }}
@@ -473,7 +474,7 @@ export default function AssessmentClient() {
               onClick={(e) => e.stopPropagation()}
               style={{
                 width: "100%", maxWidth: 380, padding: "28px 26px", textAlign: "right",
-                background: "linear-gradient(to bottom,#101017,#08080b)",
+                background: "var(--card-solid)",
                 animation: "k2ModalIn .28s cubic-bezier(.16,1,.3,1) both",
               }}
             >
@@ -505,7 +506,7 @@ export default function AssessmentClient() {
         <nav
           style={{
             position: "sticky", top: 0, zIndex: 50,
-            background: "rgba(5,5,6,.72)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+            background: "var(--nav-bg)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
             borderBottom: "1px solid var(--border-default)",
           }}
         >
@@ -536,7 +537,9 @@ export default function AssessmentClient() {
               ))}
             </div>
 
-            <div className="k2-nav-meta" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <ThemeToggle />
+              <div className="k2-nav-meta" style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--foreground-subtle)" }}>
                 {fmtTime(elapsed)}
               </span>
@@ -551,6 +554,7 @@ export default function AssessmentClient() {
               >
                 {query}
               </span>
+              </div>
             </div>
           </div>
 

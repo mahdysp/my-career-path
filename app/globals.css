@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
-:root {
+/* ─────────────────────────────────────────────
+   تم تیره (پیش‌فرض)
+   ───────────────────────────────────────────── */
+:root,
+:root[data-theme="dark"] {
   --background-deep: #020203;
   --background-base: #050506;
   --background-elevated: #0a0a0c;
@@ -16,11 +20,102 @@
   --border-hover: rgba(255, 255, 255, 0.1);
   --border-accent: rgba(94, 106, 210, 0.3);
 
+  /* توکن‌های ترکیبی — برای اینکه صفحات رنگ ثابت ننویسند */
+  --page-gradient: radial-gradient(
+    ellipse 1200px 800px at 50% -10%,
+    #0e0e16 0%,
+    #050506 55%,
+    #020203 100%
+  );
+  --nav-bg: rgba(5, 5, 6, 0.72);
+  --card-solid: linear-gradient(to bottom, #101017, #08080b);
+  --card-gradient: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.07),
+    rgba(255, 255, 255, 0.015)
+  );
+  --card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 2px 20px rgba(0, 0, 0, 0.4),
+    0 0 40px rgba(0, 0, 0, 0.15);
+  --card-shadow-hover: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 60px rgba(94, 106, 210, 0.12);
+  --input-bg: rgba(255, 255, 255, 0.04);
+  --input-bg-focus: rgba(255, 255, 255, 0.055);
+  --option-bg: #0d0d12;
+  --node-fill: #08080b;
+  --placeholder: #55585f;
+  --overlay: rgba(2, 2, 3, 0.72);
+  --grid-line: rgba(255, 255, 255, 0.025);
+  --track: rgba(255, 255, 255, 0.06);
+  --noise-opacity: 0.02;
+  --blob-1: rgba(94, 106, 210, 0.26);
+  --blob-2: rgba(168, 85, 247, 0.13);
+  --blob-3: rgba(94, 106, 210, 0.11);
+  --success: #4ade80;
+  --danger: #fca5a5;
+  --warning: #fbbf24;
+  --heading-gradient: linear-gradient(to bottom, #ffffff, rgba(255, 255, 255, 0.72));
+
   --font-sans: var(--font-vazirmatn), Vazirmatn, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", var(--font-vazirmatn),
+    Vazirmatn, monospace;
 
   --background: var(--background-base);
   --foreground-token: var(--foreground);
+  color-scheme: dark;
+}
+
+/* ─────────────────────────────────────────────
+   تم روشن — الهام‌گرفته از نور روز
+   ───────────────────────────────────────────── */
+:root[data-theme="light"] {
+  --background-deep: #eef1f7;
+  --background-base: #f7f8fc;
+  --background-elevated: #ffffff;
+  --surface: rgba(16, 20, 40, 0.04);
+  --surface-hover: rgba(16, 20, 40, 0.07);
+  --foreground: #16181f;
+  --foreground-muted: #5a6072;
+  --foreground-subtle: rgba(22, 24, 31, 0.55);
+  --accent: #4d58c4;
+  --accent-bright: #3f4ab8;
+  --accent-glow: rgba(77, 88, 196, 0.22);
+  --border-default: rgba(16, 20, 40, 0.1);
+  --border-hover: rgba(16, 20, 40, 0.18);
+  --border-accent: rgba(77, 88, 196, 0.38);
+
+  --page-gradient: radial-gradient(
+    ellipse 1200px 800px at 50% -10%,
+    #ffffff 0%,
+    #f4f6fd 45%,
+    #e9edf8 100%
+  );
+  --nav-bg: rgba(255, 255, 255, 0.78);
+  --card-solid: linear-gradient(to bottom, #ffffff, #f7f8fc);
+  --card-gradient: linear-gradient(to bottom, #ffffff, rgba(255, 255, 255, 0.72));
+  --card-shadow: 0 0 0 1px rgba(16, 20, 40, 0.03), 0 2px 14px rgba(30, 40, 90, 0.07),
+    0 0 34px rgba(30, 40, 90, 0.04);
+  --card-shadow-hover: 0 0 0 1px rgba(16, 20, 40, 0.06), 0 12px 32px rgba(30, 40, 90, 0.13),
+    0 0 48px rgba(77, 88, 196, 0.1);
+  --input-bg: rgba(16, 20, 40, 0.035);
+  --input-bg-focus: #ffffff;
+  --option-bg: #ffffff;
+  --node-fill: #ffffff;
+  --placeholder: #9aa0b4;
+  --overlay: rgba(28, 32, 52, 0.42);
+  --grid-line: rgba(16, 20, 40, 0.045);
+  --track: rgba(16, 20, 40, 0.09);
+  --noise-opacity: 0.014;
+  --blob-1: rgba(120, 132, 240, 0.2);
+  --blob-2: rgba(190, 140, 255, 0.15);
+  --blob-3: rgba(255, 196, 120, 0.16);
+  --success: #15803d;
+  --danger: #dc2626;
+  --warning: #b45309;
+  --heading-gradient: linear-gradient(to bottom, #0e1018, #3a4059);
+
+  --background: var(--background-base);
+  --foreground-token: var(--foreground);
+  color-scheme: light;
 }
 
 @theme inline {
@@ -42,13 +137,26 @@ body {
   font-family: var(--font-sans);
 }
 
+svg text {
+  font-family: var(--font-sans);
+}
+
+/* تغییر نرم بین دو تم */
+html.k2-theming,
+html.k2-theming *,
+html.k2-theming *::before,
+html.k2-theming *::after {
+  transition: background-color 0.28s ease, border-color 0.28s ease, color 0.28s ease,
+    fill 0.28s ease, stroke 0.28s ease, box-shadow 0.28s ease !important;
+}
+
 a {
   color: inherit;
 }
 
 ::selection {
   background: var(--accent-glow);
-  color: #fff;
+  color: var(--foreground);
 }
 
 :focus-visible {
@@ -57,4 +165,53 @@ a {
     0 0 0 2px var(--background-base),
     0 0 0 4px var(--accent);
   border-radius: 8px;
+}
+
+/* ─────────────────────────────────────────────
+   دکمه تغییر تم — در همه صفحات مشترک
+   ───────────────────────────────────────────── */
+.k2-theme-toggle {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border-default);
+  color: var(--foreground-muted);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.k2-theme-toggle:hover {
+  background: var(--surface-hover);
+  color: var(--foreground);
+  border-color: var(--border-hover);
+}
+.k2-theme-toggle svg {
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  transition: opacity 0.3s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* در تم تیره: ماه دیده می‌شود */
+.k2-theme-toggle .k2-sun {
+  opacity: 0;
+  transform: rotate(-70deg) scale(0.5);
+}
+.k2-theme-toggle .k2-moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+/* در تم روشن: خورشید دیده می‌شود */
+:root[data-theme="light"] .k2-theme-toggle .k2-sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+:root[data-theme="light"] .k2-theme-toggle .k2-moon {
+  opacity: 0;
+  transform: rotate(70deg) scale(0.5);
 }

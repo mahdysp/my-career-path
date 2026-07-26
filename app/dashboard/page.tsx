@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RIASEC_AXES, matchProfile } from "@/lib/onet-profiles";
+import ThemeToggle from "@/app/components/ThemeToggle";
 
 /* ─────────────────────────── انواع ─────────────────────────── */
 
@@ -65,17 +66,17 @@ const styles = `
   .k2-grid-overlay {
     position: absolute; inset: 0; pointer-events: none;
     background-image:
-      linear-gradient(to right, rgba(255,255,255,.025) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255,255,255,.025) 1px, transparent 1px);
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
     background-size: 64px 64px;
     mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
   }
   .k2-noise {
-    position: fixed; inset: 0; opacity: .02; pointer-events: none; z-index: 1;
+    position: fixed; inset: 0; opacity: var(--noise-opacity); pointer-events: none; z-index: 1;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   .k2-gradient-text {
-    background: linear-gradient(to bottom,#fff,rgba(255,255,255,.72));
+    background: var(--heading-gradient);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
 
@@ -104,9 +105,9 @@ const styles = `
 
   .k2-card {
     position: relative;
-    background: linear-gradient(to bottom, rgba(255,255,255,.07), rgba(255,255,255,.015));
+    background: var(--card-gradient);
     border: 1px solid var(--border-default); border-radius: 16px;
-    box-shadow: 0 0 0 1px rgba(255,255,255,.03), 0 2px 20px rgba(0,0,0,.4), 0 0 40px rgba(0,0,0,.15);
+    box-shadow: var(--card-shadow);
     overflow: hidden;
   }
   .k2-card::before {
@@ -132,9 +133,24 @@ const styles = `
   /* چیدمان */
   .k2-shell { max-width: 1180px; margin: 0 auto; padding: 0 clamp(16px,4vw,36px); }
   .k2-grid {
-    display: grid; grid-template-columns: 1.35fr .9fr; gap: 18px; align-items: start;
+    display: grid; grid-template-columns: minmax(0,1.3fr) minmax(300px,.85fr);
+    gap: 18px; align-items: start;
   }
   .k2-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  .k2-stats > * { min-width: 0; }
+  .k2-grid > * { min-width: 0; }
+
+  /* DNA: نمودار با عرض ثابت، نوارها بقیه فضا — بدون کِش آمدن */
+  .k2-dna {
+    display: grid; grid-template-columns: 210px minmax(0,1fr);
+    gap: 20px; align-items: center; margin-top: 14px;
+  }
+  .k2-dna-chart { width: 210px; height: 186px; overflow: visible; }
+  .k2-dna-bars { min-width: 0; }
+  @media (max-width: 560px) {
+    .k2-dna { grid-template-columns: 1fr; justify-items: center; }
+    .k2-dna-bars { width: 100%; }
+  }
 
   .k2-stat {
     padding: 16px 18px; text-align: right;
@@ -170,7 +186,7 @@ const styles = `
   }
 
   /* نوار افقی */
-  .k2-bar { height: 6px; border-radius: 100px; background: rgba(255,255,255,.06); overflow: hidden; }
+  .k2-bar { height: 6px; border-radius: 100px; background: var(--track); overflow: hidden; }
   .k2-bar > i {
     display: block; height: 100%; border-radius: 100px;
     background: linear-gradient(90deg,#5e6ad2,#a855f7);
@@ -194,17 +210,17 @@ const styles = `
   }
 
   .k2-input {
-    width: 100%; background: rgba(255,255,255,.04); border: 1px solid var(--border-default);
+    width: 100%; background: var(--input-bg); border: 1px solid var(--border-default);
     border-radius: 10px; padding: 11px 13px; color: var(--foreground);
     font-family: var(--font-sans); font-size: 14px; outline: none;
     transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
   }
   .k2-input:focus {
-    border-color: var(--border-accent); background: rgba(255,255,255,.055);
+    border-color: var(--border-accent); background: var(--input-bg-focus);
     box-shadow: 0 0 0 3px rgba(94,106,210,.12);
   }
   select.k2-input { appearance: none; -webkit-appearance: none; cursor: pointer; }
-  select.k2-input option { background: #0d0d12; color: var(--foreground); }
+  select.k2-input option { background: var(--option-bg); color: var(--foreground); }
 
   .k2-alert {
     display: flex; align-items: flex-start; gap: 9px; text-align: right;
@@ -224,6 +240,7 @@ const styles = `
   @media (max-width: 940px) {
     .k2-grid { grid-template-columns: 1fr !important; }
     .k2-stats { grid-template-columns: repeat(2,1fr) !important; }
+    .k2-dna { grid-template-columns: 210px minmax(0,1fr); }
     .k2-nav-hide { display: none !important; }
   }
 `;
@@ -454,7 +471,7 @@ export default function DashboardPage() {
           style={{
             position: "absolute", top: "-260px", left: "50%", transform: "translateX(-50%)",
             width: 1100, height: 700, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(94,106,210,.24), transparent 70%)",
+            background: "radial-gradient(circle, var(--blob-1), transparent 70%)",
             filter: "blur(140px)", pointerEvents: "none", animation: "k2Float1 9s ease-in-out infinite",
           }}
         />
@@ -462,7 +479,7 @@ export default function DashboardPage() {
           style={{
             position: "absolute", top: "40%", left: "-240px",
             width: 620, height: 800, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(168,85,247,.11), transparent 70%)",
+            background: "radial-gradient(circle, var(--blob-2), transparent 70%)",
             filter: "blur(120px)", pointerEvents: "none", animation: "k2Float2 11s ease-in-out infinite",
           }}
         />
@@ -474,7 +491,7 @@ export default function DashboardPage() {
           <nav
             style={{
               position: "sticky", top: 0, zIndex: 50,
-              background: "rgba(5,5,6,.72)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+              background: "var(--nav-bg)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
               borderBottom: "1px solid var(--border-default)",
             }}
           >
@@ -490,6 +507,7 @@ export default function DashboardPage() {
               </Link>
 
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <ThemeToggle />
                 <button className="k2-btn k2-btn-primary" onClick={() => router.push("/quiz")} style={{ fontSize: 13.5, height: 36, padding: "0 16px" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                     <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -535,10 +553,10 @@ export default function DashboardPage() {
                 { num: attempts.length, lbl: "آزمون انجام‌شده" },
                 { num: uniqueFields, lbl: "حوزه بررسی‌شده" },
                 { num: bestMatch ? `٪${bestMatch}` : "—", lbl: "بالاترین تطابق" },
-                { num: attempts.length ? relTime(attempts[0].created_at) : "—", lbl: "آخرین فعالیت" },
+                { num: attempts.length ? fmtDate(attempts[0].created_at) : "—", lbl: "آخرین فعالیت", small: true },
               ].map((s) => (
                 <div key={s.lbl} className="k2-card k2-stat" onMouseMove={spotlight}>
-                  <div className="k2-stat-num">{s.num}</div>
+                  <div className="k2-stat-num" style={s.small ? { fontSize: 15, lineHeight: 1.9 } : undefined}>{s.num}</div>
                   <div className="k2-stat-lbl">{s.lbl}</div>
                 </div>
               ))}
@@ -562,8 +580,8 @@ export default function DashboardPage() {
                   </div>
 
                   {dna ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
-                      <svg viewBox="-8 0 244 210" style={{ width: 220, flexShrink: 0, overflow: "visible" }}>
+                    <div className="k2-dna">
+                      <svg viewBox="-8 0 244 210" className="k2-dna-chart">
                         <defs>
                           <radialGradient id="dnaFill" cx="50%" cy="50%" r="50%">
                             <stop offset="0%" stopColor="#5e6ad2" stopOpacity=".45" />
@@ -584,7 +602,7 @@ export default function DashboardPage() {
                               <text
                                 x={lx} y={ly}
                                 textAnchor={Math.abs(lx - CX) < 8 ? "middle" : lx > CX ? "start" : "end"}
-                                fill={hot ? "#ededef" : "#8a8f98"} fontSize="10"
+                                fill={hot ? "var(--foreground)" : "var(--foreground-muted)"} fontSize="10"
                                 style={{ transition: "fill .2s ease" }}
                               >
                                 {ax.label}
@@ -595,11 +613,11 @@ export default function DashboardPage() {
                         <polygon points={poly(dna)} fill="url(#dnaFill)" stroke="#6872d9" strokeWidth="1.9" strokeLinejoin="round" />
                         {dna.map((v, i) => {
                           const [x, y] = axisPt(i, (R * v) / 100);
-                          return <circle key={i} cx={x} cy={y} r={hoverAxis === i ? 4.6 : 3} fill="#08080b" stroke={hoverAxis === i ? "#a855f7" : "#5e6ad2"} strokeWidth="1.6" style={{ transition: "all .18s ease" }} />;
+                          return <circle key={i} cx={x} cy={y} r={hoverAxis === i ? 4.6 : 3} fill="var(--node-fill)" stroke={hoverAxis === i ? "#a855f7" : "#5e6ad2"} strokeWidth="1.6" style={{ transition: "all .18s ease" }} />;
                         })}
                       </svg>
 
-                      <div style={{ flex: 1, minWidth: 190 }}>
+                      <div className="k2-dna-bars">
                         {RIASEC_AXES.map((ax, i) => (
                           <div
                             key={ax.key}
@@ -885,7 +903,7 @@ const shellStyle: React.CSSProperties = {
   position: "relative",
   minHeight: "100vh",
   width: "100%",
-  background: "radial-gradient(ellipse 1200px 800px at 50% -10%, #0e0e16 0%, #050506 55%, #020203 100%)",
+  background: "var(--page-gradient)",
   fontFamily: "var(--font-sans)",
   overflow: "hidden",
 };
