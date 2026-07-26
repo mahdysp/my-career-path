@@ -1,52 +1,62 @@
 @import "tailwindcss";
-@import url('https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Genesis palette */
-  --color-primary: #6366F1;
-  --color-primary-hover: #4F46E5;
-  --color-secondary: #20970B;
-  --color-neutral: #9C9C9C;
-  --color-bg: #FAFAFA;
-  --color-surface: #FFFFFF;
-  --color-text-primary: #0A0A0A;
-  --color-text-secondary: #6B6B6B;
-  --color-border: #E8E8EC;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
+  --background-deep: #020203;
+  --background-base: #050506;
+  --background-elevated: #0a0a0c;
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --foreground: #ededef;
+  --foreground-muted: #8a8f98;
+  --foreground-subtle: rgba(255, 255, 255, 0.6);
+  --accent: #5e6ad2;
+  --accent-bright: #6872d9;
+  --accent-glow: rgba(94, 106, 210, 0.3);
+  --border-default: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.1);
+  --border-accent: rgba(94, 106, 210, 0.3);
 
-  --font-display: 'General Sans', 'Vazirmatn', system-ui, sans-serif;
-  --font-body: 'DM Sans', 'Vazirmatn', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: "Vazirmatn", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
-  --background: var(--color-bg);
-  --foreground: var(--color-text-primary);
+  --background: var(--background-base);
+  --foreground-token: var(--foreground);
 }
 
 @theme inline {
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-foreground: var(--foreground-token);
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
-  background: var(--color-bg);
-  color: var(--color-text-primary);
-  font-family: var(--font-body);
+  background: var(--background-base);
+  color: var(--foreground);
+}
+
+body {
+  font-family: var(--font-sans);
 }
 
 a {
   color: inherit;
 }
 
+::selection {
+  background: var(--accent-glow);
+  color: #fff;
+}
+
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-  border-radius: 6px;
+  box-shadow:
+    0 0 0 2px var(--background-base),
+    0 0 0 4px var(--accent);
+  border-radius: 8px;
 }
