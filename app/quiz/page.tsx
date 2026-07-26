@@ -1,29 +1,42 @@
 // مسیر فایل: app/quiz/page.tsx
 "use client";
-import { useEffect, useRef, useState } from "react";
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export default function CareerHub() {
+export default function QuizLanding() {
   const router = useRouter();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const animRef = useRef<number>(0);
+
+  const [mounted, setMounted] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [inputFocused, setInputFocused] = useState(false);
 
   // وضعیت کاربر لاگین‌شده
   const [user, setUser] = useState<{ id: string; email: string; firstName: string; lastName: string } | null>(null);
   const [userLoading, setUserLoading] = useState(true);
 
-  // ── جدید: وضعیت مودال اخطار ──
+  // مودال اخطار ورود
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    router.prefetch("/assessment");
+
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => setUser(data.user))
       .catch(() => setUser(null))
       .finally(() => setUserLoading(false));
-  }, []);
+  }, [router]);
+
+  useEffect(() => {
+    if (!showAuthModal) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setShowAuthModal(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showAuthModal]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -31,140 +44,6 @@ export default function CareerHub() {
     router.refresh();
   };
 
-  useEffect(() => {
-    const cv = canvasRef.current;
-    const wrap = wrapRef.current;
-    if (!cv || !wrap) return;
-    const ctx = cv.getContext("2d");
-    if (!ctx) return;
-
-    function resize() {
-      if (!cv || !wrap) return;
-      cv.width = wrap.offsetWidth;
-      cv.height = wrap.offsetHeight;
-    }
-    resize();
-    window.addEventListener("resize", resize);
-
-    const STAR_COUNT = 140;
-    const PARTICLE_COUNT = 45;
-
-    const stars = Array.from({ length: STAR_COUNT }, () => ({
-      x: Math.random() * cv.width,
-      y: Math.random() * cv.height,
-      r: Math.random() * 1.2 + 0.2,
-      a: Math.random(),
-      speed: Math.random() * 0.008 + 0.002,
-      phase: Math.random() * Math.PI * 2,
-    }));
-
-    type Particle = {
-      x: number; y: number; vx: number; vy: number;
-      r: number; color: string; a: number; life: number; maxLife: number;
-    };
-
-    function makeParticle(): Particle {
-      const colors = [
-        "rgba(59,130,246,",
-        "rgba(16,185,129,",
-        "rgba(245,158,11,",
-        "rgba(99,102,241,",
-      ];
-      const c = colors[Math.floor(Math.random() * colors.length)];
-      return {
-        x: Math.random() * cv!.width,
-        y: Math.random() * cv!.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        r: Math.random() * 2 + 1,
-        color: c,
-        a: Math.random() * 0.6 + 0.2,
-        life: 0,
-        maxLife: Math.random() * 300 + 200,
-      };
-    }
-
-    let particles: Particle[] = Array.from({ length: PARTICLE_COUNT }, makeParticle);
-    let t = 0;
-
-    function draw() {
-      if (!cv || !ctx) return;
-      t++;
-      ctx.clearRect(0, 0, cv.width, cv.height);
-
-      const g1 = ctx.createRadialGradient(cv.width * 0.15, cv.height * 0.4, 0, cv.width * 0.15, cv.height * 0.4, cv.width * 0.5);
-      g1.addColorStop(0, "rgba(29,78,216,0.08)");
-      g1.addColorStop(1, "transparent");
-      ctx.fillStyle = g1;
-      ctx.fillRect(0, 0, cv.width, cv.height);
-
-      const g2 = ctx.createRadialGradient(cv.width * 0.85, cv.height * 0.6, 0, cv.width * 0.85, cv.height * 0.6, cv.width * 0.45);
-      g2.addColorStop(0, "rgba(16,185,129,0.06)");
-      g2.addColorStop(1, "transparent");
-      ctx.fillStyle = g2;
-      ctx.fillRect(0, 0, cv.width, cv.height);
-
-      stars.forEach((s) => {
-        s.phase += s.speed;
-        const a = s.a * (0.6 + 0.4 * Math.sin(s.phase));
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(148,163,184,${a})`;
-        ctx.fill();
-      });
-
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 90) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(59,130,246,${0.08 * (1 - d / 90)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      }
-
-      particles.forEach((p, i) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life++;
-        if (p.life > p.maxLife || p.x < -10 || p.x > cv!.width + 10 || p.y < -10 || p.y > cv!.height + 10) {
-          particles[i] = makeParticle();
-          return;
-        }
-        const fade = p.life < 30 ? p.life / 30 : p.life > p.maxLife - 30 ? (p.maxLife - p.life) / 30 : 1;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color + p.a * fade + ")";
-        ctx.fill();
-      });
-
-      const scanY = (t * 0.4) % cv.height;
-      const sg = ctx.createLinearGradient(0, scanY - 40, 0, scanY + 40);
-      sg.addColorStop(0, "transparent");
-      sg.addColorStop(0.5, "rgba(59,130,246,0.02)");
-      sg.addColorStop(1, "transparent");
-      ctx.fillStyle = sg;
-      ctx.fillRect(0, scanY - 40, cv.width, 80);
-
-      animRef.current = requestAnimationFrame(draw);
-    }
-
-    draw();
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      cancelAnimationFrame(animRef.current);
-    };
-  }, []);
-
-  // ── جدید: handleSearch با چک لاگین ──
-  // درست:
   const handleSearch = () => {
     if (!user) {
       setShowAuthModal(true);
@@ -177,428 +56,700 @@ export default function CareerHub() {
     }
   };
 
+  const handleSpotlight = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
+  }, []);
+
   const tags = ["برنامه‌نویسی", "طراحی UI/UX", "بازاریابی", "داده‌کاوی", "مدیریت محصول"];
+
+  const stats = [
+    { num: "۲۴۰۰+", lbl: "مسیر شغلی" },
+    { num: "٪۹۴", lbl: "دقت نتایج" },
+    { num: "۵ دقیقه", lbl: "زمان ارزیابی" },
+  ];
+
+  const points = [
+    { title: "انتخاب حوزه", desc: "تخصص یا علاقه‌ی مورد نظرتان را وارد کنید." },
+    { title: "ارزیابی مهارت", desc: "سؤال‌های متناسب با همان حوزه پرسیده می‌شود." },
+    { title: "گزارش شایستگی", desc: "نقاط قوت و شکاف‌های مهارتی‌تان مشخص می‌شود." },
+  ];
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap');
-
-        @keyframes blink {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(0.7); }
+        @keyframes k2Float1 {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          50% { transform: translate(20px, -30px) rotate(2deg); }
         }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-12px); }
+        @keyframes k2Float2 {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          50% { transform: translate(-24px, 20px) rotate(-2deg); }
         }
-        @keyframes modalIn {
-          from { opacity: 0; transform: scale(0.92) translateY(16px); }
-          to   { opacity: 1; transform: scale(1)    translateY(0);    }
+        @keyframes k2Float3 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+          50% { transform: translate(10px, -14px); opacity: 0.8; }
+        }
+        @keyframes k2FadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes k2ModalIn {
+          from { opacity: 0; transform: translateY(14px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes k2Overlay {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes k2Dash {
+          to { stroke-dashoffset: -26; }
         }
 
-        .search-btn:hover { background: #1e40af !important; transform: scale(1.02); }
-        .search-btn:active { transform: scale(0.98); }
-        .tag-pill:hover { background: rgba(59,130,246,0.2) !important; border-color: rgba(59,130,246,0.5) !important; }
-        .nav-login:hover { background: rgba(59,130,246,0.12) !important; border-color: rgba(59,130,246,0.6) !important; color: #60a5fa !important; }
-        .nav-register:hover { background: #1e40af !important; box-shadow: 0 6px 24px rgba(29,78,216,0.5) !important; }
-        .nav-logout:hover { background: linear-gradient(135deg,#b91c1c,#991b1b) !important; box-shadow: 0 6px 24px rgba(220,38,38,0.5) !important; }
-        .modal-login-btn:hover { background: #1e40af !important; box-shadow: 0 8px 28px rgba(29,78,216,0.5) !important; }
-        .modal-reg-btn:hover { background: rgba(59,130,246,0.12) !important; border-color: rgba(59,130,246,0.5) !important; }
+        .k2-fade-1 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.05s; }
+        .k2-fade-2 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.14s; }
+        .k2-fade-3 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.23s; }
+        .k2-fade-4 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.32s; }
+        .k2-fade-5 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.4s; }
 
-        @media (max-width: 768px) {
-          .nav-inner { padding: 12px 16px !important; }
-          .main-grid {
-            grid-template-columns: 1fr !important;
-            padding: 32px 20px !important;
-            gap: 40px !important;
-          }
-          .main-grid h1 { font-size: 28px !important; }
-          .main-grid p  { font-size: 14px !important; }
-          .search-box {
-            max-width: 100% !important;
-            flex-direction: column !important;
-            gap: 10px !important;
-          }
-          .search-box input { width: 100% !important; padding: 14px 16px !important; }
-          .search-btn { width: 100% !important; padding: 14px !important; text-align: center !important; }
-          .stats-row { gap: 20px !important; }
-          .svg-col { display: none !important; }
-          .tags-row { gap: 6px !important; }
-          .auth-modal-card { padding: 32px 24px !important; }
+        .k2-nav-link {
+          font-family: var(--font-sans);
+          font-size: 14px;
+          color: var(--foreground-muted);
+          text-decoration: none;
+          padding: 8px 14px;
+          border-radius: 8px;
+          transition: color 0.2s ease, background 0.2s ease;
+        }
+        .k2-nav-link:hover { color: var(--foreground); background: var(--surface); }
+
+        .k2-btn {
+          font-family: var(--font-sans);
+          font-weight: 500;
+          border: none;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .k2-btn:active:not(:disabled) { transform: scale(0.98); }
+        .k2-btn:disabled { cursor: wait; opacity: 0.7; }
+
+        .k2-btn-primary {
+          background: var(--accent);
+          color: #fff;
+          border-radius: 8px;
+          box-shadow:
+            0 0 0 1px rgba(94,106,210,0.5),
+            0 4px 12px rgba(94,106,210,0.3),
+            inset 0 1px 0 0 rgba(255,255,255,0.2);
+        }
+        .k2-btn-primary:hover:not(:disabled) {
+          background: var(--accent-bright);
+          box-shadow:
+            0 0 0 1px rgba(94,106,210,0.7),
+            0 6px 24px rgba(94,106,210,0.45),
+            inset 0 1px 0 0 rgba(255,255,255,0.25);
+          transform: translateY(-2px);
+        }
+
+        .k2-btn-secondary {
+          background: var(--surface);
+          color: var(--foreground);
+          border-radius: 8px;
+          box-shadow: inset 0 0 0 1px var(--border-default);
+        }
+        .k2-btn-secondary:hover { background: var(--surface-hover); box-shadow: inset 0 0 0 1px var(--border-hover); }
+
+        .k2-btn-ghost {
+          background: transparent;
+          color: var(--foreground-muted);
+          border-radius: 8px;
+        }
+        .k2-btn-ghost:hover { background: var(--surface); color: var(--foreground); }
+
+        .k2-grid-overlay {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+          background-size: 64px 64px;
+          pointer-events: none;
+          mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+        }
+
+        .k2-noise {
+          position: fixed;
+          inset: 0;
+          opacity: 0.02;
+          pointer-events: none;
+          z-index: 1;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        .k2-gradient-text {
+          background: linear-gradient(to bottom, #ffffff, rgba(255,255,255,0.72));
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+
+        .k2-card {
+          position: relative;
+          background: linear-gradient(to bottom, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+          border: 1px solid var(--border-default);
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow:
+            0 0 0 1px rgba(255,255,255,0.03),
+            0 2px 20px rgba(0,0,0,0.4),
+            0 0 40px rgba(0,0,0,0.15);
+          transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+        .k2-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: radial-gradient(300px circle at var(--mx, 50%) var(--my, 50%), rgba(94,106,210,0.16), transparent 60%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+        }
+        .k2-card:hover::before { opacity: 1; }
+
+        .k2-card-lift:hover {
+          transform: translateY(-6px);
+          border-color: var(--border-hover);
+          box-shadow:
+            0 0 0 1px rgba(255,255,255,0.08),
+            0 12px 40px rgba(0,0,0,0.5),
+            0 0 60px rgba(94,106,210,0.12);
+        }
+
+        .k2-icon-box {
+          width: 44px; height: 44px;
+          border-radius: 12px;
+          border: 1px solid var(--border-hover);
+          background: var(--surface);
+          display: flex; align-items: center; justify-content: center;
+          color: var(--accent);
+          flex-shrink: 0;
+        }
+
+        .k2-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-family: var(--font-mono);
+          font-size: 11px;
+          letter-spacing: 0.08em;
+          color: var(--foreground-subtle);
+          background: var(--surface);
+          border: 1px solid var(--border-default);
+          border-radius: 100px;
+          padding: 6px 14px;
+        }
+        .k2-badge-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: var(--accent);
+          box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .k2-search {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 7px;
+          border-radius: 12px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid var(--border-default);
+          transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+        .k2-search.focused {
+          border-color: var(--border-accent);
+          background: rgba(255,255,255,0.055);
+          box-shadow: 0 0 0 3px rgba(94,106,210,0.12);
+        }
+        .k2-search input {
+          flex: 1;
+          min-width: 0;
+          background: transparent;
+          border: none;
+          outline: none;
+          color: var(--foreground);
+          font-family: var(--font-sans);
+          font-size: 14px;
+          padding: 10px 12px;
+        }
+        .k2-search input::placeholder { color: var(--foreground-muted); }
+
+        .k2-tag {
+          font-family: var(--font-sans);
+          font-size: 12.5px;
+          color: var(--foreground-muted);
+          background: var(--surface);
+          border: 1px solid var(--border-default);
+          border-radius: 100px;
+          padding: 6px 13px;
+          cursor: pointer;
+          transition: all 0.18s ease;
+        }
+        .k2-tag:hover {
+          color: var(--foreground);
+          border-color: var(--border-accent);
+          background: var(--surface-hover);
+        }
+        .k2-tag.active {
+          color: #fff;
+          border-color: var(--border-accent);
+          background: rgba(94,106,210,0.18);
+        }
+
+        .k2-step-row {
+          position: relative;
+          border-bottom: 1px solid var(--border-default);
+          transition: background 0.2s ease;
+        }
+        .k2-step-row:last-child { border-bottom: none; }
+        .k2-step-row:hover { background: rgba(255,255,255,0.02); }
+
+        .k2-mobile-menu {
+          overflow: hidden;
+          max-height: 0;
+          opacity: 0;
+          transition: max-height 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease;
+        }
+        .k2-mobile-menu.open { max-height: 320px; opacity: 1; }
+
+        .k2-hero-grid {
+          display: grid;
+          grid-template-columns: 1.15fr 0.85fr;
+          gap: 56px;
+          align-items: center;
+        }
+
+        .k2-viz-path {
+          stroke-dasharray: 7 6;
+          animation: k2Dash 2.2s linear infinite;
+        }
+
+        @media (max-width: 860px) {
+          .k2-nav-links { display: none !important; }
+          .k2-hamburger { display: flex !important; }
+          .k2-desktop-actions { display: none !important; }
+          .k2-hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .k2-viz-col { display: none !important; }
+          .k2-hero-title { font-size: 38px !important; }
+          .k2-search { flex-direction: column !important; align-items: stretch !important; }
+          .k2-search input { width: 100% !important; }
+          .k2-search .k2-btn { width: 100% !important; }
+          .k2-stats-row { gap: 24px !important; flex-wrap: wrap; }
         }
       `}</style>
 
-      <div
-        ref={wrapRef}
+      <main
+        dir="rtl"
         style={{
-          minHeight: "100vh", width: "100%", background: "#070d1a",
-          fontFamily: "Vazirmatn, sans-serif", direction: "rtl",
-          position: "relative", overflow: "hidden",
+          position: "relative",
+          minHeight: "100vh",
+          width: "100%",
+          background:
+            "radial-gradient(ellipse 1200px 800px at 50% -10%, #0e0e16 0%, #050506 55%, #020203 100%)",
+          fontFamily: "var(--font-sans)",
+          overflow: "hidden",
         }}
       >
-        <canvas
-          ref={canvasRef}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
+        {/* Ambient blobs */}
+        <div
+          style={{
+            position: "absolute", top: "-200px", left: "50%", transform: "translateX(-50%)",
+            width: 1100, height: 700, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(94,106,210,0.28), transparent 70%)",
+            filter: "blur(140px)", pointerEvents: "none", animation: "k2Float1 9s ease-in-out infinite",
+          }}
         />
+        <div
+          style={{
+            position: "absolute", top: "20%", left: "-200px",
+            width: 600, height: 800, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(168,85,247,0.14), transparent 70%)",
+            filter: "blur(120px)", pointerEvents: "none", animation: "k2Float2 10s ease-in-out infinite",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute", top: "35%", right: "-160px",
+            width: 500, height: 700, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(94,106,210,0.12), transparent 70%)",
+            filter: "blur(100px)", pointerEvents: "none", animation: "k2Float3 8s ease-in-out infinite",
+          }}
+        />
+        <div className="k2-grid-overlay" />
+        <div className="k2-noise" />
 
-        {/* ── مودال اخطار ورود ── */}
+        {/* مودال اخطار ورود */}
         {showAuthModal && (
           <div
             onClick={() => setShowAuthModal(false)}
             style={{
               position: "fixed", inset: 0, zIndex: 100,
-              background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)",
+              background: "rgba(2,2,3,0.72)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
               display: "flex", alignItems: "center", justifyContent: "center",
               padding: 24,
+              animation: "k2Overlay 0.2s ease both",
             }}
           >
             <div
-              className="auth-modal-card"
+              className="k2-card"
               onClick={(e) => e.stopPropagation()}
+              onMouseMove={handleSpotlight}
               style={{
-                width: "100%", maxWidth: 400, textAlign: "center",
-                background: "linear-gradient(145deg,rgba(15,31,61,0.98),rgba(7,13,26,0.99))",
-                border: "1px solid rgba(59,130,246,0.22)",
-                borderRadius: 24, padding: "40px 36px",
-                boxShadow: "0 0 80px rgba(29,78,216,0.18), 0 0 0 1px rgba(255,255,255,0.04) inset",
-                animation: "modalIn 0.22s ease-out both",
+                width: "100%", maxWidth: 400, textAlign: "right",
+                padding: "32px 30px",
+                animation: "k2ModalIn 0.28s cubic-bezier(0.16,1,0.3,1) both",
+                background: "linear-gradient(to bottom, #101017, #08080b)",
               }}
             >
-              {/* آیکون */}
-              <div style={{
-                width: 60, height: 60, borderRadius: 16, margin: "0 auto 18px",
-                background: "linear-gradient(135deg,rgba(245,158,11,0.2),rgba(29,78,216,0.15))",
-                border: "1px solid rgba(245,158,11,0.35)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 26, boxShadow: "0 0 20px rgba(245,158,11,0.15)",
-              }}>
-                🔐
+              <div className="k2-icon-box" style={{ marginBottom: 18 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <rect x="4" y="10" width="16" height="10" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="M8 10V7.5a4 4 0 1 1 8 0V10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
               </div>
 
-              {/* تیتر */}
-              <h2 style={{ fontSize: 22, fontWeight: 900, color: "#f8fafc", marginBottom: 10 }}>
-                ابتدا{" "}
-                <span style={{
-                  background: "linear-gradient(90deg,#3b82f6,#10b981)",
-                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-                }}>
-                  وارد شوید
-                </span>
+              <h2 style={{ fontWeight: 700, fontSize: 20, letterSpacing: "-0.01em", color: "var(--foreground)", marginBottom: 10 }}>
+                ابتدا وارد شوید
               </h2>
-
-              <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.8, marginBottom: 28 }}>
-                برای شروع ارزیابی مسیر شغلی، ابتدا باید وارد حساب کاربری خود شوید.
-                اگه حساب ندارید، ثبت‌نام رایگانه!
+              <p style={{ fontSize: 14, lineHeight: 1.9, color: "var(--foreground-muted)", marginBottom: 24 }}>
+                برای شروع ارزیابی مسیر شغلی باید وارد حساب کاربری خود شوید.
+                اگر هنوز حساب ندارید، ساخت آن رایگان است.
               </p>
 
-              {/* دکمه‌ها */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <button
-                  className="modal-login-btn"
+                  className="k2-btn k2-btn-primary"
                   onClick={() => router.push("/auth")}
-                  style={{
-                    width: "100%",
-                    background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
-                    color: "#fff", border: "none", borderRadius: 14,
-                    padding: "13px 20px",
-                    fontFamily: "Vazirmatn, sans-serif", fontSize: 15, fontWeight: 900,
-                    cursor: "pointer",
-                    boxShadow: "0 6px 24px rgba(29,78,216,0.35)",
-                    transition: "all 0.18s",
-                  }}
+                  style={{ fontSize: 14.5, height: 44, width: "100%" }}
                 >
                   ورود به حساب کاربری
                 </button>
                 <button
-                  className="modal-reg-btn"
+                  className="k2-btn k2-btn-secondary"
                   onClick={() => router.push("/register")}
-                  style={{
-                    width: "100%",
-                    background: "rgba(59,130,246,0.07)",
-                    color: "#93c5fd", border: "1px solid rgba(59,130,246,0.25)",
-                    borderRadius: 14, padding: "13px 20px",
-                    fontFamily: "Vazirmatn, sans-serif", fontSize: 15, fontWeight: 700,
-                    cursor: "pointer", transition: "all 0.18s",
-                  }}
+                  style={{ fontSize: 14.5, height: 44, width: "100%" }}
                 >
-                  ساخت حساب رایگان ✨
+                  ساخت حساب رایگان
+                </button>
+                <button
+                  className="k2-btn k2-btn-ghost"
+                  onClick={() => setShowAuthModal(false)}
+                  style={{ fontSize: 13, height: 36, width: "100%", marginTop: 2 }}
+                >
+                  انصراف
                 </button>
               </div>
-
-              {/* دکمه بستن */}
-              <button
-                onClick={() => setShowAuthModal(false)}
-                style={{
-                  marginTop: 20, fontSize: 13, color: "#475569",
-                  background: "none", border: "none", cursor: "pointer",
-                  fontFamily: "Vazirmatn, sans-serif", transition: "color 0.15s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#94a3b8")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
-              >
-                انصراف
-              </button>
             </div>
           </div>
         )}
 
-        {/* ناوبار */}
-        <nav
-          className="nav-inner"
-          style={{
-            position: "sticky", top: 0, zIndex: 50,
-            background: "rgba(7,13,26,0.85)", backdropFilter: "blur(16px)",
-            borderBottom: "1px solid rgba(59,130,246,0.1)",
-            padding: "14px 40px", display: "flex",
-            justifyContent: "space-between", alignItems: "center",
-          }}
-        >
-          {!userLoading && user ? (
-            <>
-              {/* سمت راست (RTL: اول در JSX): نام کاربر + داشبورد */}
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <span style={{
-                  fontSize: 14, fontWeight: 700, color: "#e2e8f0",
-                  fontFamily: "Vazirmatn, sans-serif",
-                }}>
-                  سلام، {user.firstName || user.email}
-                </span>
-                <button
-                  className="nav-register"
-                  onClick={() => router.push("/dashboard")}
-                  style={{
-                    fontSize: 14, fontWeight: 700, padding: "9px 22px",
-                    color: "#fff", background: "#1d4ed8",
-                    border: "1px solid rgba(59,130,246,0.4)",
-                    borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
-                    boxShadow: "0 4px 16px rgba(29,78,216,0.35)",
-                    fontFamily: "Vazirmatn, sans-serif",
-                  }}
-                >
-                  داشبورد
-                </button>
+        <div style={{ position: "relative", zIndex: 10 }}>
+          {/* Nav */}
+          <nav
+            style={{
+              position: "sticky", top: 0, zIndex: 50,
+              display: "flex", flexDirection: "column", justifyContent: "center",
+              padding: "0 clamp(16px, 4vw, 40px)",
+              background: "rgba(5,5,6,0.7)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              borderBottom: "1px solid var(--border-default)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
+              <Link
+                href="/"
+                style={{ fontWeight: 700, fontSize: 19, letterSpacing: "-0.02em", color: "var(--foreground)", textDecoration: "none" }}
+              >
+                Karex
+              </Link>
+
+              <div className="k2-nav-links" style={{ display: "flex", gap: 4 }}>
+                <Link href="/" className="k2-nav-link">خانه</Link>
+                <a href="#how" className="k2-nav-link">روش کار</a>
               </div>
-          
+
+              <div className="k2-desktop-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {userLoading ? (
+                  <div style={{ width: 132, height: 38, borderRadius: 8, background: "var(--surface)" }} />
+                ) : user ? (
+                  <>
+                    <span style={{ fontSize: 13.5, color: "var(--foreground-muted)", marginLeft: 4 }}>
+                      سلام، {user.firstName || user.email}
+                    </span>
+                    <button className="k2-btn k2-btn-secondary" onClick={() => router.push("/dashboard")} style={{ fontSize: 14, padding: "9px 18px", height: 38 }}>
+                      داشبورد
+                    </button>
+                    <button className="k2-btn k2-btn-ghost" onClick={handleLogout} style={{ fontSize: 14, padding: "9px 16px" }}>
+                      خروج
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className="k2-btn k2-btn-ghost" onClick={() => router.push("/auth")} style={{ fontSize: 14, padding: "9px 16px" }}>
+                      ورود
+                    </button>
+                    <button className="k2-btn k2-btn-primary" onClick={() => router.push("/register")} style={{ fontSize: 14, padding: "9px 18px", height: 38 }}>
+                      ثبت‌نام
+                    </button>
+                  </>
+                )}
+              </div>
+
               <button
-                className="nav-logout"
-                onClick={handleLogout}
+                className="k2-hamburger"
+                onClick={() => setMenuOpen((v) => !v)}
                 style={{
-                  fontSize: 14, fontWeight: 700, padding: "9px 22px",
-                  color: "#fff", background: "linear-gradient(135deg,#dc2626,#b91c1c)",
-                  border: "1px solid rgba(239,68,68,0.4)",
-                  borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
-                  boxShadow: "0 4px 16px rgba(220,38,38,0.35)",
-                  fontFamily: "Vazirmatn, sans-serif",
+                  display: "none", width: 36, height: 36, alignItems: "center", justifyContent: "center",
+                  background: "var(--surface)", border: "1px solid var(--border-default)", borderRadius: 8, color: "var(--foreground)",
                 }}
               >
-                خروج
-              </button>
-            </>
-          ) : (
-            <>
-              <div />
-              <div style={{ display: "flex", gap: 10 }}>
-                <button
-                  className="nav-login"
-                  onClick={() => router.push("/auth")}
-                  style={{
-                    fontSize: 14, fontWeight: 700, padding: "9px 22px",
-                    color: "#93c5fd", background: "transparent",
-                    border: "1px solid rgba(59,130,246,0.25)",
-                    borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
-                    fontFamily: "Vazirmatn, sans-serif",
-                  }}
-                >
-                  ورود
-                </button>
-                <button
-                  className="nav-register"
-                  onClick={() => router.push("/register")}
-                  style={{
-                    fontSize: 14, fontWeight: 700, padding: "9px 22px",
-                    color: "#fff", background: "#1d4ed8",
-                    border: "1px solid rgba(59,130,246,0.4)",
-                    borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
-                    boxShadow: "0 4px 16px rgba(29,78,216,0.35)",
-                    fontFamily: "Vazirmatn, sans-serif",
-                  }}
-                >
-                  ثبت نام
-                </button>
-              </div>
-            </>
-          )}
-        </nav>
-
-        {/* محتوای اصلی */}
-        <main
-          className="main-grid"
-          style={{
-            maxWidth: 1200, margin: "0 auto", padding: "80px 40px",
-            display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60,
-            alignItems: "center", position: "relative", zIndex: 10,
-          }}
-        >
-          <div style={{ textAlign: "right" }}>
-            <div style={{ marginBottom: 20 }}>
-              <span style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)",
-                color: "#fcd34d", fontSize: 12, fontWeight: 700,
-                padding: "5px 14px", borderRadius: 100,
-              }}>
-                <span style={{
-                  width: 6, height: 6, background: "#f59e0b", borderRadius: "50%",
-                  animation: "blink 1.8s ease-in-out infinite", display: "inline-block",
-                }} />
-                سامانه هوشمند مسیریابی شغلی
-              </span>
-            </div>
-
-            <h1 style={{ fontSize: 44, fontWeight: 900, lineHeight: 1.2, color: "#f8fafc", marginBottom: 16 }}>
-              مسیر شغلی خودت را{" "}
-              <span style={{
-                background: "linear-gradient(90deg,#3b82f6,#10b981)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              }}>
-                کشف کن
-              </span>
-            </h1>
-
-            <p style={{ fontSize: 16, color: "#94a3b8", lineHeight: 1.8, marginBottom: 32, maxWidth: 460 }}>
-              تخصص خود را انتخاب کن و با سیستم هوشمند ارزیابی مهارت، شایستگی‌هایت رو بسنج.
-            </p>
-
-            <div
-              className="search-box"
-              style={{
-                background: "rgba(15,31,61,0.9)", border: "1px solid rgba(59,130,246,0.2)",
-                borderRadius: 18, padding: 8, display: "flex", gap: 8, alignItems: "center",
-                maxWidth: 500, boxShadow: "0 0 40px rgba(29,78,216,0.1)",
-              }}
-            >
-              <input
-                type="text"
-                placeholder="جستجوی حوزه تخصصی..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                style={{
-                  flex: 1, padding: "12px 16px", background: "transparent",
-                  border: "none", outline: "none", color: "#e2e8f0",
-                  fontSize: 14, fontFamily: "Vazirmatn, sans-serif", fontWeight: 500,
-                }}
-              />
-              <button
-                className="search-btn"
-                onClick={handleSearch}
-                style={{
-                  background: "#1d4ed8", color: "#fff", border: "none",
-                  borderRadius: 12, padding: "12px 24px",
-                  fontSize: 14, fontWeight: 900, cursor: "pointer",
-                  fontFamily: "Vazirmatn, sans-serif", whiteSpace: "nowrap",
-                  transition: "all 0.15s", boxShadow: "0 4px 16px rgba(29,78,216,0.4)",
-                }}
-              >
-                شروع ارزیابی
+                {menuOpen ? "✕" : "☰"}
               </button>
             </div>
 
-            <div className="tags-row" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
-              <span style={{ fontSize: 12, color: "#64748b", display: "flex", alignItems: "center" }}>پیشنهادی:</span>
-              {tags.map((tag) => (
-                <button
-                  key={tag}
-                  className="tag-pill"
-                  onClick={() => setSearchQuery(tag)}
+            <div className={`k2-mobile-menu ${menuOpen ? "open" : ""}`}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 0 20px" }}>
+                <Link href="/" className="k2-nav-link" onClick={() => setMenuOpen(false)}>خانه</Link>
+                <a href="#how" className="k2-nav-link" onClick={() => setMenuOpen(false)}>روش کار</a>
+                {user ? (
+                  <>
+                    <button className="k2-btn k2-btn-secondary" onClick={() => router.push("/dashboard")} style={{ fontSize: 14, padding: "10px", marginTop: 8 }}>داشبورد</button>
+                    <button className="k2-btn k2-btn-ghost" onClick={handleLogout} style={{ fontSize: 14, padding: "10px" }}>خروج</button>
+                  </>
+                ) : (
+                  <>
+                    <button className="k2-btn k2-btn-secondary" onClick={() => router.push("/auth")} style={{ fontSize: 14, padding: "10px", marginTop: 8 }}>ورود</button>
+                    <button className="k2-btn k2-btn-primary" onClick={() => router.push("/register")} style={{ fontSize: 14, padding: "10px" }}>ثبت‌نام رایگان</button>
+                  </>
+                )}
+              </div>
+            </div>
+          </nav>
+
+          {/* Hero */}
+          <section
+            style={{
+              maxWidth: 1280, width: "100%", margin: "0 auto",
+              padding: "clamp(56px, 9vw, 104px) clamp(16px, 4vw, 40px) 0",
+            }}
+          >
+            <div className="k2-hero-grid">
+              <div style={{ textAlign: "right" }}>
+                <div className={mounted ? "k2-fade-1" : ""} style={{ marginBottom: 22 }}>
+                  <span className="k2-badge">
+                    <span className="k2-badge-dot" />
+                    سامانه هوشمند مسیریابی شغلی
+                  </span>
+                </div>
+
+                <h1
+                  className={`k2-hero-title k2-gradient-text ${mounted ? "k2-fade-2" : ""}`}
                   style={{
-                    fontSize: 12, fontWeight: 600, padding: "5px 12px",
-                    background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)",
-                    borderRadius: 100, color: "#93c5fd", cursor: "pointer",
-                    fontFamily: "Vazirmatn, sans-serif", transition: "all 0.15s",
+                    fontWeight: 700,
+                    fontSize: "clamp(38px, 4.6vw, 56px)",
+                    lineHeight: 1.2,
+                    letterSpacing: "-0.02em",
+                    margin: "0 0 18px",
+                    maxWidth: 560,
                   }}
                 >
-                  {tag}
-                </button>
-              ))}
+                  مسیر شغلی خودت را کشف کن
+                </h1>
+
+                <p
+                  className={mounted ? "k2-fade-3" : ""}
+                  style={{
+                    fontSize: 16, lineHeight: 1.9, color: "var(--foreground-muted)",
+                    maxWidth: 470, margin: "0 0 32px",
+                  }}
+                >
+                  حوزه‌ی تخصصی‌ات را انتخاب کن تا با ارزیابی هوشمند مهارت،
+                  شایستگی‌ها و شکاف‌های یادگیری‌ات را دقیق بسنجیم.
+                </p>
+
+                <div className={mounted ? "k2-fade-4" : ""} style={{ maxWidth: 520 }}>
+                  <div className={`k2-search ${inputFocused ? "focused" : ""}`}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ marginRight: 10, flexShrink: 0, color: "var(--foreground-muted)" }}>
+                      <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.8" />
+                      <path d="M16 16l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="جستجوی حوزه تخصصی..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => setInputFocused(true)}
+                      onBlur={() => setInputFocused(false)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    />
+                    <button
+                      className="k2-btn k2-btn-primary"
+                      onClick={handleSearch}
+                      style={{ fontSize: 14, padding: "0 22px", height: 40, whiteSpace: "nowrap" }}
+                    >
+                      شروع ارزیابی
+                    </button>
+                  </div>
+
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 16, alignItems: "center" }}>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--foreground-subtle)", marginLeft: 4 }}>
+                      پیشنهادی
+                    </span>
+                    {tags.map((tag) => (
+                      <button
+                        key={tag}
+                        className={`k2-tag ${searchQuery === tag ? "active" : ""}`}
+                        onClick={() => setSearchQuery(tag)}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  className={`k2-stats-row ${mounted ? "k2-fade-5" : ""}`}
+                  style={{ display: "flex", gap: 40, marginTop: 44 }}
+                >
+                  {stats.map((s) => (
+                    <div key={s.lbl}>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 500, color: "var(--foreground)" }}>
+                        {s.num}
+                      </div>
+                      <div style={{ fontSize: 12.5, color: "var(--foreground-muted)", marginTop: 5 }}>{s.lbl}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ستون تصویری */}
+              <div className={`k2-viz-col ${mounted ? "k2-fade-4" : ""}`} style={{ display: "flex", justifyContent: "center" }}>
+                <div className="k2-card" onMouseMove={handleSpotlight} style={{ width: "100%", maxWidth: 440, padding: 24 }}>
+                  <svg viewBox="0 0 400 320" style={{ width: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="k2Line" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#5e6ad2" stopOpacity="0.9" />
+                        <stop offset="100%" stopColor="#a855f7" stopOpacity="0.6" />
+                      </linearGradient>
+                      <linearGradient id="k2Bar" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stopColor="#5e6ad2" stopOpacity="0.15" />
+                        <stop offset="100%" stopColor="#5e6ad2" stopOpacity="0.75" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* grid */}
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <line
+                        key={i}
+                        x1="24" y1={60 + i * 52} x2="376" y2={60 + i * 52}
+                        stroke="rgba(255,255,255,0.05)" strokeWidth="1"
+                      />
+                    ))}
+
+                    {/* bars */}
+                    {[
+                      { x: 60, h: 70 },
+                      { x: 124, h: 116 },
+                      { x: 188, h: 92 },
+                      { x: 252, h: 150 },
+                      { x: 316, h: 128 },
+                    ].map((b, i) => (
+                      <rect
+                        key={i}
+                        x={b.x - 16} y={268 - b.h} width="32" height={b.h}
+                        rx="7" fill="url(#k2Bar)" stroke="rgba(255,255,255,0.06)"
+                      />
+                    ))}
+
+                    {/* progress path */}
+                    <path
+                      className="k2-viz-path"
+                      d="M 44 236 C 110 210, 150 168, 200 150 S 300 112, 366 76"
+                      fill="none" stroke="url(#k2Line)" strokeWidth="2" strokeLinecap="round"
+                    />
+                    {[
+                      { cx: 44, cy: 236 },
+                      { cx: 200, cy: 150 },
+                      { cx: 366, cy: 76 },
+                    ].map((p, i) => (
+                      <g key={i}>
+                        <circle cx={p.cx} cy={p.cy} r="7" fill="#08080b" stroke="#5e6ad2" strokeWidth="1.6" />
+                        <circle cx={p.cx} cy={p.cy} r="2.6" fill="#5e6ad2" />
+                      </g>
+                    ))}
+
+                    <line x1="24" y1="268" x2="376" y2="268" stroke="rgba(255,255,255,0.09)" strokeWidth="1" />
+                    <text x="376" y="42" textAnchor="end" fill="#8a8f98" fontSize="11" fontFamily="JetBrains Mono, monospace">
+                      skill growth
+                    </text>
+                  </svg>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--border-default)" }}>
+                    <span style={{ fontSize: 13, color: "var(--foreground-muted)" }}>میانگین رشد مهارت کاربران</span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--accent)" }}>+٪۳۸</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* How */}
+          <section id="how" style={{ maxWidth: 860, width: "100%", margin: "0 auto", padding: "clamp(72px, 10vw, 112px) clamp(16px, 4vw, 40px) 112px" }}>
+            <div style={{ textAlign: "right", marginBottom: 28 }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, letterSpacing: "0.1em", color: "var(--accent)" }}>
+                روش کار
+              </span>
+              <h2 style={{ fontWeight: 700, fontSize: 34, letterSpacing: "-0.02em", color: "var(--foreground)", marginTop: 8 }}>
+                ارزیابی در سه مرحله
+              </h2>
             </div>
 
-            <div className="stats-row" style={{ display: "flex", gap: 32, marginTop: 40 }}>
-              {[
-                { num: "+۲۴۰۰", lbl: "مسیر شغلی", color: "#3b82f6" },
-                { num: "%۹۴",   lbl: "دقت نتایج",  color: "#10b981" },
-              ].map((s) => (
-                <div key={s.lbl}>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: s.color }}>{s.num}</div>
-                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 3 }}>{s.lbl}</div>
+            <div className="k2-card">
+              {points.map((p, i) => (
+                <div key={p.title} className="k2-step-row" style={{ display: "flex", alignItems: "center", gap: 22, padding: "22px 26px", textAlign: "right" }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--foreground-subtle)", minWidth: 28 }}>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: "var(--foreground)", marginBottom: 4 }}>{p.title}</div>
+                    <div style={{ fontSize: 13, color: "var(--foreground-muted)" }}>{p.desc}</div>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
 
-          <div className="svg-col" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg viewBox="0 0 480 420" style={{ width: "100%", maxWidth: 480, animation: "float 5s ease-in-out infinite" }} xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="mtnGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#1d4ed8" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#1e40af" stopOpacity="0.05" />
-                </linearGradient>
-                <linearGradient id="mtnFront" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.08" />
-                </linearGradient>
-                <linearGradient id="pathGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.6" />
-                </linearGradient>
-                <radialGradient id="glowCenter" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.15" />
-                  <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-              <ellipse cx="240" cy="280" rx="200" ry="120" fill="url(#glowCenter)" />
-              <polygon points="240,360 420,80 560,360" fill="url(#mtnGrad)" />
-              <polygon points="80,360 220,140 370,360" fill="url(#mtnFront)" />
-              <path d="M 100,340 Q 160,280 200,220 T 270,160 T 310,120" fill="none" stroke="url(#pathGrad)" strokeWidth="2.5" strokeDasharray="8 5" opacity="0.7" />
-              {[{ cx: 100, cy: 340 }, { cx: 180, cy: 255 }, { cx: 240, cy: 195 }, { cx: 285, cy: 148 }].map((pt, i) => (
-                <g key={i}>
-                  <circle cx={pt.cx} cy={pt.cy} r="5" fill="#0b1629" stroke="#3b82f6" strokeWidth="1.5" />
-                  <circle cx={pt.cx} cy={pt.cy} r="2.5" fill="#3b82f6" />
-                </g>
-              ))}
-              <line x1="220" y1="140" x2="220" y2="105" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
-              <polygon points="220,105 255,114 220,123" fill="#f59e0b" opacity="0.9" />
-              <g transform="translate(390, 90)">
-                <circle cx="0" cy="0" r="32" fill="rgba(15,31,61,0.8)" stroke="rgba(59,130,246,0.3)" strokeWidth="1" />
-                <circle cx="0" cy="0" r="26" fill="none" stroke="rgba(59,130,246,0.15)" strokeWidth="1" />
-                <path d="M 0,-20 L 5,-5 L 0,0 L -5,-5 Z" fill="#3b82f6" opacity="0.9" />
-                <path d="M 0,20 L 5,5 L 0,0 L -5,5 Z" fill="#475569" opacity="0.7" />
-                <path d="M -20,0 L -5,-5 L 0,0 L -5,5 Z" fill="#475569" opacity="0.5" />
-                <path d="M 20,0 L 5,-5 L 0,0 L 5,5 Z" fill="#475569" opacity="0.5" />
-                <circle cx="0" cy="0" r="3" fill="#f59e0b" />
-              </g>
-              <g transform="translate(30, 140)">
-                <rect width="110" height="58" rx="10" fill="rgba(15,31,61,0.9)" stroke="rgba(59,130,246,0.25)" strokeWidth="1" />
-                <rect x="10" y="12" width="28" height="6" rx="3" fill="#3b82f6" opacity="0.7" />
-                <rect x="10" y="24" width="44" height="5" rx="2.5" fill="#334155" opacity="0.8" />
-                <rect x="10" y="34" width="36" height="5" rx="2.5" fill="#334155" opacity="0.5" />
-                <circle cx="90" cy="20" r="12" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.3)" strokeWidth="1" />
-                <text x="90" y="24" textAnchor="middle" fill="#10b981" fontSize="10" fontWeight="700">۹۴٪</text>
-              </g>
-              <g transform="translate(340, 230)">
-                <rect width="115" height="62" rx="10" fill="rgba(15,31,61,0.9)" stroke="rgba(245,158,11,0.25)" strokeWidth="1" />
-                <rect x="10" y="12" width="32" height="6" rx="3" fill="#f59e0b" opacity="0.7" />
-                <rect x="10" y="24" width="48" height="5" rx="2.5" fill="#334155" opacity="0.8" />
-                <rect x="10" y="34" width="38" height="5" rx="2.5" fill="#334155" opacity="0.5" />
-                <rect x="10" y="44" width="55" height="5" rx="2.5" fill="#334155" opacity="0.3" />
-              </g>
-              <line x1="0" y1="360" x2="480" y2="360" stroke="rgba(59,130,246,0.08)" strokeWidth="1" />
-              <line x1="0" y1="380" x2="480" y2="380" stroke="rgba(59,130,246,0.05)" strokeWidth="1" />
-            </svg>
-          </div>
-        </main>
-      </div>
+            <div style={{ textAlign: "center", marginTop: 44 }}>
+              <button className="k2-btn k2-btn-primary" onClick={handleSearch} style={{ fontSize: 15, padding: "0 30px", height: 46 }}>
+                شروع ارزیابی
+              </button>
+            </div>
+          </section>
+
+          {/* Footer */}
+          <footer style={{ borderTop: "1px solid var(--border-default)", padding: "28px clamp(16px, 4vw, 40px)", textAlign: "center" }}>
+            <p style={{ fontSize: 12, color: "var(--foreground-subtle)", fontFamily: "var(--font-mono)" }}>
+              © Karex — تمامی حقوق محفوظ است
+            </p>
+          </footer>
+        </div>
+      </main>
     </>
   );
 }
