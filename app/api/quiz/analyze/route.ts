@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/route-error";
 import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { getSession } from "@/lib/session";
+import {
+  buildUserVector,
+  hasEnoughSignal,
+  hollandCodeToVector,
+  matchPercent,
+} from "@/lib/riasec-score";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: NextRequest) {
@@ -51,7 +57,7 @@ ${qaText}
   "career_paths": [
     {
       "title": "عنوان مسیر شغلی",
-      "match_percentage": 92,
+      "holland_code": "IRC",
       "description": "توضیح این مسیر و چرا مناسب این کاربر است",
       "required_skills": ["مهارت ۱", "مهارت ۲", "مهارت ۳"],
       "avg_salary": "مثلاً ۱۵-۳۰ میلیون تومان"
@@ -70,6 +76,11 @@ ${qaText}
 }
 
 حتماً:
+- برای هر مسیر شغلی، «holland_code» را بنویس: سه حرف از مدل RIASEC هالند،
+  به ترتیب اهمیت برای آن شغل. حروف مجاز:
+  R (عمل‌گرا)، I (پژوهشگر)، A (هنرمند)، S (اجتماعی)، E (متهور)، C (منظم).
+  مثال: توسعه‌دهنده نرم‌افزار = "ICR" ، طراح رابط کاربری = "AIC".
+  درصد تطابق را خودت محاسبه نکن؛ سیستم آن را از پاسخ‌های کاربر حساب می‌کند.
 - حداقل ۳ مسیر شغلی پیشنهاد بده
 - حداقل ۳ فاز در نقشه راه داشته باش
 - همه چیز را به فارسی روان بنویس
@@ -120,6 +131,37 @@ ${qaText}
         { message: "خطا در پردازش نتیجه. لطفاً دوباره تلاش کنید." },
         { status: 500 }
       );
+    }
+
+    /* ── محاسبه‌ی واقعی درصد تطابق ──
+       درصد را دیگر از هوش مصنوعی نمی‌پذیریم (قابل تکرار نبود و تعریف نداشت).
+       اینجا پروفایل RIASEC کاربر از پاسخ‌هایش ساخته می‌شود و تطابق با هر شغل
+       از شباهت کسینوسی حساب می‌گردد — همیشه یکسان و قابل توضیح. */
+    try {
+      const { vector, covered } = buildUserVector(questions, answers);
+
+      if (hasEnoughSignal(covered) && Array.isArray(result?.career_paths)) {
+        result.career_paths = result.career_paths.map(
+          (c: { holland_code?: string; match_percentage?: number }) => {
+            const target = hollandCodeToVector(c.holland_code || "");
+            return {
+              ...c,
+              match_percentage: target
+                ? matchPercent(vector, target)
+                : (c.match_percentage ?? null),
+              match_basis: target ? "riasec" : "estimate",
+            };
+          }
+        );
+        // مرتب‌سازی نزولی تا «بهترین گزینه» واقعاً اول باشد
+        result.career_paths.sort(
+          (a: { match_percentage?: number }, b: { match_percentage?: number }) =>
+            (b.match_percentage ?? 0) - (a.match_percentage ?? 0)
+        );
+        result.riasec_profile = vector;
+      }
+    } catch (e) {
+      console.error("RIASEC scoring failed:", e);
     }
 
     // ذخیره در quiz_attempts — نشست در صورت نیاز تازه می‌شود تا نتیجه‌ی

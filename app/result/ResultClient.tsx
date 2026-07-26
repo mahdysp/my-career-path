@@ -9,6 +9,8 @@ import ThemeToggle from "@/app/components/ThemeToggle";
 type CareerPath = {
   title: string;
   match_percentage: number;
+  holland_code?: string;
+  match_basis?: "riasec" | "estimate";
   description: string;
   required_skills: string[];
   avg_salary: string;
@@ -112,6 +114,13 @@ const styles = `
   .k2-tab.on {
     background: var(--accent); color: #fff;
     box-shadow: 0 2px 10px var(--accent-glow);
+  }
+
+  .k2-tab svg { flex-shrink: 0; opacity: .8; }
+  .k2-tab.on svg { opacity: 1; }
+  .k2-tab-hint {
+    font-size: 12px; line-height: 1.8; color: var(--foreground-subtle);
+    margin: 0 0 14px; text-align: right;
   }
 
   .k2-bar { height: 6px; border-radius: 100px; background: var(--track); overflow: hidden; }
@@ -514,21 +523,58 @@ export default function ResultClient() {
             </div>
           )}
 
-          {/* تب‌ها */}
-          <div className="k2-tabs k2-f3" style={{ marginBottom: 16 }}>
+          {/* تب‌ها — آیکون به‌جای عدد، چون هر سه بخش معمولاً ۳ آیتم دارند
+              و عدد تکراری هیچ تمایزی ایجاد نمی‌کرد */}
+          <div className="k2-tabs k2-f3" role="tablist" style={{ marginBottom: 16 }}>
             {([
-              ["paths", "مسیرهای شغلی", paths.length],
-              ["roadmap", "نقشه راه", roadmap.length],
-              ["personality", "ویژگی‌ها", traits.length],
-            ] as [Tab, string, number][]).map(([id, label, n]) => (
-              <button key={id} className={`k2-tab ${tab === id ? "on" : ""}`} onClick={() => setTab(id)}>
+              [
+                "paths",
+                "مسیرهای شغلی",
+                "کدام شغل‌ها به شما می‌آیند",
+                <svg key="i" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 19V9m5 10V5m5 14v-7m5 7V8" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                </svg>,
+              ],
+              [
+                "roadmap",
+                "نقشه راه",
+                "از کجا شروع کنید",
+                <svg key="i" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 6h9a3.5 3.5 0 0 1 0 7H9a3.5 3.5 0 0 0 0 7h10" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="5" cy="6" r="1.6" fill="currentColor" />
+                  <circle cx="19" cy="20" r="1.6" fill="currentColor" />
+                </svg>,
+              ],
+              [
+                "personality",
+                "ویژگی‌ها",
+                "نقاط قوت شخصیتی شما",
+                <svg key="i" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="8" r="3.6" stroke="currentColor" strokeWidth="1.9" />
+                  <path d="M5 20c0-3.4 3.1-5.6 7-5.6s7 2.2 7 5.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                </svg>,
+              ],
+            ] as [Tab, string, string, React.ReactNode][]).map(([id, label, hint, icon]) => (
+              <button
+                key={id}
+                role="tab"
+                aria-selected={tab === id}
+                className={`k2-tab ${tab === id ? "on" : ""}`}
+                onClick={() => setTab(id)}
+                title={hint}
+              >
+                {icon}
                 {label}
-                {n > 0 && (
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, opacity: 0.7 }}>{n}</span>
-                )}
               </button>
             ))}
           </div>
+
+          {/* توضیح تب فعال — تا کاربر بداند اینجا چه می‌بیند */}
+          <p className="k2-tab-hint">
+            {tab === "paths" && "بر اساس پاسخ‌های شما، این مسیرها بیشترین هم‌خوانی را دارند."}
+            {tab === "roadmap" && "برنامه‌ی گام‌به‌گام برای رسیدن به مسیر انتخابی."}
+            {tab === "personality" && "ویژگی‌هایی که در پاسخ‌های شما پررنگ بودند."}
+          </p>
 
           {/* محتوای تب */}
           {tab === "paths" && (
@@ -586,8 +632,15 @@ export default function ResultClient() {
                         >
                           ٪{p.match_percentage}
                         </div>
-                        <div style={{ fontSize: 10, color: "var(--foreground-subtle)", marginTop: 3 }}>
-                          تطابق
+                        <div
+                          style={{ fontSize: 10, color: "var(--foreground-subtle)", marginTop: 3 }}
+                          title={
+                            p.match_basis === "riasec"
+                              ? "بر پایه مدل RIASEC هالند و محاسبه از پاسخ‌های شما"
+                              : "تخمینی"
+                          }
+                        >
+                          {p.match_basis === "riasec" ? "تطابق RIASEC" : "تطابق"}
                         </div>
                       </div>
                     </div>
