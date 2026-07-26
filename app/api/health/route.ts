@@ -4,6 +4,7 @@ import {
   getSupabaseServiceKey,
   getSupabaseUrl,
 } from "@/lib/supabase-env";
+import { isDistributed } from "@/lib/rate-limit";
 
 /** همیشه در زمان اجرا اجرا شود، نه در build */
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ export async function GET() {
     {
       configured,
       env,
+      rateLimit: isDistributed ? "distributed (upstash)" : "in-memory (per instance)",
       supabase: reachable,
       vercelEnv: process.env.VERCEL_ENV ?? "local",
       time: new Date().toISOString(),

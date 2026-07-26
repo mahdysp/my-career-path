@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/route-error";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const limited = checkRateLimit(req, { name: "generate", limit: 8, windowMs: 60_000 });
+    const limited = await checkRateLimitAsync(req, { name: "generate", limit: 8, windowMs: 60_000 });
     if (limited) return limited;
 
     const { query, count } = await req.json();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/route-error";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { getSession } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const limited = checkRateLimit(req, { name: "analyze", limit: 6, windowMs: 60_000 });
+    const limited = await checkRateLimitAsync(req, { name: "analyze", limit: 6, windowMs: 60_000 });
     if (limited) return limited;
 
     const { query, questions, answers } = await req.json();
