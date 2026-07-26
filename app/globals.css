@@ -147,6 +147,41 @@ html,
 body {
   background: var(--background-base);
   color: var(--foreground);
+  /* هیچ عنصری نباید صفحه را افقی بکشد (اسکرول افقی ناخواسته در موبایل) */
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* جلوگیری از سرریز محتوای طولانی مثل ایمیل یا URL روی صفحه‌های باریک */
+@media (max-width: 640px) {
+  h1, h2, h3, p, span, div, label, button, a {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* روی دستگاه‌های لمسی، هدف‌های کوچک به حداقل استاندارد ۴۴px می‌رسند
+   بدون اینکه ظاهرشان بزرگ شود (ناحیه لمس نامرئی گسترش می‌یابد). */
+@media (hover: none) and (pointer: coarse) {
+  /* فقط دکمه‌های مستقل — نقاط نقشه سوالات عمداً مستثنا هستند، چون
+     ناحیه ۴۴px روی آن‌ها همسایه‌ها را می‌پوشاند و لمس را غیرقابل‌پیش‌بینی می‌کند. */
+  .k2-theme-toggle,
+  .k2-eye,
+  .k2-lamp {
+    position: relative;
+  }
+  .k2-theme-toggle::after,
+  .k2-eye::after,
+  .k2-lamp::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 body {

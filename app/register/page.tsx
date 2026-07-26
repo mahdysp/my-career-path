@@ -450,6 +450,11 @@ export default function RegisterPage() {
           .k2-row-2 { grid-template-columns: 1fr !important; }
         }
 
+        @media (max-width: 380px) {
+          .k2-card-pad { padding: 24px 15px !important; }
+          .k2-row-2 { grid-template-columns: 1fr !important; }
+        }
+
         ${passwordLampStyles}
       `}</style>
 

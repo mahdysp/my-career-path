@@ -151,6 +151,17 @@ const styles = `
   @media (max-width: 640px) {
     .k2-hide-sm { display: none !important; }
     .k2-head-actions { width: 100%; }
+    .k2-shell { padding: 0 14px; }
+    .k2-card-pad-sm { padding: 18px 16px !important; }
+    /* تایم‌لاین نقشه راه در موبایل تودرتو نشود */
+    .k2-phase { padding-right: 18px; }
+  }
+
+  @media (max-width: 430px) {
+    /* تب‌ها زیر هم بهتر از فشرده‌شدن و بریده‌شدن متن است */
+    .k2-tabs { flex-direction: column; gap: 4px; }
+    .k2-tab { width: 100%; height: 42px; font-size: 13.5px; }
+    .k2-shell { padding: 0 12px; }
   }
 `;
 
@@ -431,7 +442,7 @@ export default function ResultClient() {
 
           {/* خلاصه */}
           {result.summary && (
-            <div className="k2-card k2-f2" onMouseMove={spotlight} style={{ padding: "22px 24px", marginBottom: 16 }}>
+            <div className="k2-card k2-f2 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "22px 24px", marginBottom: 16 }}>
               <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
                 <div className="k2-icon-box">
                   <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
@@ -455,7 +466,7 @@ export default function ResultClient() {
               style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16, marginBottom: 16 }}
             >
               {result.strengths?.length > 0 && (
-                <div className="k2-card" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
+                <div className="k2-card k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
                   <span className="k2-sec-label">نقاط قوت</span>
                   <h2 className="k2-sec-title" style={{ marginBottom: 14 }}>در چه چیزی خوبید</h2>
                   <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
@@ -472,7 +483,7 @@ export default function ResultClient() {
               )}
 
               {result.areas_to_improve?.length > 0 && (
-                <div className="k2-card" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
+                <div className="k2-card k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
                   <span className="k2-sec-label">فرصت رشد</span>
                   <h2 className="k2-sec-title" style={{ marginBottom: 14 }}>روی چه چیزی کار کنید</h2>
                   <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
@@ -510,7 +521,7 @@ export default function ResultClient() {
           {tab === "paths" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {paths.map((p, i) => (
-                <div key={i} className="k2-card k2-f1" onMouseMove={spotlight} style={{ padding: "22px 24px" }}>
+                <div key={i} className="k2-card k2-f1 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "22px 24px" }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14, marginBottom: 12 }}>
                     <div style={{ display: "flex", gap: 12, minWidth: 0 }}>
                       <span
@@ -565,7 +576,7 @@ export default function ResultClient() {
           )}
 
           {tab === "roadmap" && (
-            <div className="k2-card k2-f1" onMouseMove={spotlight} style={{ padding: "26px 28px" }}>
+            <div className="k2-card k2-f1 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "26px 28px" }}>
               {roadmap.map((ph, i) => (
                 <div key={i} className="k2-phase">
                   <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
@@ -590,7 +601,7 @@ export default function ResultClient() {
           )}
 
           {tab === "personality" && (
-            <div className="k2-card k2-f1" onMouseMove={spotlight} style={{ padding: "24px 26px" }}>
+            <div className="k2-card k2-f1 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "24px 26px" }}>
               {traits.map((t, i) => (
                 <div key={i} style={{ marginBottom: i === traits.length - 1 ? 0 : 18 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>

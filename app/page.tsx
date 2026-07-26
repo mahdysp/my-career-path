@@ -239,6 +239,16 @@ export default function CareerHub() {
             grid-row: auto !important;
           }
         }
+
+        @media (max-width: 430px) {
+          .k2-hero-title { font-size: 33px !important; line-height: 1.3 !important; }
+          .k2-card { padding: 22px 18px !important; }
+          .k2-step-row { padding: 18px 16px !important; gap: 14px !important; }
+        }
+
+        @media (max-width: 360px) {
+          .k2-hero-title { font-size: 29px !important; }
+        }
       `}</style>
 
       <main

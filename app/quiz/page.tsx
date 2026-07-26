@@ -514,6 +514,18 @@ export default function QuizLanding() {
           .k2-search .k2-btn { width: 100% !important; }
           .k2-stats-row { gap: 24px !important; flex-wrap: wrap; }
         }
+
+        @media (max-width: 430px) {
+          .k2-hero-title { font-size: 31px !important; line-height: 1.3 !important; }
+          .k2-tag { font-size: 12px; padding: 7px 12px; }   /* هدف لمس بزرگ‌تر */
+          .k2-stats-row { gap: 18px !important; }
+          .k2-viz-col .k2-card { padding: 16px !important; }
+        }
+
+        @media (max-width: 360px) {
+          .k2-hero-title { font-size: 27px !important; }
+          .k2-holland span { width: 20px; height: 20px; font-size: 10px; }
+        }
       `}</style>
 
       <main

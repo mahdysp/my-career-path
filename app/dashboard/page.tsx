@@ -147,10 +147,6 @@ const styles = `
   }
   .k2-dna-chart { width: 210px; height: 186px; overflow: visible; }
   .k2-dna-bars { min-width: 0; }
-  @media (max-width: 560px) {
-    .k2-dna { grid-template-columns: 1fr; justify-items: center; }
-    .k2-dna-bars { width: 100%; }
-  }
 
   .k2-stat {
     padding: 16px 18px; text-align: right;
@@ -260,11 +256,26 @@ const styles = `
   .k2-link { color: var(--accent); text-decoration: none; transition: color .2s ease; }
   .k2-link:hover { color: var(--accent-bright); text-decoration: underline; }
 
+  /* ── واکنش‌گرایی: از بزرگ به کوچک، تا قانون بعدی قبلی را بازنویسی کند ── */
   @media (max-width: 940px) {
     .k2-grid { grid-template-columns: 1fr !important; }
     .k2-stats { grid-template-columns: repeat(2,1fr) !important; }
-    .k2-dna { grid-template-columns: 210px minmax(0,1fr); }
     .k2-nav-hide { display: none !important; }
+  }
+
+  @media (max-width: 620px) {
+    /* نمودار و نوارها زیر هم — در غیر این صورت نوارها له می‌شوند */
+    .k2-dna { grid-template-columns: 1fr !important; justify-items: center; gap: 16px; }
+    .k2-dna-bars { width: 100%; }
+    .k2-shell { padding: 0 14px; }
+    .k2-card-pad-sm { padding: 18px 16px !important; }
+    .k2-heat-scroll { -webkit-overflow-scrolling: touch; }
+  }
+
+  @media (max-width: 380px) {
+    .k2-stats { grid-template-columns: 1fr !important; }
+    .k2-dna-chart { width: 100%; max-width: 210px; height: auto; }
+    .k2-shell { padding: 0 12px; }
   }
 `;
 
@@ -654,7 +665,7 @@ export default function DashboardPage() {
               {/* ستون راست (اصلی) */}
               <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
                 {/* DNA مهارتی */}
-                <div className="k2-card k2-f3" onMouseMove={spotlight} style={{ padding: "22px 24px" }}>
+                <div className="k2-card k2-f3 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "22px 24px" }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
                     <div>
                       <span className="k2-sec-label">DNA شغلی شما</span>
@@ -793,7 +804,7 @@ export default function DashboardPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
                 {/* مسیرهای برتر */}
                 {topCareers.length > 0 && (
-                  <div className="k2-card k2-f2" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
+                  <div className="k2-card k2-f2 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
                     <span className="k2-sec-label">بر اساس تحلیل‌ها</span>
                     <h2 className="k2-sec-title" style={{ marginBottom: 16 }}>مسیرهای برتر شما</h2>
 
@@ -815,7 +826,7 @@ export default function DashboardPage() {
 
                 {/* نقاط قوت */}
                 {topStrengths.length > 0 && (
-                  <div className="k2-card k2-f3" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
+                  <div className="k2-card k2-f3 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
                     <span className="k2-sec-label">تکرارشونده</span>
                     <h2 className="k2-sec-title" style={{ marginBottom: 14 }}>نقاط قوت شما</h2>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
@@ -832,7 +843,7 @@ export default function DashboardPage() {
                 )}
 
                 {/* تقویم فعالیت */}
-                <div className="k2-card k2-f3" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
+                <div className="k2-card k2-f3 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
                     <div>
                       <span className="k2-sec-label">۱۸ هفته اخیر</span>
@@ -895,7 +906,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* پروفایل */}
-                <div className="k2-card k2-f4" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
+                <div className="k2-card k2-f4 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
                     <div>
                       <span className="k2-sec-label">حساب کاربری</span>

@@ -326,6 +326,10 @@ export default function AuthClient() {
           .k2-card-pad { padding: 30px 22px !important; }
         }
 
+        @media (max-width: 380px) {
+          .k2-card-pad { padding: 24px 15px !important; }
+        }
+
         ${passwordLampStyles}
       `}</style>
 

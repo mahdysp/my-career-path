@@ -171,9 +171,55 @@ const styles = `
     @media (max-width: 640px) {
       .k2-q-card { padding: 26px 20px !important; }
       .k2-nav-meta { display: none !important; }
-      .k2-scale button { height: 46px; font-size: 14px; }
       .k2-foot { flex-direction: column-reverse !important; align-items: stretch !important; }
       .k2-foot .k2-btn { width: 100%; }
+
+      /* نقشه سوالات: به‌جای شکستن به چند خط، یک نوار قابل اسکرول افقی */
+      .k2-dots {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding: 6px 2px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .k2-dots::-webkit-scrollbar { display: none; }
+      /* ناحیه لمس بزرگ‌تر با حفظ ظاهر: نقطه کوچک می‌ماند، کادر شفاف بزرگ می‌شود */
+      .k2-dot {
+        flex: 0 0 auto;
+        width: 22px; height: 26px;
+        border-radius: 6px;
+        background: transparent;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .k2-dot::before {
+        content: "";
+        width: 8px; height: 8px; border-radius: 50%;
+        background: rgba(255,255,255,.16);
+        transition: all .25s cubic-bezier(.16,1,.3,1);
+      }
+      .k2-dot.done::before { background: var(--accent); }
+      .k2-dot.now { width: 30px; }
+      .k2-dot.now::before {
+        width: 20px; border-radius: 100px; background: var(--foreground);
+        box-shadow: 0 0 10px var(--accent-glow);
+      }
+      .k2-dot:hover:not(.now) { transform: none; }
+      .k2-dot.now, .k2-dot.done { background: transparent; }
+    }
+
+    @media (max-width: 420px) {
+      /* هدف لمس استاندارد ۴۴px حفظ شود */
+      .k2-scale { gap: 6px; }
+      .k2-scale button { height: 48px; font-size: 15px; }
+      .k2-opt { padding: 13px 13px; gap: 10px; font-size: 14px; }
+      .k2-opt-key { width: 28px; height: 28px; }
+      .k2-q-card { padding: 22px 16px !important; }
+    }
+
+    @media (max-width: 360px) {
+      .k2-scale { gap: 5px; }
+      .k2-kbd-hints { display: none !important; }
     }
   `;
 
@@ -686,6 +732,7 @@ export default function AssessmentClient() {
 
           {/* راهنمای میانبرها */}
           <div
+            className="k2-kbd-hints"
             style={{
               display: "flex", alignItems: "center", justifyContent: "center",
               gap: 14, marginTop: 22, flexWrap: "wrap",

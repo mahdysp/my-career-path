@@ -93,6 +93,12 @@ export const passwordLampStyles = `
   }
   .k2-pass-row > .k2-field { flex: 1; min-width: 0; }
 
+  /* در گوشی‌های باریک چراغ کوچک‌تر شود تا فیلد رمز تنگ نشود */
+  @media (max-width: 380px) {
+    .k2-pass-row { gap: 7px; }
+    .k2-lamp svg { width: 36px; height: 62px; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .k2-lamp-swing,
     .k2-lamp:hover .k2-lamp-swing,
