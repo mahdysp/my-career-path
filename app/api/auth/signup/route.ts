@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/route-error";
 import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      return NextResponse.json({ message: authError.message }, { status: 400 });
+      return handleRouteError(authError, { message: authError.message, status: 400 });
     }
 
     const userId = authData.user?.id;
@@ -77,7 +78,6 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ message: "خطای سرور." }, { status: 500 });
+    return handleRouteError(err);
   }
 }

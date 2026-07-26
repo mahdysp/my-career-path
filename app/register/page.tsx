@@ -779,13 +779,11 @@ export default function RegisterPage() {
                               <i key={i} style={{ background: pwd && i < pwdScore ? pwdColors[pwdScore] : undefined }} />
                             ))}
                           </div>
-                          <span style={{ fontSize: 11, color: pwd ? pwdColors[pwdScore] : "var(--foreground-subtle)" }}>
-                            {pwd
-                              ? `قدرت رمز: ${pwdLabels[pwdScore]}`
-                              : showPassword
-                                ? "چراغ روشن است — رمز دیده می‌شود"
-                                : "برای دیدن رمز، چراغ را روشن کنید"}
-                          </span>
+                          {(pwd || !showPassword) && (
+                            <span style={{ fontSize: 11, color: pwd ? pwdColors[pwdScore] : "var(--foreground-subtle)" }}>
+                              {pwd ? `قدرت رمز: ${pwdLabels[pwdScore]}` : "برای دیدن رمز، چراغ را روشن کنید"}
+                            </span>
+                          )}
                         </div>
 
                         <PasswordLamp on={showPassword} onToggle={() => setShowPassword((v) => !v)} />

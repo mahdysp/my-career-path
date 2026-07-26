@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/route-error";
 
 export async function POST(req: NextRequest) {
   try {
@@ -110,7 +111,6 @@ ${count} سوال ترکیبی طراحی کن که:
 
     return NextResponse.json({ questions: parsed.questions });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ message: "خطای سرور." }, { status: 500 });
+    return handleRouteError(err);
   }
 }

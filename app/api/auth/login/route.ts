@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/route-error";
 import { supabase } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
@@ -33,7 +34,8 @@ export async function POST(req: NextRequest) {
           { status: 401 }
         );
       }
-      return NextResponse.json({ message: error.message }, { status: 401 });
+      // خطاهای شبکه‌ای Supabase (پروژه خوابیده، فیلترینگ و…) نباید خام به کاربر برسد
+      return handleRouteError(error, { message: "ورود ناموفق بود. لطفاً دوباره تلاش کنید.", status: 401 });
     }
 
     if (!data.session) {
@@ -70,7 +72,6 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ message: "خطای سرور." }, { status: 500 });
+    return handleRouteError(err);
   }
 }

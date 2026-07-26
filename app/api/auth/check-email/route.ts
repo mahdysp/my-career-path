@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/route-error";
 import { supabase } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
@@ -33,7 +34,6 @@ export async function POST(req: NextRequest) {
       message: data ? "این ایمیل قبلاً ثبت شده است." : "ایمیل قابل استفاده است.",
     });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ message: "خطای سرور." }, { status: 500 });
+    return handleRouteError(err);
   }
 }

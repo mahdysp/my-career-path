@@ -525,9 +525,11 @@ export default function AuthPage() {
                           onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         />
                       </div>
-                      <span style={{ fontSize: 11, color: "var(--foreground-subtle)", marginTop: 1 }}>
-                        {showPassword ? "چراغ روشن است — رمز شما دیده می‌شود" : "برای دیدن رمز، چراغ را روشن کنید"}
-                      </span>
+                      {!showPassword && (
+                        <span style={{ fontSize: 11, color: "var(--foreground-subtle)", marginTop: 1 }}>
+                          برای دیدن رمز، چراغ را روشن کنید
+                        </span>
+                      )}
                     </div>
 
                     <PasswordLamp on={showPassword} onToggle={() => setShowPassword((v) => !v)} />
