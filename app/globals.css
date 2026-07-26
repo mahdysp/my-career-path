@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
@@ -18,7 +18,7 @@
   --border-hover: rgba(255, 255, 255, 0.1);
   --border-accent: rgba(94, 106, 210, 0.3);
 
-  --font-sans: "Vazirmatn", system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans Arabic", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
   --background: var(--background-base);

@@ -43,37 +43,10 @@ export default function CareerHub() {
   const heroScale = Math.max(1 - scrollY / 4000, 0.94);
   const heroTranslate = Math.min(scrollY * 0.18, 90);
 
-  const features = [
-    {
-      big: true,
-      icon: (
-        <path d="M4 19V5m5 14V9m5 10V13m5 6V7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      ),
-      title: "تحلیل شخصیت شغلی مبتنی بر داده",
-      desc: "پاسخ‌هات بر اساس مدل‌های شناخته‌شده‌ی روان‌شناسی شغلی سنجیده می‌شن، نه یک تست حدسی. هوش مصنوعی الگوهای پنهان علاقه و مهارتت رو پیدا می‌کنه.",
-    },
-    {
-      icon: <path d="M12 3l2.6 6.2L21 10l-5 4.6L17.4 21 12 17.3 6.6 21 8 14.6 3 10l6.4-.8z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />,
-      title: "پیشنهاد مسیر متناسب",
-      desc: "فقط مسیرهایی که با مهارت و علاقه‌ت هم‌خونی دارن رو نشون می‌دیم.",
-    },
-    {
-      icon: <path d="M4 6h16M4 12h10M4 18h13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />,
-      title: "نقشه راه یادگیری",
-      desc: "گام‌به‌گام مشخص می‌کنیم چی یاد بگیری و از کجا شروع کنی.",
-    },
-    {
-      wide: true,
-      icon: <path d="M12 8v4l3 2M12 3a9 9 0 1 0 9 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />,
-      title: "پشتیبانی هوش مصنوعی، هر لحظه که نیاز داری",
-      desc: "سؤال داری؟ هر زمان از مسیر، دستیار هوشمند کارکس همراهته و راهنماییت می‌کنه.",
-    },
-  ];
-
   const steps = [
-    { num: "۰۱", title: "پاسخ به سؤالات کوتاه", desc: "چند سؤال ساده درباره‌ی علایق، مهارت‌ها و اهدافت." },
-    { num: "۰۲", title: "تحلیل پاسخ‌ها", desc: "سیستم پاسخ‌هات رو در چند ثانیه تحلیل می‌کنه." },
-    { num: "۰۳", title: "دریافت نقشه راه", desc: "مسیرهای شغلی پیشنهادی به‌همراه برنامه یادگیری رو می‌بینی." },
+    { num: "01", title: "پاسخ به سؤالات کوتاه", desc: "چند سؤال ساده درباره‌ی علایق، مهارت‌ها و اهدافتان." },
+    { num: "02", title: "تحلیل پاسخ‌ها", desc: "سیستم پاسخ‌های شما را در چند ثانیه تحلیل می‌کند." },
+    { num: "03", title: "دریافت نقشه راه", desc: "مسیرهای شغلی پیشنهادی به‌همراه برنامه یادگیری را می‌بینید." },
   ];
 
   return (
@@ -94,13 +67,6 @@ export default function CareerHub() {
         @keyframes k2FadeUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes k2Shimmer {
-          to { background-position: 200% center; }
-        }
-        @keyframes k2Blink {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(0.7); }
         }
 
         .k2-fade-1 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.05s; }
@@ -192,34 +158,6 @@ export default function CareerHub() {
           background-clip: text;
           color: transparent;
         }
-        .k2-accent-text {
-          background: linear-gradient(90deg, var(--accent), #a5b4fc, var(--accent));
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          animation: k2Shimmer 4s linear infinite;
-        }
-
-        .k2-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          border: 1px solid var(--border-accent);
-          background: rgba(94,106,210,0.08);
-          border-radius: 9999px;
-          padding: 6px 16px;
-          font-family: var(--font-mono);
-          font-size: 11px;
-          letter-spacing: 0.08em;
-          color: var(--foreground-subtle);
-        }
-        .k2-badge-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: var(--accent);
-          box-shadow: 0 0 8px 1px var(--accent-glow);
-          animation: k2Blink 1.8s ease-in-out infinite;
-        }
 
         .k2-card {
           position: relative;
@@ -260,6 +198,7 @@ export default function CareerHub() {
           background: var(--surface);
           display: flex; align-items: center; justify-content: center;
           color: var(--accent);
+          flex-shrink: 0;
         }
 
         .k2-step-row {
@@ -278,15 +217,26 @@ export default function CareerHub() {
         }
         .k2-mobile-menu.open { max-height: 320px; opacity: 1; }
 
+        .k2-bento {
+          display: grid;
+          grid-template-columns: 1.4fr 1fr;
+          gap: 20px;
+        }
+
         @media (max-width: 860px) {
           .k2-nav-links { display: none !important; }
           .k2-hero-title { font-size: 42px !important; }
           .k2-hero-sub { font-size: 15px !important; }
           .k2-stats-row { gap: 28px !important; flex-wrap: wrap; }
-          .k2-bento { grid-template-columns: 1fr !important; }
-          .k2-bento-item { grid-column: span 1 !important; grid-row: auto !important; }
           .k2-hamburger { display: flex !important; }
           .k2-desktop-actions { display: none !important; }
+          .k2-bento {
+            grid-template-columns: 1fr !important;
+          }
+          .k2-bento > * {
+            grid-column: 1 !important;
+            grid-row: auto !important;
+          }
         }
       `}</style>
 
@@ -345,7 +295,7 @@ export default function CareerHub() {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-              <span style={{ fontWeight: 800, fontSize: 19, letterSpacing: "-0.02em", color: "var(--foreground)" }}>
+              <span style={{ fontWeight: 700, fontSize: 19, letterSpacing: "-0.02em", color: "var(--foreground)" }}>
                 Karex
               </span>
 
@@ -396,26 +346,18 @@ export default function CareerHub() {
               transition: "opacity 0.1s linear",
             }}
           >
-            <div className={mounted ? "k2-fade-1" : ""} style={{ marginBottom: 24 }}>
-              <span className="k2-badge">
-                <span className="k2-badge-dot" />
-                سامانه هوشمند مسیریابی شغلی
-              </span>
-            </div>
-
             <h1
-              className={`k2-hero-title k2-gradient-text ${mounted ? "k2-fade-2" : ""}`}
+              className={`k2-hero-title k2-gradient-text ${mounted ? "k2-fade-1" : ""}`}
               style={{
-                fontWeight: 800,
+                fontWeight: 700,
                 fontSize: "clamp(42px, 6.5vw, 76px)",
-                lineHeight: 1.1,
-                letterSpacing: "-0.03em",
+                lineHeight: 1.15,
+                letterSpacing: "-0.02em",
                 margin: "0 auto 20px",
                 maxWidth: 820,
               }}
             >
-              مسیر شغلی خودت را{" "}
-              <span className="k2-accent-text">با دقت</span> پیدا کن
+              مسیر شغلی خودتان را پیدا کنید
             </h1>
 
             <p
@@ -425,11 +367,11 @@ export default function CareerHub() {
                 maxWidth: 540, margin: "0 auto 40px",
               }}
             >
-              چند سؤال کوتاه جواب می‌دی، ما علایق و مهارت‌هات رو با هوش مصنوعی تحلیل می‌کنیم
-              و مسیرهای شغلی متناسب با تو رو با یک نقشه راه یادگیری نشونت می‌دیم.
+              با پاسخ به چند سؤال کوتاه، علایق و مهارت‌های شما با هوش مصنوعی تحلیل می‌شود
+              و مسیرهای شغلی متناسب به‌همراه یک نقشه راه یادگیری پیشنهاد داده می‌شود.
             </p>
 
-            <div className={mounted ? "k2-fade-3" : ""} style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 20 }}>
+            <div className={mounted ? "k2-fade-3" : ""} style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 72 }}>
               <button className="k2-btn k2-btn-primary" onClick={handleStart} disabled={isLoading} style={{ fontSize: 15, padding: "0 30px", height: 46 }}>
                 {isLoading ? "در حال آماده‌سازی..." : "شروع آزمون"}
               </button>
@@ -438,22 +380,18 @@ export default function CareerHub() {
               </a>
             </div>
 
-            <p className={mounted ? "k2-fade-3" : ""} style={{ fontSize: 13, color: "var(--foreground-subtle)", marginBottom: 72, fontFamily: "var(--font-mono)" }}>
-              رایگان و بدون نیاز به کارت بانکی &nbsp;·&nbsp; کمتر از ۵ دقیقه
-            </p>
-
             <div
               className={`k2-stats-row ${mounted ? "k2-fade-4" : ""}`}
               style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 56, paddingBottom: 72, borderBottom: "1px solid var(--border-default)" }}
             >
               {[
-                { num: "+۲٬۴۰۰", lbl: "مسیر شغلی" },
-                { num: "۹۴٪", lbl: "دقت تحلیل" },
-                { num: "۴٫۹", lbl: "امتیاز کاربران" },
+                { num: "2,400+", lbl: "مسیر شغلی" },
+                { num: "94%", lbl: "دقت تحلیل" },
+                { num: "4.9", lbl: "امتیاز کاربران" },
               ].map((s, i) => (
                 <div key={s.lbl} style={{ display: "flex", alignItems: "center", gap: 56 }}>
                   <div style={{ textAlign: "center" }}>
-                    <div className="k2-gradient-text" style={{ fontWeight: 800, fontSize: 34, letterSpacing: "-0.02em" }}>
+                    <div className="k2-gradient-text" style={{ fontFamily: "var(--font-mono)", fontWeight: 600, fontSize: 30, letterSpacing: "-0.01em" }}>
                       {s.num}
                     </div>
                     <div style={{ fontSize: 12, color: "var(--foreground-muted)", marginTop: 4 }}>{s.lbl}</div>
@@ -470,49 +408,96 @@ export default function CareerHub() {
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, letterSpacing: "0.1em", color: "var(--accent)" }}>
                 ویژگی‌ها
               </span>
-              <h2 style={{ fontWeight: 700, fontSize: 34, letterSpacing: "-0.03em", color: "var(--foreground)", marginTop: 8 }}>
-                چه چیزی می‌گیری؟
+              <h2 style={{ fontWeight: 700, fontSize: 34, letterSpacing: "-0.02em", color: "var(--foreground)", marginTop: 8 }}>
+                چه امکاناتی دریافت می‌کنید؟
               </h2>
             </div>
 
-            <div
-              className="k2-bento"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(6, 1fr)",
-                gridAutoRows: "170px",
-                gridAutoFlow: "row dense",
-                gap: 20,
-              }}
-            >
-              {features.map((f, i) => (
-                <div
-                  key={f.title}
-                  className="k2-card k2-bento-item"
-                  onMouseMove={handleSpotlight}
-                  style={{
-                    gridColumn: f.big ? "span 4" : f.wide ? "span 6" : "span 2",
-                    gridRow: f.big ? "span 2" : "span 1",
-                    padding: 28,
-                    textAlign: "right",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <div>
-                    <div className="k2-icon-box" style={{ marginBottom: 18 }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">{f.icon}</svg>
-                    </div>
-                    <h3 style={{ fontWeight: 700, fontSize: f.big ? 20 : 16, color: "var(--foreground)", marginBottom: 10, letterSpacing: "-0.01em" }}>
-                      {f.title}
-                    </h3>
-                    <p style={{ fontSize: 14, lineHeight: 1.8, color: "var(--foreground-muted)", maxWidth: f.big ? 460 : "none" }}>
-                      {f.desc}
-                    </p>
-                  </div>
+            <div className="k2-bento">
+              {/* کارت بزرگ */}
+              <div
+                className="k2-card"
+                onMouseMove={handleSpotlight}
+                style={{ gridColumn: "1", gridRow: "1 / span 2", padding: 32, textAlign: "right", display: "flex", flexDirection: "column", gap: 16, justifyContent: "center" }}
+              >
+                <div className="k2-icon-box">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 19V5m5 14V9m5 10V13m5 6V7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
                 </div>
-              ))}
+                <div>
+                  <h3 style={{ fontWeight: 700, fontSize: 20, color: "var(--foreground)", marginBottom: 12, letterSpacing: "-0.01em" }}>
+                    تحلیل شخصیت شغلی مبتنی بر داده
+                  </h3>
+                  <p style={{ fontSize: 14, lineHeight: 1.9, color: "var(--foreground-muted)", maxWidth: 440 }}>
+                    پاسخ‌های شما بر اساس مدل‌های شناخته‌شده‌ی روان‌شناسی شغلی سنجیده می‌شود، نه یک تست حدسی.
+                    هوش مصنوعی الگوهای پنهان علاقه و مهارت شما را شناسایی می‌کند.
+                  </p>
+                </div>
+              </div>
+
+              {/* کارت کوچک ۱ */}
+              <div
+                className="k2-card"
+                onMouseMove={handleSpotlight}
+                style={{ gridColumn: "2", gridRow: "1", padding: 28, textAlign: "right", display: "flex", flexDirection: "column", gap: 14 }}
+              >
+                <div className="k2-icon-box">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3l2.6 6.2L21 10l-5 4.6L17.4 21 12 17.3 6.6 21 8 14.6 3 10l6.4-.8z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 style={{ fontWeight: 700, fontSize: 16, color: "var(--foreground)", marginBottom: 8 }}>
+                    پیشنهاد مسیر متناسب
+                  </h3>
+                  <p style={{ fontSize: 14, lineHeight: 1.8, color: "var(--foreground-muted)" }}>
+                    فقط مسیرهایی که با مهارت و علاقه شما هم‌خوانی دارند نشان داده می‌شود.
+                  </p>
+                </div>
+              </div>
+
+              {/* کارت کوچک ۲ */}
+              <div
+                className="k2-card"
+                onMouseMove={handleSpotlight}
+                style={{ gridColumn: "2", gridRow: "2", padding: 28, textAlign: "right", display: "flex", flexDirection: "column", gap: 14 }}
+              >
+                <div className="k2-icon-box">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 6h16M4 12h10M4 18h13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 style={{ fontWeight: 700, fontSize: 16, color: "var(--foreground)", marginBottom: 8 }}>
+                    نقشه راه یادگیری
+                  </h3>
+                  <p style={{ fontSize: 14, lineHeight: 1.8, color: "var(--foreground-muted)" }}>
+                    گام‌به‌گام مشخص می‌کنیم چه چیزی یاد بگیرید و از کجا شروع کنید.
+                  </p>
+                </div>
+              </div>
+
+              {/* کارت عریض */}
+              <div
+                className="k2-card"
+                onMouseMove={handleSpotlight}
+                style={{ gridColumn: "1 / -1", gridRow: "3", padding: 28, textAlign: "right", display: "flex", alignItems: "center", gap: 20 }}
+              >
+                <div className="k2-icon-box">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 8v4l3 2M12 3a9 9 0 1 0 9 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 style={{ fontWeight: 700, fontSize: 16, color: "var(--foreground)", marginBottom: 6 }}>
+                    پشتیبانی هوش مصنوعی، هر زمان که نیاز دارید
+                  </h3>
+                  <p style={{ fontSize: 14, lineHeight: 1.8, color: "var(--foreground-muted)" }}>
+                    سؤال دارید؟ در هر مرحله از مسیر، دستیار هوشمند کارکس همراه شماست و راهنمایی می‌کند.
+                  </p>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -522,8 +507,8 @@ export default function CareerHub() {
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, letterSpacing: "0.1em", color: "var(--accent)" }}>
                 روش کار
               </span>
-              <h2 style={{ fontWeight: 700, fontSize: 34, letterSpacing: "-0.03em", color: "var(--foreground)", marginTop: 8 }}>
-                سه قدم تا مسیر روشن
+              <h2 style={{ fontWeight: 700, fontSize: 34, letterSpacing: "-0.02em", color: "var(--foreground)", marginTop: 8 }}>
+                سه گام تا مسیر روشن
               </h2>
             </div>
 
@@ -551,7 +536,7 @@ export default function CareerHub() {
           {/* Footer */}
           <footer style={{ borderTop: "1px solid var(--border-default)", padding: "28px clamp(16px, 4vw, 40px)", textAlign: "center" }}>
             <p style={{ fontSize: 12, color: "var(--foreground-subtle)", fontFamily: "var(--font-mono)" }}>
-              © Karex — همه حقوق محفوظ است
+              © Karex — تمامی حقوق محفوظ است
             </p>
           </footer>
         </div>
