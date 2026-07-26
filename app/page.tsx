@@ -357,7 +357,7 @@ export default function CareerHub() {
                 maxWidth: 820,
               }}
             >
-              مسیر شغلی خودتان را پیدا کنید
+              بدون سردرگمی، نقشه راه آینده شغلی‌تان را بسازید
             </h1>
 
             <p
@@ -367,8 +367,8 @@ export default function CareerHub() {
                 maxWidth: 540, margin: "0 auto 40px",
               }}
             >
-              با پاسخ به چند سؤال کوتاه، علایق و مهارت‌های شما با هوش مصنوعی تحلیل می‌شود
-              و مسیرهای شغلی متناسب به‌همراه یک نقشه راه یادگیری پیشنهاد داده می‌شود.
+              ارزیابی هوشمند علایق و توانمندی‌ها برای ترسیم دقیق‌ترین مسیر شغلی
+              از کشف استعداد تا آغاز یادگیری
             </p>
 
             <div className={mounted ? "k2-fade-3" : ""} style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 72 }}>
@@ -431,7 +431,7 @@ export default function CareerHub() {
                   </h3>
                   <p style={{ fontSize: 14, lineHeight: 1.9, color: "var(--foreground-muted)", maxWidth: 440 }}>
                     پاسخ‌های شما بر اساس مدل‌های شناخته‌شده‌ی روان‌شناسی شغلی سنجیده می‌شود، نه یک تست حدسی.
-                    هوش مصنوعی الگوهای پنهان علاقه و مهارت شما را شناسایی می‌کند.
+                    کارکس الگوهای پنهان علاقه و مهارت شما را شناسایی می‌کند.
                   </p>
                 </div>
               </div>
