@@ -389,7 +389,9 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           display: flex;
           flex-direction: column;
           justify-content: center;
-          gap: clamp(10px, 2vh, 26px);
+          /* فاصله‌ی سربرگ تا صحنه عمداً کم است؛ قبلاً تصویر خیلی دور
+             از متن می‌افتاد و ارتباطشان دیده نمی‌شد. */
+          gap: clamp(4px, 0.8vh, 12px);
           max-width: 1080px;
           margin: 0 auto;
           padding: clamp(16px, 3vh, 36px) clamp(16px, 4vw, 40px);
@@ -409,11 +411,11 @@ export default function HomeClient({ content }: { content: SiteContent }) {
         .k2-exp-title {
           font-weight: 700; font-size: clamp(28px, 4.4vw, 44px);
           letter-spacing: -.025em; color: var(--foreground);
-          margin: 14px 0 0; line-height: 1.25;
+          margin: 12px 0 0; line-height: 1.25;
         }
         .k2-exp-sub {
           font-size: 15px; line-height: 1.95; color: var(--foreground-muted);
-          max-width: 560px; margin: 16px auto 0;
+          max-width: 560px; margin: 12px auto 0;
         }
 
         /* صحنه فضای باقی‌مانده را می‌گیرد و بوم داخلش نسبتش را حفظ
@@ -424,7 +426,8 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           min-height: 0;
           display: flex;
           flex-direction: column;
-          justify-content: flex-end;
+          /* صحنه به بالا می‌چسبد تا فاصله‌ی خالی زیر متن جمع شود */
+          justify-content: flex-start;
         }
         /* ابعاد را جاوااسکریپت ست می‌کند (متناسب با عرض و ارتفاع موجود) */
         .k2-exp-canvas { display: block; margin: 0 auto; }
@@ -486,16 +489,25 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           .k2-exp-item { opacity: 1; transform: none; }
         }
 
-        /* ── نمایشگر: قاب دستگاه با محتوای دلخواه ── */
-        .k2-screen {
+        /* ── نمایشگر: قاب دستگاه با محتوای دلخواه ──
+           مثل بخش نمای انفجاری چسبان است: تا وقتی همه‌ی اسلایدها دیده
+           نشده‌اند صحنه در وسط پنجره قفل می‌ماند، پس در هر لحظه فقط
+           متعلقات همین بخش در قاب دید هستند. */
+        .k2-screen-wrap {
           position: relative;
+          /* ارتفاع = یک پنجره برای هر اسلاید + کمی مکث */
+          height: 300vh;
+        }
+        .k2-screen {
+          position: sticky;
+          top: 0;
+          height: 100svh;
           max-width: 1280px;
           margin: 0 auto;
-          padding: clamp(8px, 2vw, 28px) clamp(16px, 4vw, 40px)
-            clamp(72px, 10vw, 130px);
+          padding: clamp(16px, 3vh, 40px) clamp(16px, 4vw, 40px);
           display: grid;
           grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
-          gap: clamp(28px, 5vw, 72px);
+          gap: clamp(24px, 4vw, 64px);
           align-items: center;
         }
         .k2-screen-copy { text-align: right; }
@@ -524,6 +536,15 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           transition: width .35s cubic-bezier(.16,1,.3,1), background .3s ease;
         }
         .k2-screen-dot.on { width: 26px; background: var(--accent); }
+
+        /* لینک‌های فوتر */
+        .k2-foot-link {
+          font-size: 13px; color: var(--foreground-muted);
+          text-decoration: none; transition: color .18s ease;
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .k2-foot-link:hover { color: var(--foreground); }
+        }
 
         /* قاب دستگاه: از لبه‌ی راست بیرون می‌زند، مثل مرجع طراحی */
         .k2-device { position: relative; }
@@ -606,11 +627,19 @@ export default function HomeClient({ content }: { content: SiteContent }) {
         @media (max-width: 900px) {
           .k2-screen {
             grid-template-columns: 1fr;
-            gap: clamp(28px, 6vw, 44px);
+            gap: clamp(18px, 3vh, 32px);
+            align-content: center;
           }
           .k2-screen-copy { text-align: center; }
           .k2-screen-sub { margin-inline: auto; }
           .k2-screen-dots { justify-content: center; }
+          .k2-screen-title { font-size: clamp(24px, 5.5vw, 34px); }
+          .k2-screen-sub { font-size: 14px; margin-top: 12px; }
+        }
+        /* روی نمایشگرهای کوتاه، قفل‌کردن باعث بریده شدن محتوا می‌شود */
+        @media (max-height: 600px) {
+          .k2-screen-wrap { height: auto; }
+          .k2-screen { position: static; height: auto; padding-block: 56px; }
         }
 
         .k2-bento {
@@ -925,8 +954,26 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           )}
 
           {/* Footer */}
-          <footer style={{ borderTop: "1px solid var(--border-default)", padding: "28px clamp(16px, 4vw, 40px)", textAlign: "center" }}>
-            <p style={{ fontSize: 12, color: "var(--foreground-subtle)", fontFamily: "var(--font-mono)" }}>
+          {/* فوتر — جای مرسوم و مورد انتظار برای «درباره‌ی ما» و تماس */}
+          <footer
+            style={{
+              borderTop: "1px solid var(--border-default)",
+              padding: "26px clamp(16px, 4vw, 40px) 30px",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 14,
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <nav style={{ display: "flex", flexWrap: "wrap", gap: 18 }}>
+              {content.flags.aboutVisible && (
+                <a href="/about" className="k2-foot-link">درباره‌ی ما</a>
+              )}
+              <a href="/how-it-works" className="k2-foot-link">روش کار</a>
+              <a href="/science" className="k2-foot-link">پشتوانه‌ی علمی</a>
+            </nav>
+            <p style={{ fontSize: 12, color: "var(--foreground-subtle)", fontFamily: "var(--font-mono)", margin: 0 }}>
               © Karex — تمامی حقوق محفوظ است
             </p>
           </footer>

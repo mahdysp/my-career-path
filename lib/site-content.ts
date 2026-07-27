@@ -23,6 +23,17 @@ export type ShowcaseSlide = {
   label: string;
 };
 
+export type AboutValue = { id: string; title: string; body: string };
+export type ContactChannel = {
+  id: string;
+  /** نوع کانال — آیکن و رفتار لینک از همین می‌آید */
+  kind: "email" | "telegram" | "instagram" | "phone" | "address" | "link";
+  label: string;
+  value: string;
+  /** خالی بگذارید تا خودکار از kind و value ساخته شود */
+  href: string;
+};
+
 export type SiteContent = {
   showcase: { slides: ShowcaseSlide[] };
   hero: {
@@ -33,6 +44,22 @@ export type SiteContent = {
     secondaryCta: string;
   };
   exploded: { eyebrow: string; title: string; subtitle: string };
+  about: {
+    /** پیام کوتاه بالای صفحه */
+    eyebrow: string;
+    title: string;
+    lede: string;
+    /** داستان ما — هر بند یک پاراگراف */
+    story: string[];
+    /** ارزش‌ها یا اصول کاری */
+    values: AboutValue[];
+    /** متن بالای بخش تماس */
+    contactTitle: string;
+    contactBody: string;
+    channels: ContactChannel[];
+    /** زمان پاسخ‌گویی — خالی یعنی نمایش داده نشود */
+    responseTime: string;
+  };
   flags: {
     /** بخش نمایشگر روی صفحه‌ی اصلی دیده شود */
     showcaseVisible: boolean;
@@ -40,6 +67,8 @@ export type SiteContent = {
     explodedVisible: boolean;
     /** ثبت‌نام کاربر جدید باز است */
     registrationOpen: boolean;
+    /** صفحه‌ی درباره‌ی ما در منو و فوتر دیده شود */
+    aboutVisible: boolean;
     /** پیام نواری بالای سایت — خالی یعنی نمایش داده نشود */
     banner: string;
   };
@@ -93,10 +122,64 @@ export const DEFAULT_CONTENT: SiteContent = {
     subtitle:
       "شخصیت شغلی شما از شش بُعد ساخته شده است. آزمون Karex این قطعات را کنار هم می‌گذارد تا ببینید کدام مسیر واقعاً به شما می‌آید.",
   },
+  about: {
+    eyebrow: "درباره‌ی ما",
+    title: "چرا Karex را ساختیم",
+    lede:
+      "انتخاب مسیر شغلی در ایران بیشتر بر پایه‌ی حرف اطرافیان و حدس و گمان است تا داده. Karex تلاشی است برای اینکه این تصمیم دست‌کم یک نقطه‌ی شروع روشن داشته باشد.",
+    story: [
+      "خیلی از ما رشته و شغلمان را بر اساس رتبه‌ی کنکور، توصیه‌ی خانواده، یا صرفاً چیزی که در دسترس بود انتخاب کردیم. سال‌ها بعد تازه می‌فهمیم که آن انتخاب چقدر با آنچه واقعاً به ما انرژی می‌دهد فاصله داشته.",
+      "Karex ادعا نمی‌کند این مسئله را حل می‌کند. کاری که می‌کند ساده‌تر است: با یک چارچوب استاندارد و داده‌ی واقعی، به شما نشان می‌دهد چه نوع کاری با علاقه‌هایتان هم‌جهت است — تا دست‌کم بدانید کجا را باید بیشتر بگردید.",
+      "همه‌چیز را باز گذاشته‌ایم: فرمول محاسبه، منبع داده‌ها، نقش هوش مصنوعی، و محدودیت‌هایی که این روش دارد. اگر ابزاری محدودیت‌هایش را نگوید، قابل اعتماد نیست.",
+    ],
+    values: [
+      {
+        id: "honest",
+        title: "صداقت بر بازاریابی",
+        body: "اگر عددی پشتوانه‌ی محکم ندارد، می‌نویسیم. محدودیت‌های آزمون را به‌اندازه‌ی نقاط قوتش برجسته کرده‌ایم.",
+      },
+      {
+        id: "data",
+        title: "داده به‌جای حدس",
+        body: "نمره‌های شغلی مستقیماً از پایگاه رسمی O*NET می‌آید و درصد تطابق با فرمول ثابت حساب می‌شود، نه با حدس مدل زبانی.",
+      },
+      {
+        id: "light",
+        title: "سبک و در دسترس",
+        body: "سایت طوری ساخته شده که روی اینترنت کند هم باز شود. استفاده از آزمون رایگان است.",
+      },
+      {
+        id: "privacy",
+        title: "داده‌ی شما مال شماست",
+        body: "نتایج فقط در حساب خودتان ذخیره می‌شود و هر زمان بخواهید می‌توانید حذفش کنید.",
+      },
+    ],
+    contactTitle: "راه‌های ارتباطی",
+    contactBody:
+      "اگر پیشنهادی دارید، ایرادی دیدید، یا ادعایی در سایت بدون منبع بود — حتماً بگویید. پیام‌ها را می‌خوانیم.",
+    channels: [
+      {
+        id: "email",
+        kind: "email",
+        label: "ایمیل",
+        value: "hello@mykarex.ir",
+        href: "",
+      },
+      {
+        id: "telegram",
+        kind: "telegram",
+        label: "تلگرام",
+        value: "@mykarex",
+        href: "",
+      },
+    ],
+    responseTime: "معمولاً ظرف ۲ روز کاری پاسخ می‌دهیم.",
+  },
   flags: {
     showcaseVisible: true,
     explodedVisible: true,
     registrationOpen: true,
+    aboutVisible: true,
     banner: "",
   },
 };

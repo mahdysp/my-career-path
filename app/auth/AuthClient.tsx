@@ -1,7 +1,7 @@
 // مسیر فایل: app/auth/AuthClient.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import PasswordLamp from "@/app/components/PasswordLamp";
@@ -17,6 +17,33 @@ export default function AuthClient() {
 
   const [mounted, setMounted] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+
+  /* در پشتی پنل مدیریت: سه ضربه‌ی پیاپی روی قفل.
+     یک کلیک ساده نیست تا تصادفی باز نشود؛ سه ضربه هم آن‌قدر ساده هست
+     که خودتان یادتان بماند. پنجره‌ی زمانی ۱٫۲ ثانیه است.
+     این فقط میان‌بر است، نه لایه‌ی امنیتی — کنترل واقعی سمت سرور است. */
+  const lockTaps = useRef(0);
+  const lockTimer = useRef<number | null>(null);
+
+  const handleLockTap = () => {
+    lockTaps.current += 1;
+    if (lockTimer.current) window.clearTimeout(lockTimer.current);
+
+    if (lockTaps.current >= 3) {
+      lockTaps.current = 0;
+      router.push("/admin");
+      return;
+    }
+    lockTimer.current = window.setTimeout(() => {
+      lockTaps.current = 0;
+    }, 1200);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (lockTimer.current) window.clearTimeout(lockTimer.current);
+    };
+  }, []);
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -204,6 +231,17 @@ export default function AuthClient() {
           display: flex; align-items: center; justify-content: center;
           color: var(--accent);
           flex-shrink: 0;
+        }
+        /* دکمه‌ی قفل نباید شبیه دکمه به‌نظر برسد */
+        .k2-icon-btn {
+          padding: 0; cursor: pointer;
+          font: inherit; -webkit-tap-highlight-color: transparent;
+          transition: border-color .2s ease, box-shadow .2s ease;
+        }
+        .k2-icon-btn:focus-visible {
+          outline: none;
+          border-color: var(--border-accent);
+          box-shadow: 0 0 0 3px var(--accent-glow);
         }
 
         /* ── فرم ── */
@@ -418,18 +456,29 @@ export default function AuthClient() {
               >
                 {/* Icon + title */}
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
-                  <div className="k2-icon-box">
-                    {isLogin ? (
+                  {/* در حالت ورود، قفل یک در پشتی به پنل مدیریت است.
+                      عمداً هیچ نشانه‌ی بصری ندارد؛ امنیت واقعی در
+                      lib/admin-auth.ts و middleware اعمال می‌شود، نه اینجا. */}
+                  {isLogin ? (
+                    <button
+                      type="button"
+                      className="k2-icon-box k2-icon-btn"
+                      onClick={handleLockTap}
+                      aria-label="ورود به حساب کاربری"
+                      title=""
+                    >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                         <rect x="4" y="10" width="16" height="10" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
                         <path d="M8 10V7.5a4 4 0 1 1 8 0V10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                       </svg>
-                    ) : (
+                    </button>
+                  ) : (
+                    <div className="k2-icon-box">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                         <path d="M12 4v16M4 12h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                       </svg>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <div key={isLogin ? "login" : "signup"} className="k2-swap" style={{ minWidth: 0 }}>
                     <h1
                       className="k2-gradient-text"

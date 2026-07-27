@@ -97,6 +97,12 @@ export default function AdminSettingsPage() {
                 onToggle={() => set({ showcaseVisible: !flags.showcaseVisible })}
               />
               <Switch
+                on={flags.aboutVisible}
+                label="صفحه‌ی درباره‌ی ما"
+                note="اگر خاموش شود، صفحه‌ی /about پیام «یافت نشد» می‌دهد و از منو و فوتر برداشته می‌شود."
+                onToggle={() => set({ aboutVisible: !flags.aboutVisible })}
+              />
+              <Switch
                 on={flags.registrationOpen}
                 label="ثبت‌نام کاربر جدید"
                 note="اگر خاموش شود، صفحه‌ی ثبت‌نام پیام «فعلاً بسته است» نشان می‌دهد."

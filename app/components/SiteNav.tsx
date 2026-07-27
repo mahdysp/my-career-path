@@ -86,7 +86,7 @@ const GROUPS: Group[] = [
     label: "حساب",
     items: [
       { label: "داشبورد من", desc: "نتایج و روند پیشرفت شما", href: "/dashboard", icon: "user" },
-      { label: "حریم خصوصی", desc: "داده‌های شما چطور نگه‌داری می‌شود", href: "/#features", icon: "shield" },
+      { label: "درباره‌ی ما", desc: "چرا Karex را ساختیم و راه‌های تماس", href: "/about", icon: "shield" },
     ],
   },
 ];
@@ -239,7 +239,7 @@ export default function SiteNav() {
         ورود
       </button>
       <button className="kn-cta" onClick={() => router.push("/register")}>
-        شروع رایگان
+        ثبت‌نام
       </button>
     </>
   );
@@ -259,7 +259,7 @@ export default function SiteNav() {
         ورود
       </button>
       <button className="kn-cta" onClick={() => go("/register")}>
-        شروع رایگان
+        ثبت‌نام
       </button>
     </>
   );
