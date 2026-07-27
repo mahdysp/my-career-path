@@ -76,58 +76,60 @@
    تم روشن — الهام‌گرفته از نور روز
    ───────────────────────────────────────────── */
 :root[data-theme="light"] {
-  --background-deep: #eef1f7;
-  --background-base: #f7f8fc;
+  /* الهام‌گرفته از داشبوردهای مدرن SaaS: کاغذ کرمی گرم به‌جای سفید سرد،
+     کارت‌های سفید خالص روی آن، و لهجه‌ی بنفش‌آبی اشباع. */
+  --background-deep: #efece4;
+  --background-base: #faf8f3;
   --background-elevated: #ffffff;
-  --surface: rgba(16, 20, 40, 0.04);
-  --surface-hover: rgba(16, 20, 40, 0.07);
-  --foreground: #16181f;
-  --foreground-muted: #5a6072;
-  --foreground-subtle: rgba(22, 24, 31, 0.55);
-  --accent: #4d58c4;
-  --accent-bright: #3f4ab8;
-  --accent-glow: rgba(77, 88, 196, 0.22);
-  --border-default: rgba(16, 20, 40, 0.1);
-  --border-hover: rgba(16, 20, 40, 0.18);
-  --border-accent: rgba(77, 88, 196, 0.38);
+  --surface: rgba(30, 27, 22, 0.045);
+  --surface-hover: rgba(30, 27, 22, 0.075);
+  --foreground: #1a1a1f;
+  --foreground-muted: #6b6862;
+  --foreground-subtle: rgba(26, 26, 31, 0.5);
+  --accent: #5b5bd6;
+  --accent-bright: #4a4ac4;
+  --accent-glow: rgba(91, 91, 214, 0.2);
+  --border-default: rgba(30, 27, 22, 0.09);
+  --border-hover: rgba(30, 27, 22, 0.16);
+  --border-accent: rgba(91, 91, 214, 0.35);
 
   --page-gradient: radial-gradient(
     ellipse 1200px 800px at 50% -10%,
-    #ffffff 0%,
-    #f4f6fd 45%,
-    #e9edf8 100%
+    #fdfcf9 0%,
+    #faf8f3 45%,
+    #f4f1e9 100%
   );
-  --nav-bg: rgba(255, 255, 255, 0.78);
-  --card-solid: linear-gradient(to bottom, #ffffff, #f7f8fc);
-  --card-gradient: linear-gradient(to bottom, #ffffff, rgba(255, 255, 255, 0.72));
-  --card-shadow: 0 0 0 1px rgba(16, 20, 40, 0.03), 0 2px 14px rgba(30, 40, 90, 0.07),
-    0 0 34px rgba(30, 40, 90, 0.04);
-  --card-shadow-hover: 0 0 0 1px rgba(16, 20, 40, 0.06), 0 12px 32px rgba(30, 40, 90, 0.13),
-    0 0 48px rgba(77, 88, 196, 0.1);
-  --input-bg: rgba(16, 20, 40, 0.035);
+  --nav-bg: rgba(250, 248, 243, 0.82);
+  --card-solid: linear-gradient(to bottom, #ffffff, #fdfcfa);
+  --card-gradient: linear-gradient(to bottom, #ffffff, #fefdfb);
+  --card-shadow: 0 0 0 1px rgba(30, 27, 22, 0.05), 0 1px 3px rgba(30, 27, 22, 0.04),
+    0 8px 24px rgba(30, 27, 22, 0.05);
+  --card-shadow-hover: 0 0 0 1px rgba(30, 27, 22, 0.08), 0 4px 12px rgba(30, 27, 22, 0.07),
+    0 16px 40px rgba(30, 27, 22, 0.09);
+  --input-bg: #ffffff;
   --input-bg-focus: #ffffff;
   --option-bg: #ffffff;
   --node-fill: #ffffff;
-  --placeholder: #9aa0b4;
-  --overlay: rgba(28, 32, 52, 0.42);
-  --grid-line: rgba(16, 20, 40, 0.045);
-  --track: rgba(16, 20, 40, 0.09);
-  --noise-opacity: 0.014;
-  --blob-1: rgba(120, 132, 240, 0.2);
-  --blob-2: rgba(190, 140, 255, 0.15);
-  --blob-3: rgba(255, 196, 120, 0.16);
+  --placeholder: #a8a49c;
+  --overlay: rgba(26, 24, 20, 0.4);
+  --grid-line: rgba(30, 27, 22, 0.04);
+  --track: rgba(30, 27, 22, 0.08);
+  --noise-opacity: 0.012;
+  --blob-1: rgba(91, 91, 214, 0.13);
+  --blob-2: rgba(168, 130, 255, 0.1);
+  --blob-3: rgba(255, 190, 120, 0.13);
   --success: #15803d;
   --danger: #dc2626;
   --warning: #b45309;
-  --heading-gradient: linear-gradient(to bottom, #0e1018, #3a4059);
+  --heading-gradient: linear-gradient(to bottom, #16161c, #3d3a45);
 
   /* تقویم فعالیت — جدول در حالت روز باید دیده شود */
-  --heat-0: #e6e9f5;
-  --heat-1: #c3c9ee;
-  --heat-2: #8f97dd;
-  --heat-3: #5f68c9;
-  --heat-4: #3f2a9e;
-  --heat-edge: rgba(16, 20, 40, 0.13);
+  --heat-0: #ebe8e0;
+  --heat-1: #c9c8ee;
+  --heat-2: #9a99e0;
+  --heat-3: #6b6bd0;
+  --heat-4: #4a3fa8;
+  --heat-edge: rgba(30, 27, 22, 0.1);
 
   --background: var(--background-base);
   --foreground-token: var(--foreground);

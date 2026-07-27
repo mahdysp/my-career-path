@@ -9,8 +9,6 @@ import ThemeToggle from "@/app/components/ThemeToggle";
 const JOURNEY_PATH =
   "M30 8 C 44 62, 16 96, 30 148 S 48 214, 30 266 S 12 330, 30 382 S 46 448, 29 512";
 const JOURNEY_LEN = 516;
-/* زاویه‌ی کمی متفاوت برای هر کارت — ناقرینگی عمدی */
-const STEP_TILTS = ["-0.5deg", "0.7deg", "-0.35deg"];
 
 export default function CareerHub() {
   const router = useRouter();
@@ -57,9 +55,11 @@ export default function CareerHub() {
          و وقتی کامل است که پایین بخش به ۴۵٪ پنجره برسد. فاصله‌ی بین این دو
          حالت، «مسافت اسکرول» است؛ باید ارتفاع خود بخش را هم شامل شود وگرنه
          مسیر خیلی زودتر از دیده‌شدن گام آخر تمام می‌شود. */
-      const startAt = vh * 0.8;
-      const endAt = vh * 0.45;
-      const distance = Math.max(1, r.height + startAt - endAt);
+      /* مسافت بر پایه‌ی «چقدر از بخش دیده شده» حساب می‌شود، نه موقعیت مطلق.
+         قبلاً اگر بعد از این بخش فضای اسکرول کافی نبود (اینجا فقط یک دکمه و
+         فوتر هست)، پیشرفت هرگز به ۱۰۰٪ نمی‌رسید و گام سوم فعال نمی‌شد. */
+      const startAt = vh * 0.92;
+      const distance = Math.max(1, Math.min(r.height, vh * 0.6));
       const travelled = startAt - r.top;
 
       setPathProgress(Math.max(0, Math.min(1, travelled / distance)));
@@ -275,14 +275,14 @@ export default function CareerHub() {
         .k2-journey-step {
           position: relative;
           opacity: 0;
-          transform: translateY(16px) rotate(0deg);
+          transform: translateY(16px);
           transition:
             opacity .5s cubic-bezier(.16,1,.3,1),
             transform .55s cubic-bezier(.16,1,.3,1);
         }
         .k2-journey-step.on {
           opacity: 1;
-          transform: translateY(0) rotate(var(--tilt));
+          transform: translateY(0);
         }
 
         /* نقطه‌ی روی مسیر */
@@ -319,7 +319,7 @@ export default function CareerHub() {
           border-color: var(--border-hover);
         }
         /* با هاور، کارت صاف می‌شود — انگار دست رویش گذاشته‌اید */
-        .k2-journey-step:hover { transform: translateY(-2px) rotate(0deg); }
+        .k2-journey-step:hover { transform: translateY(-2px); }
         .k2-journey-step:hover .k2-journey-card {
           box-shadow: var(--card-shadow-hover);
         }
@@ -649,10 +649,7 @@ export default function CareerHub() {
           {/* How it works */}
           <section id="how-it-works" style={{ maxWidth: 860, width: "100%", margin: "0 auto", padding: "0 clamp(16px, 4vw, 40px) 128px" }}>
             <div style={{ textAlign: "right", marginBottom: 28 }}>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, letterSpacing: "0.1em", color: "var(--accent)" }}>
-                روش کار
-              </span>
-              <h2 style={{ fontWeight: 700, fontSize: 34, letterSpacing: "-0.02em", color: "var(--foreground)", marginTop: 8 }}>
+              <h2 style={{ fontWeight: 700, fontSize: 34, letterSpacing: "-0.02em", color: "var(--foreground)", margin: 0 }}>
                 سه گام تا مسیر روشن
               </h2>
             </div>
@@ -695,7 +692,6 @@ export default function CareerHub() {
                   <div
                     key={st.num}
                     className={`k2-journey-step ${active ? "on" : ""}`}
-                    style={{ ["--tilt" as string]: STEP_TILTS[i] }}
                   >
                     <span className="k2-journey-dot" aria-hidden="true" />
                     <div className="k2-journey-card">
