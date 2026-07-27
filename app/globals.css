@@ -63,6 +63,18 @@
   --heat-4: #c084fc;
   --heat-edge: rgba(255, 255, 255, 0.06);
 
+  /* نوار بالای سایت — قرص شناور */
+  --nav-pill: rgba(14, 14, 19, 0.72);
+  --nav-pill-edge: rgba(255, 255, 255, 0.09);
+  --nav-pill-shadow: 0 2px 14px rgba(0, 0, 0, 0.28);
+  --nav-pill-shadow-lift: 0 10px 34px rgba(0, 0, 0, 0.48);
+  --nav-pop: rgba(16, 16, 22, 0.94);
+  --nav-pop-shadow: 0 18px 50px -14px rgba(0, 0, 0, 0.72);
+  --nav-ico: rgba(255, 255, 255, 0.06);
+  --nav-ico-fg: var(--foreground);
+  --nav-cta: var(--foreground);
+  --nav-cta-fg: #0a0a0d;
+
   /* قاب دستگاه در بخش نمایشگر */
   --device-body: linear-gradient(160deg, #26262e, #131318 46%);
   --device-edge: rgba(255, 255, 255, 0.13);
@@ -140,6 +152,18 @@
   --heat-4: #4a3fa8;
   --heat-edge: rgba(30, 27, 22, 0.1);
 
+  /* نوار بالای سایت — در تم روشن قرص سفید روی کاغذ کرمی */
+  --nav-pill: rgba(255, 255, 255, 0.82);
+  --nav-pill-edge: rgba(30, 27, 22, 0.1);
+  --nav-pill-shadow: 0 2px 12px rgba(48, 42, 32, 0.07);
+  --nav-pill-shadow-lift: 0 10px 30px rgba(48, 42, 32, 0.14);
+  --nav-pop: rgba(255, 255, 255, 0.97);
+  --nav-pop-shadow: 0 18px 46px -14px rgba(48, 42, 32, 0.24);
+  --nav-ico: rgba(30, 27, 22, 0.055);
+  --nav-ico-fg: var(--foreground);
+  --nav-cta: #16161c;
+  --nav-cta-fg: #ffffff;
+
   /* در تم روشن بدنه باید تیره‌تر از کاغذ کرمی باشد، وگرنه حاشیه‌ی
      نمایشگر با پس‌زمینه یکی می‌شود و قاب دیده نمی‌شود. */
   --device-body: linear-gradient(160deg, #d9d5cb, #bfbab0 52%);
@@ -162,6 +186,22 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* ─────────────────────────────────────────────
+   ارقام لاتین در سراسر سایت
+
+   Vazirmatn به‌طور پیش‌فرض ارقام فارسی (۱۲۳) را نمایش می‌دهد. با خاموش
+   کردن ویژگی OpenType به نام `ss02` — که همان «فرم فارسی ارقام» است —
+   رقم‌های لاتین (123) رندر می‌شوند.
+
+   این یک تور ایمنی در سطح فونت است؛ منطق قالب‌بندی در lib/format.ts
+   خودش خروجی لاتین می‌دهد. اما اگر جایی از سایت رقم فارسی از دیتابیس یا
+   متن ثابت بیاید، اینجا هم درست دیده می‌شود.
+   ───────────────────────────────────────────── */
+html {
+  font-feature-settings: "ss02" off;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 html,

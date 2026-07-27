@@ -4,7 +4,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import ThemeToggle from "@/app/components/ThemeToggle";
+import SiteNav from "@/app/components/SiteNav";
+import { dateFa, num } from "@/lib/format";
 
 type CareerPath = {
   title: string;
@@ -408,37 +409,8 @@ export default function ResultClient() {
       <style>{styles}</style>
       <Shell>
         {/* ناوبار */}
-        <nav
-          style={{
-            position: "sticky", top: 0, zIndex: 50,
-            background: "var(--nav-bg)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-            borderBottom: "1px solid var(--border-default)",
-          }}
-        >
-          <div className="k2-shell" style={{ height: 60, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <Link href="/" style={{ fontWeight: 700, fontSize: 19, letterSpacing: "-.02em", color: "var(--foreground)", textDecoration: "none" }}>
-              Karex
-            </Link>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <ThemeToggle />
-              <button className="k2-btn k2-btn-secondary" onClick={handleCopy} style={{ fontSize: 13, height: 36, padding: "0 14px" }}>
-                {copied ? (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    کپی شد
-                  </>
-                ) : (
-                  "کپی لینک"
-                )}
-              </button>
-              <Link href="/dashboard" className="k2-btn k2-btn-ghost k2-hide-sm" style={{ fontSize: 13, height: 36, padding: "0 14px" }}>
-                داشبورد
-              </Link>
-            </div>
-          </div>
-        </nav>
+        <SiteNav />
+        <div className="kn-spacer" />
 
         <div className="k2-shell" style={{ padding: "clamp(28px,5vw,44px) clamp(16px,4vw,32px) 72px" }}>
           {/* سربرگ */}
@@ -450,12 +422,12 @@ export default function ResultClient() {
               </span>
               {createdAt && (
                 <span className="k2-chip" style={{ fontFamily: "var(--font-mono)" }}>
-                  {new Date(createdAt).toLocaleDateString("fa-IR", { year: "numeric", month: "long", day: "numeric" })}
+                  {dateFa(createdAt)}
                 </span>
               )}
               {best > 0 && (
                 <span className="k2-chip" style={{ color: "var(--accent)", borderColor: "var(--border-accent)" }}>
-                  بالاترین تطابق ٪{best}
+                  بالاترین تطابق ٪{num(best)}
                 </span>
               )}
             </div>
@@ -632,7 +604,7 @@ export default function ResultClient() {
                             color: isTop ? "var(--accent)" : "var(--foreground-muted)",
                           }}
                         >
-                          ٪{p.match_percentage}
+                          ٪{num(p.match_percentage)}
                         </div>
                         <div
                           style={{ fontSize: 10, color: "var(--foreground-subtle)", marginTop: 3 }}

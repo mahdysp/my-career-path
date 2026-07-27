@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import ThemeToggle from "@/app/components/ThemeToggle";
+import SiteNav from "@/app/components/SiteNav";
 
 type MultipleChoiceQuestion = {
   id: number;
@@ -551,65 +551,8 @@ export default function AssessmentClient() {
         )}
 
         {/* ── ناوبار ── */}
-        <nav
-          style={{
-            position: "sticky", top: 0, zIndex: 50,
-            background: "var(--nav-bg)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-            borderBottom: "1px solid var(--border-default)",
-          }}
-        >
-          <div
-            style={{
-              height: 60, maxWidth: 940, margin: "0 auto",
-              padding: "0 clamp(16px,4vw,32px)",
-              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-            }}
-          >
-            <button className="k2-btn k2-btn-ghost" onClick={() => setConfirmExit(true)} style={{ fontSize: 13, padding: "8px 12px" }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                <path d="M14 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              خروج
-            </button>
-
-            {/* نقشه سوالات */}
-            <div className="k2-dots">
-              {questions.map((q, i) => (
-                <button
-                  key={q.id}
-                  className={`k2-dot ${i === currentIndex ? "now" : answeredIds.has(q.id) ? "done" : ""}`}
-                  onClick={() => i !== currentIndex && goTo(i, i > currentIndex ? "next" : "prev")}
-                  aria-label={`سوال ${i + 1}`}
-                  title={`سوال ${i + 1}`}
-                />
-              ))}
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <ThemeToggle />
-              <div className="k2-nav-meta" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--foreground-subtle)" }}>
-                {fmtTime(elapsed)}
-              </span>
-              <span
-                style={{
-                  fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--foreground-muted)",
-                  background: "var(--surface)", border: "1px solid var(--border-default)",
-                  borderRadius: 100, padding: "5px 11px", maxWidth: 150,
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}
-                title={query}
-              >
-                {query}
-              </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="k2-rail">
-            <i style={{ width: `${progress}%` }} />
-          </div>
-        </nav>
+        <SiteNav />
+        <div className="kn-spacer" />
 
         {/* ── محتوا ── */}
         <div

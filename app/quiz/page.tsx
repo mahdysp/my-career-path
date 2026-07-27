@@ -2,9 +2,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import ThemeToggle from "@/app/components/ThemeToggle";
+import SiteNav from "@/app/components/SiteNav";
 import {
   ONET_PROFILES,
   RIASEC_AXES,
@@ -17,13 +16,11 @@ export default function QuizLanding() {
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [inputFocused, setInputFocused] = useState(false);
 
   // وضعیت کاربر لاگین‌شده
   const [user, setUser] = useState<{ id: string; email: string; firstName: string; lastName: string } | null>(null);
-  const [userLoading, setUserLoading] = useState(true);
 
   // مودال اخطار ورود
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -37,8 +34,7 @@ export default function QuizLanding() {
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => setUser(data.user))
-      .catch(() => setUser(null))
-      .finally(() => setUserLoading(false));
+      .catch(() => setUser(null));
   }, [router]);
 
   useEffect(() => {
@@ -48,11 +44,6 @@ export default function QuizLanding() {
     return () => window.removeEventListener("keydown", onKey);
   }, [showAuthModal]);
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
-    router.refresh();
-  };
 
   const handleSearch = () => {
     const q = searchQuery.trim();
@@ -642,95 +633,8 @@ export default function QuizLanding() {
         )}
 
         <div style={{ position: "relative", zIndex: 10 }}>
-          {/* Nav */}
-          <nav
-            style={{
-              position: "sticky", top: 0, zIndex: 50,
-              display: "flex", flexDirection: "column", justifyContent: "center",
-              padding: "0 clamp(16px, 4vw, 40px)",
-              background: "var(--nav-bg)",
-              backdropFilter: "blur(16px)",
-              WebkitBackdropFilter: "blur(16px)",
-              borderBottom: "1px solid var(--border-default)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-              <Link
-                href="/"
-                style={{ fontWeight: 700, fontSize: 19, letterSpacing: "-0.02em", color: "var(--foreground)", textDecoration: "none" }}
-              >
-                Karex
-              </Link>
-
-              <div className="k2-nav-links" style={{ display: "flex", gap: 4 }}>
-                <Link href="/" className="k2-nav-link">خانه</Link>
-                <a href="#how" className="k2-nav-link">روش کار</a>
-              </div>
-
-              <div className="k2-desktop-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <ThemeToggle />
-                {userLoading ? (
-                  <div style={{ width: 132, height: 38, borderRadius: 8, background: "var(--surface)" }} />
-                ) : user ? (
-                  <>
-                    <span style={{ fontSize: 13.5, color: "var(--foreground-muted)", marginLeft: 4 }}>
-                      سلام، {user.firstName || user.email}
-                    </span>
-                    <button className="k2-btn k2-btn-secondary" onClick={() => router.push("/dashboard")} style={{ fontSize: 14, padding: "9px 18px", height: 38 }}>
-                      داشبورد
-                    </button>
-                    <button className="k2-btn k2-btn-ghost" onClick={handleLogout} style={{ fontSize: 14, padding: "9px 16px" }}>
-                      خروج
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button className="k2-btn k2-btn-ghost" onClick={() => router.push("/auth")} style={{ fontSize: 14, padding: "9px 16px" }}>
-                      ورود
-                    </button>
-                    <button className="k2-btn k2-btn-primary" onClick={() => router.push("/register")} style={{ fontSize: 14, padding: "9px 18px", height: 38 }}>
-                      ثبت‌نام
-                    </button>
-                  </>
-                )}
-              </div>
-
-              <div className="k2-mobile-actions">
-                <ThemeToggle />
-                <button
-                  onClick={() => setMenuOpen((v) => !v)}
-                  aria-expanded={menuOpen}
-                  aria-controls="k2-quiz-menu"
-                  aria-label={menuOpen ? "بستن منو" : "باز کردن منو"}
-                  style={{
-                    width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-                    background: "var(--surface)", border: "1px solid var(--border-default)",
-                    borderRadius: 8, color: "var(--foreground)", cursor: "pointer",
-                  }}
-                >
-                  {menuOpen ? "✕" : "☰"}
-                </button>
-              </div>
-            </div>
-
-            <div id="k2-quiz-menu" className={`k2-mobile-menu ${menuOpen ? "open" : ""}`}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 0 20px" }}>
-                <Link href="/" className="k2-nav-link" onClick={() => setMenuOpen(false)}>خانه</Link>
-                <a href="#how" className="k2-nav-link" onClick={() => setMenuOpen(false)}>روش کار</a>
-                {user ? (
-                  <>
-                    <button className="k2-btn k2-btn-secondary" onClick={() => router.push("/dashboard")} style={{ fontSize: 14, padding: "10px", marginTop: 8 }}>داشبورد</button>
-                    <button className="k2-btn k2-btn-ghost" onClick={handleLogout} style={{ fontSize: 14, padding: "10px" }}>خروج</button>
-                  </>
-                ) : (
-                  <>
-                    <button className="k2-btn k2-btn-secondary" onClick={() => router.push("/auth")} style={{ fontSize: 14, padding: "10px", marginTop: 8 }}>ورود</button>
-                    <button className="k2-btn k2-btn-primary" onClick={() => router.push("/register")} style={{ fontSize: 14, padding: "10px" }}>ثبت‌نام رایگان</button>
-                  </>
-                )}
-              </div>
-            </div>
-          </nav>
+          <SiteNav />
+          <div className="kn-spacer" />
 
           {/* Hero */}
           <section

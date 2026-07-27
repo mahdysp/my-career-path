@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import ThemeToggle from "@/app/components/ThemeToggle";
+import SiteNav from "@/app/components/SiteNav";
 import ExplodedProfile from "@/app/components/ExplodedProfile";
 import ScreenShowcase from "@/app/components/ScreenShowcase";
 import type { SiteContent } from "@/lib/site-content";
@@ -18,7 +18,6 @@ export default function HomeClient({ content }: { content: SiteContent }) {
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [scrollY, setScrollY] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   // پیشرفت رسم مسیر «سه گام» (۰ تا ۱) و گام فعال
   const stepsRef = useRef<HTMLDivElement | null>(null);
@@ -129,17 +128,6 @@ export default function HomeClient({ content }: { content: SiteContent }) {
         .k2-fade-2 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.14s; }
         .k2-fade-3 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.23s; }
         .k2-fade-4 { animation: k2FadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.32s; }
-
-        .k2-nav-link {
-          font-family: var(--font-sans);
-          font-size: 14px;
-          color: var(--foreground-muted);
-          text-decoration: none;
-          padding: 8px 14px;
-          border-radius: 8px;
-          transition: color 0.2s ease, background 0.2s ease;
-        }
-        .k2-nav-link:hover { color: var(--foreground); background: var(--surface); }
 
         .k2-btn {
           font-family: var(--font-sans);
@@ -373,7 +361,10 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           margin: 0 auto;
           padding: 0 clamp(16px, 4vw, 40px);
           text-align: center;
-          min-height: calc(100svh - 64px);
+          /* نوار بالا شناور است و یک اسپیسر جای آن را گرفته؛ قهرمان باید
+             بقیه‌ی ارتفاع پنجره را بگیرد نه بیشتر، وگرنه اسکرول اضافه
+             می‌آید. */
+          min-height: calc(100svh - 58px - clamp(20px, 3.2vw, 36px));
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -389,12 +380,12 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           height: 215vh;
           position: relative;
         }
-        /* ناوبار چسبانِ ۶۴px بالای صفحه است؛ صحنه باید زیرش قفل شود
-           وگرنه سر بخش پشت ناوبار پنهان می‌ماند. */
+        /* نوار بالا شناور است و با اسکرول به پایین کنار می‌رود، پس صحنه
+           می‌تواند تمام ارتفاع پنجره را بگیرد. */
         .k2-exp-sticky {
           position: sticky;
-          top: 64px;
-          height: calc(100svh - 64px);
+          top: 0;
+          height: 100svh;
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -622,16 +613,6 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           .k2-screen-dots { justify-content: center; }
         }
 
-        .k2-mobile-actions { display: none; gap: 8px; align-items: center; }
-
-        .k2-mobile-menu {
-          overflow: hidden;
-          max-height: 0;
-          opacity: 0;
-          transition: max-height 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease;
-        }
-        .k2-mobile-menu.open { max-height: 70vh; opacity: 1; overflow-y: auto; }
-
         .k2-bento {
           display: grid;
           grid-template-columns: 1.4fr 1fr;
@@ -639,12 +620,9 @@ export default function HomeClient({ content }: { content: SiteContent }) {
         }
 
         @media (max-width: 860px) {
-          .k2-nav-links { display: none !important; }
           .k2-hero-title { font-size: 42px !important; }
           .k2-hero-sub { font-size: 15px !important; }
           .k2-stats-row { gap: 28px !important; flex-wrap: wrap; }
-          .k2-mobile-actions { display: flex !important; }
-          .k2-desktop-actions { display: none !important; }
           .k2-bento {
             grid-template-columns: 1fr !important;
           }
@@ -709,65 +687,9 @@ export default function HomeClient({ content }: { content: SiteContent }) {
         <div className="k2-noise" />
 
         <div style={{ position: "relative", zIndex: 10 }}>
-          {/* Nav */}
-          <nav
-            style={{
-              position: "sticky", top: 0, zIndex: 50,
-              display: "flex", flexDirection: "column", justifyContent: "center",
-              padding: "0 clamp(16px, 4vw, 40px)",
-              background: "var(--nav-bg)",
-              backdropFilter: "blur(16px)",
-              WebkitBackdropFilter: "blur(16px)",
-              borderBottom: "1px solid var(--border-default)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-              <span style={{ fontWeight: 700, fontSize: 19, letterSpacing: "-0.02em", color: "var(--foreground)" }}>
-                Karex
-              </span>
-
-              <div className="k2-nav-links" style={{ display: "flex", gap: 4 }}>
-                <a href="#features" className="k2-nav-link">ویژگی‌ها</a>
-                <a href="#how-it-works" className="k2-nav-link">روش کار</a>
-              </div>
-
-              <div className="k2-desktop-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <ThemeToggle />
-                <button className="k2-btn k2-btn-ghost" onClick={() => router.push("/auth")} style={{ fontSize: 14, padding: "9px 16px" }}>
-                  ورود
-                </button>
-                <button className="k2-btn k2-btn-primary" onClick={() => router.push("/register")} style={{ fontSize: 14, padding: "9px 18px", height: 38 }}>
-                  ثبت‌نام
-                </button>
-              </div>
-
-              <div className="k2-mobile-actions">
-                <ThemeToggle />
-                <button
-                  onClick={() => setMenuOpen((v) => !v)}
-                  aria-expanded={menuOpen}
-                  aria-controls="k2-main-menu"
-                  aria-label={menuOpen ? "بستن منو" : "باز کردن منو"}
-                  style={{
-                    width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-                    background: "var(--surface)", border: "1px solid var(--border-default)",
-                    borderRadius: 8, color: "var(--foreground)", cursor: "pointer",
-                  }}
-                >
-                  {menuOpen ? "✕" : "☰"}
-                </button>
-              </div>
-            </div>
-
-            <div id="k2-main-menu" className={`k2-mobile-menu ${menuOpen ? "open" : ""}`}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 0 20px" }}>
-                <a href="#features" className="k2-nav-link" onClick={() => setMenuOpen(false)}>ویژگی‌ها</a>
-                <a href="#how-it-works" className="k2-nav-link" onClick={() => setMenuOpen(false)}>روش کار</a>
-                <button className="k2-btn k2-btn-secondary" onClick={() => router.push("/auth")} style={{ fontSize: 14, padding: "10px", marginTop: 8 }}>ورود</button>
-                <button className="k2-btn k2-btn-primary" onClick={() => router.push("/register")} style={{ fontSize: 14, padding: "10px" }}>ثبت‌نام رایگان</button>
-              </div>
-            </div>
-          </nav>
+          {/* نوار بالا — قرص شناور که با اسکرول پنهان و پیدا می‌شود */}
+          <SiteNav />
+          <div className="kn-spacer" />
 
           {/* Hero */}
           <section

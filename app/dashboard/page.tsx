@@ -2,10 +2,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RIASEC_AXES, matchProfile } from "@/lib/onet-profiles";
-import ThemeToggle from "@/app/components/ThemeToggle";
+import SiteNav from "@/app/components/SiteNav";
+import { agoFa, dateFa, monthFa, num } from "@/lib/format";
 
 /* ─────────────────────────── انواع ─────────────────────────── */
 
@@ -289,53 +289,12 @@ const EDU_LABEL: Record<string, string> = {
   graduate: "فارغ‌التحصیل",
 };
 
-/** اعداد لاتین → فارسی */
-function toFa(n: number | string) {
-  return String(n).replace(/[0-9]/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]);
-}
-
-/** تاریخ کامل شمسی همراه نام روز — مثل «یکشنبه ۴ مرداد ۱۴۰۵»
- *  از formatToParts استفاده می‌شود چون خروجی پیش‌فرض fa-IR ترتیب
- *  نامتعارف «۱۴۰۵ مرداد ۴, یکشنبه» می‌دهد. */
-function faDate(d: Date) {
-  try {
-    const parts = new Intl.DateTimeFormat("fa-IR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).formatToParts(d);
-    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-    return `${get("weekday")} ${get("day")} ${get("month")} ${get("year")}`;
-  } catch {
-    return d.toLocaleDateString("fa-IR");
-  }
-}
-
-function fmtDate(iso: string) {
-  try {
-    const parts = new Intl.DateTimeFormat("fa-IR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).formatToParts(new Date(iso));
-    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-    return `${get("day")} ${get("month")} ${get("year")}`;
-  } catch {
-    return iso;
-  }
-}
-
-function relTime(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const d = Math.floor(diff / 86400000);
-  if (d <= 0) return "امروز";
-  if (d === 1) return "دیروز";
-  if (d < 30) return `${d} روز پیش`;
-  const m = Math.floor(d / 30);
-  if (m < 12) return `${m} ماه پیش`;
-  return `${Math.floor(m / 12)} سال پیش`;
-}
+/* قالب‌بندی مشترک — ارقام در کل سایت لاتین‌اند (lib/format.ts) */
+const toFa = (n: number | string) =>
+  typeof n === "number" ? num(n) : String(n);
+const faDate = (d: Date) => dateFa(d, { weekday: true });
+const fmtDate = (iso: string) => dateFa(iso);
+const relTime = (iso: string) => agoFa(iso);
 
 /* ─────────────────────────── صفحه ─────────────────────────── */
 
@@ -380,10 +339,6 @@ export default function DashboardPage() {
     e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
   }, []);
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/");
-  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -498,8 +453,7 @@ export default function DashboardPage() {
     }
 
     // برچسب ماه شمسی بالای هر ستونی که ماه در آن عوض می‌شود
-    const monthOf = (d: Date) =>
-      new Intl.DateTimeFormat("fa-IR", { month: "long" }).format(d);
+    const monthOf = (d: Date) => monthFa(d);
     const months: { col: number; label: string }[] = [];
     for (let w = 0; w < WEEKS; w++) {
       const first = cells[w * 7];
@@ -588,38 +542,8 @@ export default function DashboardPage() {
 
         <div style={{ position: "relative", zIndex: 10 }}>
           {/* ── ناوبار ── */}
-          <nav
-            style={{
-              position: "sticky", top: 0, zIndex: 50,
-              background: "var(--nav-bg)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-              borderBottom: "1px solid var(--border-default)",
-            }}
-          >
-            <div
-              className="k2-shell"
-              style={{ height: 62, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}
-            >
-              <Link
-                href="/"
-                style={{ fontWeight: 700, fontSize: 19, letterSpacing: "-.02em", color: "var(--foreground)", textDecoration: "none" }}
-              >
-                Karex
-              </Link>
-
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <ThemeToggle />
-                <button className="k2-btn k2-btn-primary" onClick={() => router.push("/quiz")} style={{ fontSize: 13.5, height: 36, padding: "0 16px" }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                  آزمون جدید
-                </button>
-                <button className="k2-btn k2-btn-ghost" onClick={handleLogout} style={{ fontSize: 13.5, height: 36, padding: "0 14px" }}>
-                  خروج
-                </button>
-              </div>
-            </div>
-          </nav>
+          <SiteNav />
+          <div className="kn-spacer" />
 
           <div className="k2-shell" style={{ padding: "clamp(28px,5vw,44px) clamp(16px,4vw,36px) 72px" }}>
             {/* ── سربرگ ── */}
@@ -817,7 +741,7 @@ export default function DashboardPage() {
                             {c.title}
                           </span>
                           <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: i === 0 ? "var(--accent)" : "var(--foreground-subtle)", flexShrink: 0 }}>
-                            ٪{c.best}
+                            ٪{num(c.best)}
                           </span>
                         </div>
                         <div className="k2-bar"><i style={{ width: `${c.best}%` }} /></div>
