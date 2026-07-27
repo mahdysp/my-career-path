@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/app/components/ThemeToggle";
-import ExplodedProfile from "@/app/components/ExplodedProfile";
+import LazyCompass from "@/app/components/LazyCompass";
 
 /* مسیر عمودی که بین گام‌ها می‌پیچد. عمداً کاملاً صاف نیست تا حس
    خط کشیده‌شده با دست بدهد نه یک خط برداری بی‌روح. */
@@ -378,6 +378,76 @@ export default function CareerHub() {
           justify-content: center;
         }
 
+
+        /* ── صحنه سه‌بعدی نقشه و قطب‌نما ── */
+        .k2-cmp {
+          max-width: 1080px;
+          margin: 0 auto;
+          padding: clamp(72px, 11vw, 140px) clamp(16px, 4vw, 40px);
+          text-align: center;
+        }
+        .k2-cmp-eyebrow {
+          display: inline-flex; align-items: center; gap: 8px;
+          font-family: var(--font-mono); font-size: 11px;
+          letter-spacing: .18em; color: var(--accent);
+        }
+        .k2-cmp-tri {
+          width: 0; height: 0;
+          border-left: 4.5px solid transparent;
+          border-right: 4.5px solid transparent;
+          border-bottom: 7px solid var(--accent);
+        }
+        .k2-cmp-title {
+          font-weight: 700; font-size: clamp(28px, 4.4vw, 44px);
+          letter-spacing: -.025em; color: var(--foreground);
+          margin: 14px 0 0; line-height: 1.3;
+        }
+        .k2-cmp-sub {
+          font-size: 15px; line-height: 2; color: var(--foreground-muted);
+          max-width: 580px; margin: 16px auto 0;
+        }
+        .k2-cmp-stage {
+          position: relative;
+          height: clamp(300px, 46vw, 460px);
+          margin-top: clamp(20px, 4vw, 40px);
+        }
+        .k2-cmp-stage canvas { display: block; }
+
+        .k2-cmp-legend {
+          display: grid; grid-template-columns: repeat(4, 1fr);
+          margin-top: clamp(20px, 4vw, 40px);
+          text-align: right;
+        }
+        .k2-cmp-item {
+          display: flex; gap: 10px; align-items: flex-start;
+          padding: 0 16px;
+          border-right: 1px solid var(--border-default);
+          opacity: 0; transform: translateY(10px);
+          transition: opacity .5s ease, transform .55s cubic-bezier(.16,1,.3,1);
+        }
+        .k2-cmp-item.on { opacity: 1; transform: translateY(0); }
+        .k2-cmp-num {
+          font-family: var(--font-mono); font-size: 11px;
+          color: var(--accent); padding-top: 2px;
+        }
+        .k2-cmp-name { font-weight: 700; font-size: 14px; color: var(--foreground); }
+        .k2-cmp-hint {
+          font-size: 12px; line-height: 1.75;
+          color: var(--foreground-subtle); margin-top: 4px;
+        }
+        .k2-cmp-credit {
+          font-size: 10.5px; color: var(--foreground-subtle);
+          margin: 26px 0 0; opacity: .7;
+        }
+        .k2-cmp-credit a { color: var(--foreground-muted); }
+
+        @media (max-width: 720px) {
+          .k2-cmp-legend { grid-template-columns: repeat(2, 1fr); gap: 18px 0; }
+        }
+        @media (max-width: 420px) {
+          .k2-cmp-item { padding: 0 11px; }
+          .k2-cmp-hint { font-size: 11.5px; }
+        }
 
         /* ── نمای انفجاری پروفایل ── */
         .k2-exp {
@@ -817,8 +887,8 @@ export default function CareerHub() {
             </div>
           </section>
 
-          {/* نمای انفجاری — شش بُعد که با اسکرول کنار هم می‌نشینند */}
-          <ExplodedProfile />
+          {/* صحنه سه‌بعدی: نقشه و قطب‌نما */}
+          <LazyCompass />
 
           {/* Footer */}
           <footer style={{ borderTop: "1px solid var(--border-default)", padding: "28px clamp(16px, 4vw, 40px)", textAlign: "center" }}>
