@@ -63,7 +63,12 @@ const LIGHT: Palette = {
   leader: "rgba(26,26,31,0.3)",
 };
 
-export default function ExplodedProfile() {
+export default function ExplodedProfile({
+  copy,
+}: {
+  /** متن‌های بخش — از پنل مدیریت می‌آید */
+  copy?: { eyebrow: string; title: string; subtitle: string };
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
@@ -237,14 +242,16 @@ export default function ExplodedProfile() {
     <div ref={wrapRef} className="k2-exp">
       <div ref={stickyRef} className="k2-exp-sticky">
         <div className="k2-exp-head">
-          <span className="k2-exp-eyebrow">
-            <span className="k2-exp-tri" />
-            پروفایل شغلی
-          </span>
-          <h2 className="k2-exp-title">شش قطعه، یک تصویر کامل</h2>
+          {copy?.eyebrow !== "" && (
+            <span className="k2-exp-eyebrow">
+              <span className="k2-exp-tri" />
+              {copy?.eyebrow || "پروفایل شغلی"}
+            </span>
+          )}
+          <h2 className="k2-exp-title">{copy?.title || "شش قطعه، یک تصویر کامل"}</h2>
           <p className="k2-exp-sub">
-            شخصیت شغلی شما از شش بُعد ساخته شده است. آزمون Karex این قطعات را
-            کنار هم می‌گذارد تا ببینید کدام مسیر واقعاً به شما می‌آید.
+            {copy?.subtitle ||
+              "شخصیت شغلی شما از شش بُعد ساخته شده است. آزمون Karex این قطعات را کنار هم می‌گذارد تا ببینید کدام مسیر واقعاً به شما می‌آید."}
           </p>
         </div>
 

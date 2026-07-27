@@ -9,9 +9,12 @@ import { NextRequest, NextResponse } from "next/server";
  * توجه: اینجا فقط «وجود کوکی» بررسی می‌شود (اعتبارسنجی کامل توکن در Edge
  * پرهزینه است). اعتبارسنجی واقعی همچنان در API Routeها انجام می‌شود، پس این
  * لایه صرفاً تجربه‌ی کاربری را درست می‌کند، نه جایگزین کنترل دسترسی.
+ *
+ * برای /admin هم همین‌طور: اینجا فقط مهمان‌ها رد می‌شوند. بررسی «ادمین بودن»
+ * در lib/admin-auth.ts و داخل هر API Route انجام می‌شود.
  */
 
-const PROTECTED = ["/dashboard", "/assessment", "/result"];
+const PROTECTED = ["/dashboard", "/assessment", "/result", "/admin"];
 const AUTH_PAGES = ["/auth", "/register"];
 
 export function middleware(req: NextRequest) {
@@ -38,5 +41,12 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/assessment/:path*", "/result/:path*", "/auth", "/register"],
+  matcher: [
+    "/dashboard/:path*",
+    "/assessment/:path*",
+    "/result/:path*",
+    "/admin/:path*",
+    "/auth",
+    "/register",
+  ],
 };
