@@ -79,7 +79,7 @@ const GROUPS: Group[] = [
     label: "منابع",
     items: [
       { label: "روش کار", desc: "از آزمون تا نتیجه در سه گام", href: "/#how-it-works", icon: "spark" },
-      { label: "پشتوانه‌ی علمی", desc: "داده‌های O*NET و مدل هالند", href: "/#features", icon: "book" },
+      { label: "پشتوانه‌ی علمی", desc: "مدل هالند، داده‌های O*NET و روش محاسبه", href: "/science", icon: "book" },
     ],
   },
   {
