@@ -430,19 +430,19 @@ export default function CareerHub() {
           letter-spacing: .08em;
           color: var(--exp-hue);
         }
-        /* فام‌ها همان‌هایی است که در explodedGeometry.ts به قطعات داده شده */
-        .k2-exp-num[data-axis="R"] { --exp-hue: hsl(220 58% 68%); }
-        .k2-exp-num[data-axis="I"] { --exp-hue: hsl(231 58% 70%); }
-        .k2-exp-num[data-axis="A"] { --exp-hue: hsl(243 55% 72%); }
-        .k2-exp-num[data-axis="S"] { --exp-hue: hsl(255 52% 73%); }
-        .k2-exp-num[data-axis="E"] { --exp-hue: hsl(268 50% 73%); }
-        .k2-exp-num[data-axis="C"] { --exp-hue: hsl(283 48% 73%); }
-        :root[data-theme="light"] .k2-exp-num[data-axis="R"] { --exp-hue: hsl(220 48% 46%); }
-        :root[data-theme="light"] .k2-exp-num[data-axis="I"] { --exp-hue: hsl(231 48% 48%); }
-        :root[data-theme="light"] .k2-exp-num[data-axis="A"] { --exp-hue: hsl(243 45% 50%); }
-        :root[data-theme="light"] .k2-exp-num[data-axis="S"] { --exp-hue: hsl(255 43% 51%); }
-        :root[data-theme="light"] .k2-exp-num[data-axis="E"] { --exp-hue: hsl(268 41% 51%); }
-        :root[data-theme="light"] .k2-exp-num[data-axis="C"] { --exp-hue: hsl(283 40% 50%); }
+        /* فام‌ها دقیقاً همان HUES در explodedGeometry.ts است */
+        .k2-exp-num[data-axis="R"] { --exp-hue: hsl(193 78% 62%); }
+        .k2-exp-num[data-axis="I"] { --exp-hue: hsl(213 78% 66%); }
+        .k2-exp-num[data-axis="A"] { --exp-hue: hsl(233 78% 72%); }
+        .k2-exp-num[data-axis="S"] { --exp-hue: hsl(256 72% 74%); }
+        .k2-exp-num[data-axis="E"] { --exp-hue: hsl(280 68% 74%); }
+        .k2-exp-num[data-axis="C"] { --exp-hue: hsl(308 66% 72%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="R"] { --exp-hue: hsl(193 72% 32%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="I"] { --exp-hue: hsl(213 68% 42%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="A"] { --exp-hue: hsl(233 64% 50%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="S"] { --exp-hue: hsl(256 58% 52%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="E"] { --exp-hue: hsl(280 54% 48%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="C"] { --exp-hue: hsl(308 56% 44%); }
 
         .k2-exp-name {
           font-weight: 700; font-size: 13.5px; color: var(--foreground);

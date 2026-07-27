@@ -30,29 +30,26 @@ const easeInOut = (t: number) =>
 const phase = (t: number, from: number, to: number) =>
   Math.max(0, Math.min(1, (t - from) / (to - from)));
 
-/* رنگ قطعات از توکن‌های سایت نمی‌آید چون سایه‌پردازی به فضای HSL نیاز
-   دارد؛ اما فام‌ها (۲۲۰ تا ۲۸۳ درجه) عمداً همان خانواده‌ی --accent
-   (#5e6ad2 ≈ ۲۳۱ درجه) هستند. */
+/* رنگ قطعات از توکن‌های CSS نمی‌آید چون سایه‌پردازی به فضای HSL نیاز
+   دارد؛ اما فام‌ها حول --accent (#5e6ad2 ≈ ۲۳۱ درجه) چیده شده‌اند.
+   baseLum بالا نگه داشته شده تا سایه‌ها هم رنگی و روشن بمانند و قطعات
+   به توده‌ی تیره تبدیل نشوند. */
 const DARK: Palette = {
-  baseSat: 0.34,
-  baseLum: 0.13,
-  litSat: 0.4,
-  litLum: 0.71,
-  shaftBase: [36, 38, 47],
-  shaftLit: [168, 173, 192],
-  line: "rgba(255,255,255,0.26)",
-  leader: "rgba(255,255,255,0.3)",
+  baseSat: 0.62,
+  baseLum: 0.34,
+  litSat: 0.8,
+  litLum: 0.82,
+  line: "rgba(255,255,255,0.3)",
+  leader: "rgba(255,255,255,0.28)",
 };
 
 const LIGHT: Palette = {
-  baseSat: 0.3,
-  baseLum: 0.44,
-  litSat: 0.36,
-  litLum: 0.94,
-  shaftBase: [132, 132, 140],
-  shaftLit: [252, 252, 254],
-  line: "rgba(26,26,31,0.3)",
-  leader: "rgba(26,26,31,0.34)",
+  baseSat: 0.5,
+  baseLum: 0.55,
+  litSat: 0.72,
+  litLum: 0.93,
+  line: "rgba(26,26,31,0.26)",
+  leader: "rgba(26,26,31,0.3)",
 };
 
 export default function ExplodedProfile() {

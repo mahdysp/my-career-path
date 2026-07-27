@@ -413,11 +413,6 @@ export function axialPositions(open: number): number[] {
   return out;
 }
 
-const shaftHalf = (open: number) => {
-  const xs = axialPositions(open);
-  return xs[xs.length - 1] + PART_DEFS[PART_DEFS.length - 1].h + SPIG_L + 26;
-};
-
 /** مرکز افقی و پایین‌ترین نقطه‌ی هر قطعه روی صفحه — برای خطوط راهنما */
 export function partAnchors(open: number, scale: number) {
   const xs = axialPositions(open);
@@ -433,18 +428,14 @@ const PART_MESHES: Mesh[] = PART_DEFS.map((p) => {
   return mb.build();
 });
 
-const SHAFT_MESH: Mesh = (() => {
-  const mb = new MeshBuilder();
-  lathe(mb, [[-1, 0], [-1, 10.5], [1, 10.5], [1, 0]], 24);
-  return mb.build();
-})();
-
 /* ------------------------------------------------------------------ */
 /* رنگ                                                                 */
 /* ------------------------------------------------------------------ */
 
 /** طیف رنگی هم‌خانواده با لهجه‌ی سایت (ایندیگو → بنفش) */
-const HUES = [220, 231, 243, 255, 268, 283];
+/* طیف از فیروزه‌ای تا سرخابی، با مرکزیت فام --accent (~۲۳۱ درجه).
+   دامنه عمداً پهن‌تر از قبل است تا شش قطعه از هم تفکیک شوند. */
+const HUES = [193, 213, 233, 256, 280, 308];
 
 export type Palette = {
   /** اشباع و روشناییِ سایه و نور برای قطعات رنگی */
@@ -452,9 +443,6 @@ export type Palette = {
   baseLum: number;
   litSat: number;
   litLum: number;
-  /** شفت خنثی می‌ماند تا رنگ‌ها با هم رقابت نکنند */
-  shaftBase: [number, number, number];
-  shaftLit: [number, number, number];
   line: string;
   leader: string;
 };
@@ -511,8 +499,7 @@ type Item = {
   mesh: Mesh;
   vOff: number;
   off: number;
-  sx: number;
-  /** ایندکس قطعه، یا -1 برای شفت */
+  /** ایندکس قطعه */
   part: number;
   facing: Uint8Array;
   shade: Float32Array;
@@ -539,11 +526,10 @@ export function renderScene(
   tints(pal);
   const cs = Math.cos(spin), sn = Math.sin(spin);
   const xs = axialPositions(open);
-  const half = shaftHalf(open);
 
   items.length = 0;
   let totalV = 0;
-  const add = (mesh: Mesh, off: number, sx: number, part: number) => {
+  const add = (mesh: Mesh, off: number, part: number) => {
     const vOff = totalV;
     totalV += mesh.vx.length / 3;
     const n = items.length;
@@ -555,30 +541,19 @@ export function renderScene(
       facingPool[n] = facing;
       shadePool[n] = shade;
     }
-    items.push({ mesh, vOff, off, sx, part, facing, shade: shade!, z: 0 });
+    items.push({ mesh, vOff, off, part, facing, shade: shade!, z: 0 });
   };
 
-  /* شفت فقط در فاصله‌ی بین قطعات (و دو سر) کشیده می‌شود؛ داخل قطعات
-     پنهان است، پس هیچ‌وقت روی قطعه نمی‌افتد. */
-  const spans: [number, number][] = [];
-  let prev = -half;
-  for (let i = 0; i < xs.length; i++) {
-    const a = xs[i] - PART_DEFS[i].h - (i > 0 ? 0 : 0);
-    if (a - prev > 1) spans.push([prev, a]);
-    prev = xs[i] + PART_DEFS[i].h + SPIG_L;
-  }
-  if (half - prev > 1) spans.push([prev, half]);
-  for (const [a, b] of spans) add(SHAFT_MESH, (a + b) / 2, (b - a) / 2, -1);
-  for (let i = 0; i < PART_MESHES.length; i++) add(PART_MESHES[i], xs[i], 1, i);
+  for (let i = 0; i < PART_MESHES.length; i++) add(PART_MESHES[i], xs[i], i);
   ensure(totalV);
 
   /* تبدیل رأس‌ها */
   for (let i = 0; i < items.length; i++) {
-    const { mesh, vOff, off, sx } = items[i];
+    const { mesh, vOff, off } = items[i];
     const v = mesh.vx;
     const n = v.length / 3;
     for (let k = 0; k < n; k++) {
-      const x = v[k * 3] * sx + off;
+      const x = v[k * 3] + off;
       const y0 = v[k * 3 + 1], z0 = v[k * 3 + 2];
       const y = y0 * cs - z0 * sn;
       const z = y0 * sn + z0 * cs;
@@ -599,8 +574,8 @@ export function renderScene(
     const { mesh, vOff, facing, shade, part } = it;
     const { fn, fo, fi, ev, ecrease, fe, faceCount } = mesh;
 
-    const [br, bg, bb] = part < 0 ? pal.shaftBase : cachedBase[part];
-    const [lr, lg, lb] = part < 0 ? pal.shaftLit : cachedLit[part];
+    const [br, bg, bb] = cachedBase[part];
+    const [lr, lg, lb] = cachedLit[part];
 
     faceRefs.length = 0;
     for (let f = 0; f < faceCount; f++) {
