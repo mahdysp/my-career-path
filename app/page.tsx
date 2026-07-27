@@ -388,10 +388,12 @@ export default function CareerHub() {
           height: 215vh;
           position: relative;
         }
+        /* ناوبار چسبانِ ۶۴px بالای صفحه است؛ صحنه باید زیرش قفل شود
+           وگرنه سر بخش پشت ناوبار پنهان می‌ماند. */
         .k2-exp-sticky {
           position: sticky;
-          top: 0;
-          height: 100svh;
+          top: 64px;
+          height: calc(100svh - 64px);
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -670,7 +672,11 @@ export default function CareerHub() {
           background:
             "var(--page-gradient)",
           fontFamily: "var(--font-sans)",
-          overflow: "hidden",
+          /* overflow-x به‌تنهایی، نه overflow: hidden — چون هر مقدار
+             غیر از visible روی یک جدّ، position: sticky فرزندان را
+             از کار می‌اندازد (بخش نمای انفجاری به آن وابسته است).
+             مهار سرریز افقی همچنان روی html/body در globals.css هست. */
+          overflowX: "clip",
         }}
       >
         {/* Ambient blobs */}

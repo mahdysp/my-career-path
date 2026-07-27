@@ -81,9 +81,11 @@ export default function ExplodedProfile() {
       const r = el.getBoundingClientRect();
       const vh = window.innerHeight;
       /* نوار پیشرفت دقیقاً بازه‌ی قفل‌بودن بخش است: از لحظه‌ای که بالای
-         بخش به سقف پنجره می‌رسد تا لحظه‌ای که پایینش به کف می‌رسد. */
-      const travel = Math.max(1, r.height - vh);
-      const p = Math.max(0, Math.min(1, -r.top / travel));
+         بخش به زیر ناوبار می‌رسد تا لحظه‌ای که پایینش به کف می‌رسد.
+         NAV باید با top در .k2-exp-sticky یکی باشد. */
+      const NAV = 64;
+      const travel = Math.max(1, r.height - (vh - NAV));
+      const p = Math.max(0, Math.min(1, (NAV - r.top) / travel));
       progress.current = p;
       setOpenT(openness(p));
       ticking = false;

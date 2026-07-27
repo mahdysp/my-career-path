@@ -168,8 +168,10 @@ html,
 body {
   background: var(--background-base);
   color: var(--foreground);
-  /* هیچ عنصری نباید صفحه را افقی بکشد (اسکرول افقی ناخواسته در موبایل) */
-  overflow-x: hidden;
+  /* هیچ عنصری نباید صفحه را افقی بکشد (اسکرول افقی ناخواسته در موبایل).
+     از clip استفاده می‌شود نه hidden: مقدار hidden روی ریشه یک زمینه‌ی
+     اسکرول می‌سازد و position: sticky فرزندان را از کار می‌اندازد. */
+  overflow-x: clip;
   max-width: 100%;
 }
 
