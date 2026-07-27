@@ -13,17 +13,25 @@ export default function AuthClient() {
   const searchParams = useSearchParams();
   // middleware مقصد اصلی را در ?next= می‌گذارد؛ فقط مسیرهای داخلی پذیرفته می‌شوند
   const rawNext = searchParams.get("next");
-  const nextUrl = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/quiz";
+  const parsedNext =
+    rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
 
   const [mounted, setMounted] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
 
-  /* در پشتی پنل مدیریت: سه ضربه‌ی پیاپی روی قفل.
-     یک کلیک ساده نیست تا تصادفی باز نشود؛ سه ضربه هم آن‌قدر ساده هست
-     که خودتان یادتان بماند. پنجره‌ی زمانی ۱٫۲ ثانیه است.
-     این فقط میان‌بر است، نه لایه‌ی امنیتی — کنترل واقعی سمت سرور است. */
+  /* در پشتی پنل مدیریت: سه ضربه‌ی پیاپی روی قفل (پنجره‌ی ۱٫۲ ثانیه).
+     یک کلیک ساده نیست تا تصادفی باز نشود.
+
+     نکته‌ی مهم: نمی‌توان مستقیم به /admin پرید، چون کاربرِ هنوز
+     وارد‌نشده را middleware فوراً به /auth برمی‌گرداند و حلقه می‌شود.
+     پس فقط مقصدِ بعد از ورود را روی /admin می‌گذاریم و کاربر همین‌جا
+     وارد می‌شود. اگر از قبل نشست دارد، مستقیم می‌رویم.
+
+     این فقط میان‌بر است، نه لایه‌ی امنیتی — کنترل واقعی در
+     lib/admin-auth.ts سمت سرور انجام می‌شود. */
   const lockTaps = useRef(0);
   const lockTimer = useRef<number | null>(null);
+  const [adminMode, setAdminMode] = useState(false);
 
   const handleLockTap = () => {
     lockTaps.current += 1;
@@ -31,7 +39,14 @@ export default function AuthClient() {
 
     if (lockTaps.current >= 3) {
       lockTaps.current = 0;
-      router.push("/admin");
+      setAdminMode(true);
+      // اگر همین حالا نشست دارد، معطلش نکنیم
+      fetch("/api/auth/me", { credentials: "same-origin" })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d?.user) router.push("/admin");
+        })
+        .catch(() => {});
       return;
     }
     lockTimer.current = window.setTimeout(() => {
@@ -50,6 +65,9 @@ export default function AuthClient() {
   const [showPassword, setShowPassword] = useState(false);
   const [capsOn, setCapsOn] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
+
+  /* مقصد پس از ورود موفق. حالت ادمین بر ?next= اولویت دارد. */
+  const nextUrl = adminMode ? "/admin" : parsedNext ?? "/quiz";
 
   useEffect(() => {
     setMounted(true);
@@ -237,6 +255,11 @@ export default function AuthClient() {
           padding: 0; cursor: pointer;
           font: inherit; -webkit-tap-highlight-color: transparent;
           transition: border-color .2s ease, box-shadow .2s ease;
+        }
+        .k2-icon-btn.armed {
+          border-color: var(--accent);
+          background: color-mix(in srgb, var(--accent) 14%, transparent);
+          box-shadow: 0 0 0 3px var(--accent-glow);
         }
         .k2-icon-btn:focus-visible {
           outline: none;
@@ -462,7 +485,7 @@ export default function AuthClient() {
                   {isLogin ? (
                     <button
                       type="button"
-                      className="k2-icon-box k2-icon-btn"
+                      className={`k2-icon-box k2-icon-btn ${adminMode ? "armed" : ""}`}
                       onClick={handleLockTap}
                       aria-label="ورود به حساب کاربری"
                       title=""
@@ -479,17 +502,27 @@ export default function AuthClient() {
                       </svg>
                     </div>
                   )}
-                  <div key={isLogin ? "login" : "signup"} className="k2-swap" style={{ minWidth: 0 }}>
+                  <div
+                    key={isLogin ? (adminMode ? "admin" : "login") : "signup"}
+                    className="k2-swap"
+                    style={{ minWidth: 0 }}
+                  >
                     <h1
                       className="k2-gradient-text"
                       style={{ fontWeight: 700, fontSize: 22, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.35 }}
                     >
-                      {isLogin ? "ورود به حساب کاربری" : "ساخت حساب کاربری"}
+                      {!isLogin
+                        ? "ساخت حساب کاربری"
+                        : adminMode
+                          ? "ورود مدیران"
+                          : "ورود به حساب کاربری"}
                     </h1>
                     <p style={{ fontSize: 13, color: "var(--foreground-muted)", margin: "4px 0 0", lineHeight: 1.7 }}>
-                      {isLogin
-                        ? "برای ادامه مسیر شغلی‌تان وارد شوید"
-                        : "چند ثانیه تا شروع مسیر شغلی‌تان فاصله دارید"}
+                      {!isLogin
+                        ? "چند ثانیه تا شروع مسیر شغلی‌تان فاصله دارید"
+                        : adminMode
+                          ? "پس از ورود به پنل مدیریت هدایت می‌شوید"
+                          : "برای ادامه مسیر شغلی‌تان وارد شوید"}
                     </p>
                   </div>
                 </div>

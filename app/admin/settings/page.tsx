@@ -103,6 +103,18 @@ export default function AdminSettingsPage() {
                 onToggle={() => set({ aboutVisible: !flags.aboutVisible })}
               />
               <Switch
+                on={flags.faqVisible}
+                label="صفحه‌ی پرسش‌های متداول"
+                note="اگر خاموش شود، صفحه‌ی /faq پیام «یافت نشد» می‌دهد."
+                onToggle={() => set({ faqVisible: !flags.faqVisible })}
+              />
+              <Switch
+                on={flags.integrationsVisible}
+                label="صفحه‌ی داده و یکپارچگی"
+                note="اگر خاموش شود، صفحه‌ی /data پیام «یافت نشد» می‌دهد."
+                onToggle={() => set({ integrationsVisible: !flags.integrationsVisible })}
+              />
+              <Switch
                 on={flags.registrationOpen}
                 label="ثبت‌نام کاربر جدید"
                 note="اگر خاموش شود، صفحه‌ی ثبت‌نام پیام «فعلاً بسته است» نشان می‌دهد."

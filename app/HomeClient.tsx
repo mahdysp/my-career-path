@@ -972,6 +972,9 @@ export default function HomeClient({ content }: { content: SiteContent }) {
               )}
               <a href="/how-it-works" className="k2-foot-link">روش کار</a>
               <a href="/science" className="k2-foot-link">پشتوانه‌ی علمی</a>
+              {content.flags.faqVisible && (
+                <a href="/faq" className="k2-foot-link">پرسش‌های متداول</a>
+              )}
             </nav>
             <p style={{ fontSize: 12, color: "var(--foreground-subtle)", fontFamily: "var(--font-mono)", margin: 0 }}>
               © Karex — تمامی حقوق محفوظ است

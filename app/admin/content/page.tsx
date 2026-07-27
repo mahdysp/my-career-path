@@ -8,6 +8,8 @@ import { api } from "../adminClient";
 import type {
   AboutValue,
   ContactChannel,
+  FaqItem,
+  IntegrationItem,
   ShowcaseSlide,
   SiteContent,
 } from "@/lib/site-content";
@@ -34,6 +36,14 @@ const CHANNEL_KINDS: { v: ContactChannel["kind"]; t: string }[] = [
   { v: "link", t: "لینک دیگر" },
 ];
 
+const blankFaq = (): FaqItem => ({ id: `f-${rid()}`, q: "", a: "" });
+const blankIntegration = (): IntegrationItem => ({
+  id: `i-${rid()}`,
+  title: "",
+  body: "",
+  tags: [],
+});
+
 const blank = (): ShowcaseSlide => ({
   id: `slide-${Math.random().toString(36).slice(2, 8)}`,
   src: "",
@@ -55,6 +65,9 @@ export default function AdminContentPage() {
   const [slides, setSlides] = useState<ShowcaseSlide[]>([]);
   const [exploded, setExploded] = useState({ eyebrow: "", title: "", subtitle: "" });
   const [about, setAbout] = useState<SiteContent["about"] | null>(null);
+  const [faq, setFaq] = useState<SiteContent["faq"] | null>(null);
+  const [integrations, setIntegrations] =
+    useState<SiteContent["integrations"] | null>(null);
   const [picking, setPicking] = useState<number | null>(null);
 
   const load = useCallback(() => {
@@ -66,6 +79,8 @@ export default function AdminContentPage() {
         setSlides(d.content.showcase.slides);
         setExploded(d.content.exploded);
         setAbout(d.content.about);
+        setFaq(d.content.faq);
+        setIntegrations(d.content.integrations);
       })
       .catch(setError)
       .finally(() => setLoading(false));
@@ -576,6 +591,292 @@ export default function AdminContentPage() {
                     className="ad-btn"
                     disabled={busy}
                     onClick={() => setAbout(data.defaults.about)}
+                  >
+                    بازگردانی به پیش‌فرض
+                  </button>
+                </div>
+              </div>
+            )}
+            {faq && (
+              <div className="ad-card">
+                <div className="ad-slide-top" style={{ marginBottom: 6 }}>
+                  <div>
+                    <p className="ad-card-title">پرسش‌های متداول</p>
+                    <p className="ad-card-note" style={{ marginBottom: 0 }}>
+                      محتوای صفحه‌ی <code>/faq</code>. ترتیب همان ترتیب نمایش است.
+                    </p>
+                  </div>
+                  <button
+                    className="ad-btn sm"
+                    onClick={() => setFaq({ ...faq, items: [...faq.items, blankFaq()] })}
+                  >
+                    + پرسش
+                  </button>
+                </div>
+
+                <div className="ad-field">
+                  <label className="ad-label">عنوان بالا (کوچک)</label>
+                  <input
+                    className="ad-input"
+                    value={faq.eyebrow}
+                    onChange={(e) => setFaq({ ...faq, eyebrow: e.target.value })}
+                  />
+                </div>
+                <div className="ad-field">
+                  <label className="ad-label">تیتر</label>
+                  <input
+                    className="ad-input"
+                    value={faq.title}
+                    onChange={(e) => setFaq({ ...faq, title: e.target.value })}
+                  />
+                </div>
+                <div className="ad-field">
+                  <label className="ad-label">توضیح کوتاه</label>
+                  <textarea
+                    className="ad-textarea"
+                    value={faq.lede}
+                    onChange={(e) => setFaq({ ...faq, lede: e.target.value })}
+                  />
+                </div>
+
+                <div style={{ marginTop: 16 }}>
+                  {faq.items.map((it, i) => (
+                    <div key={it.id} className="ad-slide">
+                      <div className="ad-slide-top">
+                        <span className="ad-badge accent">{i + 1}</span>
+                        <div className="ad-row">
+                          <button
+                            className="ad-btn sm"
+                            disabled={i === 0}
+                            onClick={() => {
+                              const a = [...faq.items];
+                              [a[i - 1], a[i]] = [a[i], a[i - 1]];
+                              setFaq({ ...faq, items: a });
+                            }}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            className="ad-btn sm"
+                            disabled={i === faq.items.length - 1}
+                            onClick={() => {
+                              const a = [...faq.items];
+                              [a[i + 1], a[i]] = [a[i], a[i + 1]];
+                              setFaq({ ...faq, items: a });
+                            }}
+                          >
+                            ↓
+                          </button>
+                          <button
+                            className="ad-btn sm danger"
+                            onClick={() =>
+                              setFaq({
+                                ...faq,
+                                items: faq.items.filter((_, j) => j !== i),
+                              })
+                            }
+                          >
+                            حذف
+                          </button>
+                        </div>
+                      </div>
+                      <div className="ad-field" style={{ marginTop: 0 }}>
+                        <label className="ad-label">پرسش</label>
+                        <input
+                          className="ad-input"
+                          value={it.q}
+                          onChange={(e) =>
+                            setFaq({
+                              ...faq,
+                              items: faq.items.map((x, j) =>
+                                j === i ? { ...x, q: e.target.value } : x
+                              ),
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="ad-field">
+                        <label className="ad-label">پاسخ</label>
+                        <textarea
+                          className="ad-textarea"
+                          value={it.a}
+                          onChange={(e) =>
+                            setFaq({
+                              ...faq,
+                              items: faq.items.map((x, j) =>
+                                j === i ? { ...x, a: e.target.value } : x
+                              ),
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="ad-row" style={{ marginTop: 16 }}>
+                  <button className="ad-btn primary" disabled={busy} onClick={() => save("faq", faq)}>
+                    {busy ? "در حال ذخیره…" : "ذخیره‌ی پرسش‌ها"}
+                  </button>
+                  <button className="ad-btn" disabled={busy} onClick={() => setFaq(data.content.faq)}>
+                    بازگردانی تغییرات
+                  </button>
+                  <button className="ad-btn" disabled={busy} onClick={() => setFaq(data.defaults.faq)}>
+                    بازگردانی به پیش‌فرض
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {integrations && (
+              <div className="ad-card">
+                <div className="ad-slide-top" style={{ marginBottom: 6 }}>
+                  <div>
+                    <p className="ad-card-title">داده و یکپارچگی</p>
+                    <p className="ad-card-note" style={{ marginBottom: 0 }}>
+                      محتوای صفحه‌ی <code>/data</code>.
+                    </p>
+                  </div>
+                  <button
+                    className="ad-btn sm"
+                    onClick={() =>
+                      setIntegrations({
+                        ...integrations,
+                        items: [...integrations.items, blankIntegration()],
+                      })
+                    }
+                  >
+                    + مورد
+                  </button>
+                </div>
+
+                <div className="ad-field">
+                  <label className="ad-label">عنوان بالا (کوچک)</label>
+                  <input
+                    className="ad-input"
+                    value={integrations.eyebrow}
+                    onChange={(e) =>
+                      setIntegrations({ ...integrations, eyebrow: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="ad-field">
+                  <label className="ad-label">تیتر</label>
+                  <input
+                    className="ad-input"
+                    value={integrations.title}
+                    onChange={(e) =>
+                      setIntegrations({ ...integrations, title: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="ad-field">
+                  <label className="ad-label">توضیح کوتاه</label>
+                  <textarea
+                    className="ad-textarea"
+                    value={integrations.lede}
+                    onChange={(e) =>
+                      setIntegrations({ ...integrations, lede: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div style={{ marginTop: 16 }}>
+                  {integrations.items.map((it, i) => (
+                    <div key={it.id} className="ad-slide">
+                      <div className="ad-slide-top">
+                        <span className="ad-badge accent">{i + 1}</span>
+                        <button
+                          className="ad-btn sm danger"
+                          onClick={() =>
+                            setIntegrations({
+                              ...integrations,
+                              items: integrations.items.filter((_, j) => j !== i),
+                            })
+                          }
+                        >
+                          حذف
+                        </button>
+                      </div>
+                      <div className="ad-field" style={{ marginTop: 0 }}>
+                        <label className="ad-label">عنوان</label>
+                        <input
+                          className="ad-input"
+                          value={it.title}
+                          onChange={(e) =>
+                            setIntegrations({
+                              ...integrations,
+                              items: integrations.items.map((x, j) =>
+                                j === i ? { ...x, title: e.target.value } : x
+                              ),
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="ad-field">
+                        <label className="ad-label">توضیح</label>
+                        <textarea
+                          className="ad-textarea"
+                          value={it.body}
+                          onChange={(e) =>
+                            setIntegrations({
+                              ...integrations,
+                              items: integrations.items.map((x, j) =>
+                                j === i ? { ...x, body: e.target.value } : x
+                              ),
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="ad-field">
+                        <label className="ad-label">
+                          برچسب‌ها — با ویرگول جدا کنید
+                        </label>
+                        <input
+                          className="ad-input"
+                          value={it.tags.join("، ")}
+                          placeholder="مثلاً: O*NET 30.0، CC BY 4.0"
+                          onChange={(e) =>
+                            setIntegrations({
+                              ...integrations,
+                              items: integrations.items.map((x, j) =>
+                                j === i
+                                  ? {
+                                      ...x,
+                                      tags: e.target.value
+                                        .split(/[،,]/)
+                                        .map((t) => t.trim())
+                                        .filter(Boolean),
+                                    }
+                                  : x
+                              ),
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="ad-row" style={{ marginTop: 16 }}>
+                  <button
+                    className="ad-btn primary"
+                    disabled={busy}
+                    onClick={() => save("integrations", integrations)}
+                  >
+                    {busy ? "در حال ذخیره…" : "ذخیره‌ی داده و یکپارچگی"}
+                  </button>
+                  <button
+                    className="ad-btn"
+                    disabled={busy}
+                    onClick={() => setIntegrations(data.content.integrations)}
+                  >
+                    بازگردانی تغییرات
+                  </button>
+                  <button
+                    className="ad-btn"
+                    disabled={busy}
+                    onClick={() => setIntegrations(data.defaults.integrations)}
                   >
                     بازگردانی به پیش‌فرض
                   </button>
