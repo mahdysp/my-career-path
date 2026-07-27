@@ -69,10 +69,10 @@ const GROUPS: Group[] = [
     label: "امکانات",
     wide: true,
     items: [
-      { label: "آزمون شخصیت شغلی", desc: "شش بُعد RIASEC بر پایه‌ی استاندارد O*NET", href: "/quiz", icon: "compass" },
-      { label: "پروفایل شغلی", desc: "نمودار مهارت‌ها و نقاط قوت شما", href: "/#features", icon: "chart" },
-      { label: "مقایسه‌ی مشاغل", desc: "درصد تطابق واقعی، نه حدس", href: "/#features", icon: "layers" },
-      { label: "مسیر پیشنهادی", desc: "قدم بعدی که باید بردارید", href: "/how-it-works#stage-06", icon: "target" },
+      { label: "آزمون شخصیت شغلی", desc: "شش بُعد RIASEC بر پایه‌ی استاندارد O*NET", href: "/features/assessment", icon: "compass" },
+      { label: "پروفایل شغلی", desc: "شش عددی که تصویر کاری شما را می‌سازند", href: "/features/profile", icon: "chart" },
+      { label: "مقایسه‌ی مشاغل", desc: "درصد تطابق با فرمول مشخص", href: "/features/compare", icon: "layers" },
+      { label: "مسیر پیشنهادی", desc: "بعد از نتیجه چه کنید", href: "/features/path", icon: "target" },
     ],
   },
   {

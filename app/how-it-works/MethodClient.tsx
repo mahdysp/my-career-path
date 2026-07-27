@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import SiteNav from "@/app/components/SiteNav";
-import { FAQS, STAGES } from "@/lib/method-content";
+import { STAGES } from "@/lib/method-content";
 import { methodStyles } from "./methodStyles";
 
 /**
@@ -144,10 +144,6 @@ export default function MethodClient() {
                 {s.short}
               </a>
             ))}
-            <a href="#faq" className={reached >= STAGES.length - 1 ? "on" : ""}>
-              <i>—</i>
-              پرسش‌های متداول
-            </a>
           </nav>
 
           <div>
@@ -200,8 +196,49 @@ export default function MethodClient() {
               ))}
             </div>
 
+            {/* صفحات مرتبط — هر مرحله جزئیات بیشتری در بخش امکانات دارد */}
+            <div className="mw-crossref" style={{ display: "block" }}>
+              <h3>جزئیات بیشتر هر بخش</h3>
+              <p style={{ maxWidth: "100%" }}>
+                هر مرحله صفحه‌ی مفصل خودش را دارد.
+              </p>
+              <div
+                style={{
+                  display: "grid",
+                  gap: 8,
+                  marginTop: 14,
+                  gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+                }}
+              >
+                {[
+                  { h: "/features/assessment", t: "آزمون شخصیت شغلی" },
+                  { h: "/features/profile", t: "پروفایل شغلی" },
+                  { h: "/features/compare", t: "مقایسه‌ی مشاغل" },
+                  { h: "/features/path", t: "مسیر پیشنهادی" },
+                ].map((x) => (
+                  <Link
+                    key={x.h}
+                    href={x.h}
+                    style={{
+                      display: "block",
+                      padding: "11px 14px",
+                      borderRadius: 10,
+                      textDecoration: "none",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--foreground)",
+                      background: "var(--background-elevated)",
+                      border: "1px solid var(--border-default)",
+                    }}
+                  >
+                    {x.t}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
             {/* ارجاع به صفحه‌ی علمی */}
-            <div className="mw-crossref">
+            <div className="mw-crossref" style={{ marginTop: 12 }}>
               <div>
                 <h3>چرا این روش معتبر است؟</h3>
                 <p>
@@ -214,21 +251,6 @@ export default function MethodClient() {
                 پشتوانه‌ی علمی
               </Link>
             </div>
-
-            {/* پرسش‌های متداول */}
-            <section id="faq" className="mw-sec">
-              <span className="mw-sec-n">پرسش‌های متداول</span>
-              <h2 className="mw-h2">سؤال‌هایی که زیاد پرسیده می‌شود</h2>
-
-              <div className="mw-faqs">
-                {FAQS.map((f) => (
-                  <details key={f.q} className="mw-faq">
-                    <summary>{f.q}</summary>
-                    <p className="mw-faq-a">{f.a}</p>
-                  </details>
-                ))}
-              </div>
-            </section>
 
             <div className="mw-cta">
               <h2>آماده‌اید شروع کنید؟</h2>

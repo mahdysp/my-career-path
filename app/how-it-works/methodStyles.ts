@@ -200,38 +200,6 @@ export const methodStyles = `
     margin: 14px 0 0; max-width: 66ch;
   }
 
-  /* ── پرسش‌های متداول ── */
-  .mw-faqs { margin-top: 22px; display: grid; gap: 8px; }
-  .mw-faq {
-    background: var(--background-elevated);
-    border: 1px solid var(--border-default);
-    border-radius: 12px; overflow: hidden;
-  }
-  .mw-faq summary {
-    cursor: pointer; list-style: none;
-    padding: 14px 18px; font-size: 14px; font-weight: 600;
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    transition: background .16s ease;
-  }
-  .mw-faq summary::-webkit-details-marker { display: none; }
-  .mw-faq summary::after {
-    content: ""; flex: 0 0 auto;
-    width: 8px; height: 8px;
-    border-inline-end: 1.8px solid var(--foreground-subtle);
-    border-bottom: 1.8px solid var(--foreground-subtle);
-    transform: rotate(45deg) translateY(-2px);
-    transition: transform .26s cubic-bezier(.22,1,.36,1);
-  }
-  .mw-faq[open] summary::after { transform: rotate(-135deg) translateY(-2px); }
-  @media (hover: hover) and (pointer: fine) {
-    .mw-faq summary:hover { background: var(--surface); }
-  }
-  .mw-faq-a {
-    padding: 0 18px 16px;
-    font-size: 13.5px; line-height: 2.05;
-    color: var(--foreground-muted); max-width: 70ch;
-  }
-
   /* ── ارجاع به صفحه‌ی علمی ── */
   .mw-crossref {
     margin-top: 26px; border-radius: 14px;
@@ -299,7 +267,7 @@ export const methodStyles = `
     .mw-crossref { flex-direction: column; align-items: flex-start; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .mw-fill, .mw-dot, .mw-n, .mw-btn, .mw-faq summary::after {
+    .mw-fill, .mw-dot, .mw-n, .mw-btn {
       transition-duration: .01ms;
     }
   }
