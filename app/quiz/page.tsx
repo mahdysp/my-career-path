@@ -304,15 +304,19 @@ export default function QuizLanding() {
           transition: opacity 0.3s ease;
           pointer-events: none;
         }
-        .k2-card:hover::before { opacity: 1; }
+        @media (hover: hover) and (pointer: fine) {
+    .k2-card:hover::before { opacity: 1; }
+  }
 
-        .k2-card-lift:hover {
-          transform: translateY(-6px);
-          border-color: var(--border-hover);
-          box-shadow:
-            0 0 0 1px rgba(255,255,255,0.08),
-            0 12px 40px rgba(0,0,0,0.5),
-            0 0 60px var(--blob-3);
+        @media (hover: hover) and (pointer: fine) {
+          .k2-card-lift:hover {
+            transform: translateY(-6px);
+            border-color: var(--border-hover);
+            box-shadow:
+              0 0 0 1px rgba(255,255,255,0.08),
+              0 12px 40px rgba(0,0,0,0.5),
+              0 0 60px var(--blob-3);
+          }
         }
 
         .k2-icon-box {

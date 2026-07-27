@@ -225,13 +225,17 @@ export default function CareerHub() {
             0 0 40px rgba(0,0,0,0.15);
           transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease, border-color 0.25s ease;
         }
-        .k2-card:hover {
-          transform: translateY(-6px);
-          border-color: var(--border-hover);
-          box-shadow:
-            0 0 0 1px rgba(255,255,255,0.08),
-            0 12px 40px rgba(0,0,0,0.5),
-            0 0 60px var(--blob-3);
+        /* بالا پریدن فقط روی دستگاه‌های دارای اشاره‌گر واقعی.
+           روی لمسی، :hover بعد از تپ می‌چسبد و کارت روی کارت بعدی می‌افتد. */
+        @media (hover: hover) and (pointer: fine) {
+          .k2-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--border-hover);
+            box-shadow:
+              0 0 0 1px rgba(255,255,255,0.08),
+              0 12px 40px rgba(0,0,0,0.5),
+              0 0 60px var(--blob-3);
+          }
         }
         .k2-card::before {
           content: "";
@@ -243,7 +247,9 @@ export default function CareerHub() {
           transition: opacity 0.3s ease;
           pointer-events: none;
         }
-        .k2-card:hover::before { opacity: 1; }
+        @media (hover: hover) and (pointer: fine) {
+          .k2-card:hover::before { opacity: 1; }
+        }
 
         .k2-icon-box {
           width: 44px; height: 44px;
@@ -355,6 +361,59 @@ export default function CareerHub() {
 
         @media (prefers-reduced-motion: reduce) {
           .k2-journey-step { opacity: 1; transform: none; transition: none; }
+        }
+
+        /* هیرو دقیقاً یک صفحه است؛ ویژگی‌ها بعد از اسکرول شروع می‌شوند */
+        .k2-hero {
+          position: relative;
+          max-width: 1280px;
+          width: 100%;
+          margin: 0 auto;
+          padding: 0 clamp(16px, 4vw, 40px);
+          text-align: center;
+          min-height: calc(100svh - 64px);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .k2-scroll-cue {
+          position: absolute;
+          bottom: 26px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 7px;
+          font-family: var(--font-mono);
+          font-size: 10px;
+          letter-spacing: .14em;
+          color: var(--foreground-subtle);
+          pointer-events: none;
+        }
+        .k2-scroll-cue i {
+          display: block;
+          width: 1px;
+          height: 30px;
+          background: linear-gradient(to bottom, transparent, var(--border-hover));
+          position: relative;
+          overflow: hidden;
+        }
+        .k2-scroll-cue i::after {
+          content: "";
+          position: absolute;
+          inset: 0 auto auto 0;
+          width: 1px;
+          height: 12px;
+          background: var(--accent);
+          animation: k2CueSlide 1.9s ease-in-out infinite;
+        }
+        @keyframes k2CueSlide {
+          0% { transform: translateY(-14px); opacity: 0; }
+          40% { opacity: 1; }
+          100% { transform: translateY(30px); opacity: 0; }
         }
 
         /* ── نمای انفجاری پروفایل ── */
@@ -586,10 +645,8 @@ export default function CareerHub() {
 
           {/* Hero */}
           <section
+            className="k2-hero"
             style={{
-              maxWidth: 1280, width: "100%", margin: "0 auto",
-              padding: "clamp(64px, 11vw, 128px) clamp(16px, 4vw, 40px) 0",
-              textAlign: "center",
               opacity: mounted ? heroOpacity : 1,
               transform: mounted ? `translateY(${heroTranslate}px) scale(${heroScale})` : "none",
               transition: "opacity 0.1s linear",
@@ -620,7 +677,7 @@ export default function CareerHub() {
               از کشف استعداد تا آغاز یادگیری
             </p>
 
-            <div className={mounted ? "k2-fade-3" : ""} style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 72 }}>
+            <div className={mounted ? "k2-fade-3" : ""} style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
               <button className="k2-btn k2-btn-primary" onClick={handleStart} disabled={isLoading} style={{ fontSize: 15, padding: "0 30px", height: 46 }}>
                 {isLoading ? "در حال آماده‌سازی..." : "شروع آزمون"}
               </button>
@@ -629,7 +686,10 @@ export default function CareerHub() {
               </a>
             </div>
 
-            
+            <span className="k2-scroll-cue" aria-hidden="true">
+              <i />
+              اسکرول کنید
+            </span>
           </section>
 
           {/* Features — Bento */}

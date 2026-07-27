@@ -89,7 +89,9 @@ const styles = `
     background: radial-gradient(340px circle at var(--mx,50%) var(--my,50%), var(--accent-glow), transparent 60%);
     opacity:0; transition: opacity .3s ease;
   }
-  .k2-card:hover::before { opacity:.55; }
+  @media (hover: hover) and (pointer: fine) {
+    .k2-card:hover::before { opacity:.55; }
+  }
 
   .k2-sec-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; color: var(--accent); }
   .k2-sec-title { font-weight: 700; font-size: 17px; letter-spacing: -.01em; color: var(--foreground); margin: 6px 0 0; }

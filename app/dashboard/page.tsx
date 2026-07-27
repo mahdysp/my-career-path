@@ -115,7 +115,9 @@ const styles = `
     background: radial-gradient(340px circle at var(--mx,50%) var(--my,50%), rgba(94,106,210,.13), transparent 60%);
     opacity: 0; transition: opacity .3s ease;
   }
-  .k2-card:hover::before { opacity: 1; }
+  @media (hover: hover) and (pointer: fine) {
+    .k2-card:hover::before { opacity: 1; }
+  }
 
   .k2-sec-label {
     font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; color: var(--accent);
