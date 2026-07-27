@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RIASEC_AXES } from "@/lib/onet-profiles";
-import { buildScene, CX, CY, VIEW_H, VIEW_W } from "./explodedGeometry";
+import { VIEW_H, VIEW_W, renderScene, type Palette } from "./explodedGeometry";
 
 /**
  * نمای انفجاری قطعات پروفایل شغلی.
@@ -12,9 +12,10 @@ import { buildScene, CX, CY, VIEW_H, VIEW_W } from "./explodedGeometry";
  *   ۲. مجموعه کمی بزرگ می‌شود.
  *   ۳. قطعات در امتداد همان محور از هم جدا می‌شوند و شش بُعد RIASEC آشکار می‌گردد.
  *
- * تفاوت با نسخه‌ی قبلی: قبلاً هر قطعه یک دیسکِ روبه‌رو بود که کنار بقیه چیده
- * شده بود؛ حالا صفحه‌ی هر قطعه عمود بر یک محور مشترک است و چرخش، چرخشِ
- * همان محور است — دقیقاً مثل یک مجموعه‌ی مکانیکی واقعی.
+ * چرا canvas و نه SVG: قطعات باید سطح تو‌پُر داشته باشند و جلوی هم را
+ * بگیرند. با خط تنها، در حالت سرهم خطوط پشتی از داخل قطعه‌ی جلویی دیده
+ * می‌شد و تصویر به هم می‌ریخت. حدود ۶۰۰ وجه در هر فریم رسم می‌شود که برای
+ * canvas سبک است ولی برای SVG (۶۰۰ گره DOM در هر فریم) نبود.
  */
 
 const easeInOut = (t: number) =>
@@ -23,12 +24,29 @@ const easeInOut = (t: number) =>
 const phase = (t: number, from: number, to: number) =>
   Math.max(0, Math.min(1, (t - from) / (to - from)));
 
+/* پالت‌ها: فلز مات. base سایه‌ی عمیق، lit سطحی که مستقیم زیر نور است. */
+const DARK: Palette = {
+  base: [24, 25, 32],
+  lit: [200, 204, 218],
+  line: "rgba(255,255,255,0.34)",
+  lineSoft: "rgba(255,255,255,0.08)",
+};
+
+const LIGHT: Palette = {
+  base: [126, 124, 120],
+  lit: [252, 251, 248],
+  line: "rgba(26,26,31,0.42)",
+  lineSoft: "rgba(26,26,31,0.10)",
+};
+
 export default function ExplodedProfile() {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [p, setP] = useState(0);
-  const [spin, setSpin] = useState(0.35);
-  const [visible, setVisible] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const progress = useRef(0);
+  const spin = useRef(0.4);
+  const [openT, setOpenT] = useState(0);
 
+  /* اسکرول → پیشرفت */
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
@@ -36,10 +54,11 @@ export default function ExplodedProfile() {
     const update = () => {
       const r = el.getBoundingClientRect();
       const vh = window.innerHeight;
-      setVisible(r.top < vh + 200 && r.bottom > -200);
       const startAt = vh * 0.55;
       const distance = Math.max(1, Math.min(r.height * 0.8, vh * 0.85));
-      setP(Math.max(0, Math.min(1, (startAt - r.top) / distance)));
+      const p = Math.max(0, Math.min(1, (startAt - r.top) / distance));
+      progress.current = p;
+      setOpenT(easeInOut(phase(p, 0.22, 0.94)));
       ticking = false;
     };
     const onScroll = () => {
@@ -56,30 +75,92 @@ export default function ExplodedProfile() {
     };
   }, []);
 
-  /* چرخش پیوسته‌ی شفت — فقط وقتی بخش در دید است */
+  /* حلقه‌ی رندر — فقط وقتی بخش در دید است */
   useEffect(() => {
-    if (!visible) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const canvas = canvasRef.current;
+    const wrap = wrapRef.current;
+    if (!canvas || !wrap) return;
+    const ctx = canvas.getContext("2d", { alpha: true });
+    if (!ctx) return;
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let visible = false;
     let raf = 0;
     let last = performance.now();
-    const loop = (now: number) => {
+    let dpr = 1;
+
+    const palette = () =>
+      document.documentElement.dataset.theme === "light" ? LIGHT : DARK;
+
+    const resize = () => {
+      const w = canvas.clientWidth;
+      if (!w) return;
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      const h = Math.round((w * VIEW_H) / VIEW_W);
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      canvas.style.height = `${h}px`;
+    };
+
+    const frame = (now: number) => {
       const dt = Math.min(80, now - last);
       last = now;
-      setSpin((s) => s + dt * 0.00042);
-      raf = requestAnimationFrame(loop);
+      if (!reduce) spin.current += dt * 0.00038;
+
+      const w = canvas.clientWidth;
+      const k = (w / VIEW_W) * dpr;
+      const o = easeInOut(phase(progress.current, 0.22, 0.94));
+      const zoom = easeInOut(phase(progress.current, 0, 0.26));
+      const scale = 1.28 + 0.12 * zoom - 0.42 * o;
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.setTransform(k, 0, 0, k, 0, 0);
+      renderScene(ctx, spin.current, o, scale, palette());
+
+      raf = requestAnimationFrame(frame);
     };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [visible]);
 
-  const zoomT = easeInOut(phase(p, 0, 0.26));
-  const openT = easeInOut(phase(p, 0.22, 0.94));
+    const start = () => {
+      if (raf) return;
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    };
+    const stop = () => {
+      if (!raf) return;
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
 
-  /* سرهم که هست کوچک‌تر دیده می‌شود، پس اول بزرگ‌نمایی می‌کنیم و
-     هرچه باز می‌شود مقیاس را برمی‌گردانیم تا از قاب بیرون نزند. */
-  const scale = 1.34 + 0.1 * zoomT - 0.44 * openT;
+    resize();
+    const io = new IntersectionObserver(
+      ([e]) => {
+        visible = e.isIntersecting;
+        if (visible) start();
+        else stop();
+      },
+      { rootMargin: "120px" }
+    );
+    io.observe(wrap);
 
-  const scene = useMemo(() => buildScene(spin, openT), [spin, openT]);
+    const onResize = () => {
+      resize();
+      if (!visible) {
+        // یک فریم ثابت بکش تا قاب خالی نماند
+        last = performance.now();
+        requestAnimationFrame(frame);
+        stop();
+      }
+    };
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      io.disconnect();
+      window.removeEventListener("resize", onResize);
+      stop();
+    };
+  }, []);
+
   const opened = openT > 0.9;
 
   return (
@@ -97,31 +178,12 @@ export default function ExplodedProfile() {
       </div>
 
       <div className="k2-exp-stage">
-        <svg
-          viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-          className="k2-exp-svg"
+        <canvas
+          ref={canvasRef}
+          className="k2-exp-canvas"
           role="img"
           aria-label="نمای انفجاری شش بُعد شخصیت شغلی روی یک محور"
-        >
-          <g
-            style={{
-              transform: `translate(${CX}px, ${CY}px) scale(${scale.toFixed(
-                3
-              )}) translate(${-CX}px, ${-CY}px)`,
-              transformOrigin: "0 0",
-            }}
-            fill="none"
-            stroke="currentColor"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-          >
-            <path d={scene.far} opacity={0.2} strokeWidth={0.7} />
-            <path d={scene.mid} opacity={0.55} strokeWidth={0.85} />
-            <path d={scene.near} opacity={0.95} strokeWidth={1.1} />
-          </g>
-        </svg>
-
+        />
         <div className={`k2-exp-badge ${opened ? "on" : ""}`}>
           <span>شش بُعد شخصیت شغلی</span>
         </div>

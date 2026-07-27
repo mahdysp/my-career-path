@@ -411,7 +411,7 @@ export default function CareerHub() {
         }
 
         .k2-exp-stage { position: relative; margin-top: clamp(28px, 5vw, 56px); }
-        .k2-exp-svg { width: 100%; height: auto; display: block; color: var(--foreground); }
+        .k2-exp-canvas { width: 100%; display: block; }
 
         .k2-exp-badge {
           position: absolute; left: 50%; bottom: 4%;

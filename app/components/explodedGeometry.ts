@@ -1,297 +1,613 @@
 /**
  * هندسه‌ی مجموعه‌ی مکانیکی «شش قطعه روی یک محور».
  *
- * ایده: تمام قطعات روی یک شفت افقی (محور X) سوار هستند. صفحه‌ی هر قطعه
- * عمود بر محور است (در صفحه‌ی YZ)، بنابراین وقتی شفت می‌چرخد همه‌ی قطعات
- * با یک سرعت و یک جهت حول همان محور می‌گردند — دقیقاً مثل یک مجموعه‌ی واقعی.
+ * چرا این‌طور نوشته شده:
+ *   ۱. نسخه‌ی اول فقط خط بود؛ در حالت سرهم خطوط پشتی از داخل قطعه‌ی جلویی
+ *      دیده می‌شد و تصویر به هم می‌ریخت.
+ *   ۲. نسخه‌ی دوم سطح تو‌پُر داشت ولی دور هر وجه خط می‌کشید، پس دیسک‌ها شبیه
+ *      برش‌های پیتزا می‌شدند و کل چیز چندوجهی و مصنوعی به‌نظر می‌رسید.
+ *   ۳. نسخه‌ی فعلی مش واقعی می‌سازد (رأس‌های مشترک + توپولوژی یال‌ها) و فقط
+ *      دو نوع خط می‌کشد: سیلوئت (مرز بین وجه رو‌به‌جلو و پشت) و لبه‌ی چین
+ *      (جایی که دو وجه زاویه‌ی تند دارند). همان قراردادِ نقشه‌ی فنی.
  *
- * دوربین: چرخش yaw حول Y و pitch کوچک حول X، تصویر متعامد (بدون پرسپکتیو)
- * تا خطوط مستقیم بمانند. نتیجه: دایره‌ها به بیضی‌های باریکِ ایستاده تبدیل
- * می‌شوند و ردیف قطعات کمی به سمت عمق می‌رود.
- *
- * خروجی سه رشته‌ی path است (دور / میانی / نزدیک) تا با اپاسیتی متفاوت
- * رسم شوند و حس عمق و خطوط پنهان بدهند.
+ * توپولوژی ثابت است و فقط یک‌بار ساخته می‌شود؛ در هر فریم صرفاً رأس‌ها حول
+ * محور X می‌چرخند. برای همین با ~۲۵۰۰ مثلث هم روان می‌ماند.
  */
 
 export const VIEW_W = 900;
-export const VIEW_H = 420;
+export const VIEW_H = 430;
 export const CX = 450;
-export const CY = 212;
+export const CY = 215;
 
-const RY = 0.5; // چرخش افقی دوربین — پهنای بیضی‌ها
+const RY = 0.5; // چرخش افقی دوربین
 const RX = 0.2; // نگاه از کمی بالا
 
 const cRY = Math.cos(RY), sRY = Math.sin(RY);
 const cRX = Math.cos(RX), sRX = Math.sin(RX);
 
-/* بردارهای پایه‌ی خام در فضای صفحه (y به سمت پایین) */
-const W0: [number, number] = [cRY, -(sRY * sRX)]; // جهت محور شفت
-const U0: [number, number] = [0, -cRX]; // محور Y جهان (بالا)
-const V0: [number, number] = [sRY, cRY * sRX]; // محور Z جهان (عمق)
+const W0: [number, number] = [cRY, -(sRY * sRX)];
+const U0: [number, number] = [0, -cRX];
+const V0: [number, number] = [sRY, cRY * sRX];
 
-/* رول دوربین: محور شفت را دقیقاً افقی می‌کند تا ردیف قطعات کج ننشیند.
-   این فقط چرخش خود دوربین حول محور دیدش است، پس هندسه دست‌نخورده می‌ماند. */
+/* رول دوربین تا محور شفت دقیقاً افقی بیفتد */
 const ROLL = -Math.atan2(W0[1], W0[0]);
 const cR = Math.cos(ROLL), sR = Math.sin(ROLL);
-const roll = (v: [number, number]): [number, number] => [
+const rollV = (v: [number, number]): [number, number] => [
   v[0] * cR - v[1] * sR,
   v[0] * sR + v[1] * cR,
 ];
+const W = rollV(W0);
+const U = rollV(U0);
+const V = rollV(V0);
 
-const W = roll(W0);
-const U = roll(U0);
-const V = roll(V0);
+/** جهت نگاه دوربین (از دوربین به صحنه). عمق = dot(p, DIR) */
+const DIR: [number, number, number] = [-sRY * cRX, sRX, cRY * cRX];
 
-/** عمق نقطه؛ عدد بزرگ‌تر یعنی دورتر از دوربین */
-const depthOf = (ax: number, r: number, a: number) =>
-  r * Math.cos(a) * sRX + (-ax * sRY + r * Math.sin(a) * cRY) * cRX;
-
-export type Pt = [number, number];
-
-/** نقطه‌ای روی قطعه: ax = فاصله در راستای محور، r و a = مختصات قطبی در صفحه‌ی قطعه */
-const pt = (ax: number, r: number, a: number): Pt => [
-  CX + W[0] * ax + U[0] * r * Math.cos(a) + V[0] * r * Math.sin(a),
-  CY + W[1] * ax + U[1] * r * Math.cos(a) + V[1] * r * Math.sin(a),
-];
-
-const f = (n: number) => (Math.round(n * 10) / 10).toString();
-
-type Buckets = { far: string[]; mid: string[]; near: string[] };
-
-const emptyBuckets = (): Buckets => ({ far: [], mid: [], near: [] });
-
-const line = (b: Buckets, k: keyof Buckets, a: Pt, c: Pt) => {
-  b[k].push(`M${f(a[0])} ${f(a[1])}L${f(c[0])} ${f(c[1])}`);
+const unit = (l: [number, number, number]): [number, number, number] => {
+  const m = Math.hypot(l[0], l[1], l[2]) || 1;
+  return [l[0] / m, l[1] / m, l[2] / m];
 };
 
-const loop = (b: Buckets, k: keyof Buckets, p: Pt[]) => {
-  b[k].push(`M${p.map((q) => `${f(q[0])} ${f(q[1])}`).join("L")}Z`);
+/* نور نسبت به دوربین تعریف می‌شود، نه نسبت به جهان: کمی بالای شانه‌ی
+   چپ بیننده. اگر مطلق تعریف شود، وجه‌های رو به دوربین تاریک می‌افتند. */
+const LIGHT = unit([-DIR[0] * 0.9, -DIR[1] * 0.9 + 0.8, -DIR[2] * 0.9]);
+/** نور کمکی از پایین‌عقب تا سایه‌ها کاملاً سیاه نشوند */
+const FILL = unit([DIR[0] * 0.6 + 0.55, DIR[1] * 0.6 - 0.55, DIR[2] * 0.6]);
+
+type P3 = [number, number, number];
+
+/* ------------------------------------------------------------------ */
+/* ساخت مش                                                             */
+/* ------------------------------------------------------------------ */
+
+type Mesh = {
+  /** مختصات رأس‌ها، سه‌تایی پشت‌سرهم */
+  vx: Float32Array;
+  /** ایندکس رأس‌های هر وجه، مسطح‌شده */
+  fi: Int32Array;
+  /** آفست شروع هر وجه در fi */
+  fo: Int32Array;
+  /** نرمال هر وجه */
+  fn: Float32Array;
+  /** یال‌ها: v0, v1, faceA, faceB (faceB = -1 یعنی یال مرزی) */
+  ev: Int32Array;
+  /** آیا یال چین تیز است */
+  ecrease: Uint8Array;
+  /** ایندکس یال‌های هر وجه، مسطح‌شده (هم‌اندازه با fi) */
+  fe: Int32Array;
+  faceCount: number;
+  edgeCount: number;
 };
 
-/** حلقه‌ی دایره‌ای در صفحه‌ی قطعه */
-const ring = (ax: number, r: number, spin: number, n = 64): Pt[] =>
-  Array.from({ length: n }, (_, i) => pt(ax, r, spin + (i / n) * Math.PI * 2));
+class MeshBuilder {
+  private verts: number[] = [];
+  private index = new Map<string, number>();
+  private faces: number[][] = [];
+  private normals: P3[] = [];
 
-/** حلقه‌ی چندضلعی */
-const ngon = (ax: number, r: number, spin: number, sides: number): Pt[] =>
-  Array.from({ length: sides }, (_, i) => pt(ax, r, spin + (i / sides) * Math.PI * 2));
-
-/** پروفیل دنده‌دار (چرخ‌دنده) */
-function toothProfile(ax: number, rTip: number, rRoot: number, teeth: number, spin: number): Pt[] {
-  const out: Pt[] = [];
-  const step = (Math.PI * 2) / teeth;
-  const tw = step * 0.5;
-  for (let i = 0; i < teeth; i++) {
-    const a = spin + i * step;
-    out.push(pt(ax, rRoot, a - tw * 0.5));
-    out.push(pt(ax, rTip, a - tw * 0.26));
-    out.push(pt(ax, rTip, a + tw * 0.26));
-    out.push(pt(ax, rRoot, a + tw * 0.5));
+  vertex(x: number, y: number, z: number): number {
+    const k = `${Math.round(x * 100)},${Math.round(y * 100)},${Math.round(z * 100)}`;
+    const hit = this.index.get(k);
+    if (hit !== undefined) return hit;
+    const i = this.verts.length / 3;
+    this.verts.push(x, y, z);
+    this.index.set(k, i);
+    return i;
   }
-  return out;
+
+  face(ids: number[], n: P3) {
+    // رأس‌های تکراری پشت‌سرهم را حذف کن
+    const clean: number[] = [];
+    for (const id of ids) if (clean[clean.length - 1] !== id) clean.push(id);
+    if (clean[0] === clean[clean.length - 1]) clean.pop();
+    if (clean.length < 3) return;
+    this.faces.push(clean);
+    this.normals.push(n);
+  }
+
+  build(): Mesh {
+    const faceCount = this.faces.length;
+    const fo = new Int32Array(faceCount + 1);
+    let total = 0;
+    for (let i = 0; i < faceCount; i++) {
+      fo[i] = total;
+      total += this.faces[i].length;
+    }
+    fo[faceCount] = total;
+
+    const fi = new Int32Array(total);
+    let c = 0;
+    for (const f of this.faces) for (const v of f) fi[c++] = v;
+
+    const fn = new Float32Array(faceCount * 3);
+    for (let i = 0; i < faceCount; i++) {
+      fn[i * 3] = this.normals[i][0];
+      fn[i * 3 + 1] = this.normals[i][1];
+      fn[i * 3 + 2] = this.normals[i][2];
+    }
+
+    // توپولوژی یال‌ها
+    const em = new Map<number, [number, number, number, number]>();
+    for (let f = 0; f < faceCount; f++) {
+      const face = this.faces[f];
+      for (let i = 0; i < face.length; i++) {
+        const a = face[i];
+        const b = face[(i + 1) % face.length];
+        const lo = Math.min(a, b), hi = Math.max(a, b);
+        const key = lo * 100000 + hi;
+        const hit = em.get(key);
+        if (hit) hit[3] = f;
+        else em.set(key, [lo, hi, f, -1]);
+      }
+    }
+
+    const edgeCount = em.size;
+    const ev = new Int32Array(edgeCount * 4);
+    const ecrease = new Uint8Array(edgeCount);
+    const eIndex = new Map<number, number>();
+    let e = 0;
+    for (const [key, v] of em) {
+      eIndex.set(key, e);
+      ev[e * 4] = v[0];
+      ev[e * 4 + 1] = v[1];
+      ev[e * 4 + 2] = v[2];
+      ev[e * 4 + 3] = v[3];
+      if (v[3] >= 0) {
+        const a = this.normals[v[2]];
+        const b = this.normals[v[3]];
+        const d = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+        ecrease[e] = d < 0.72 ? 1 : 0; // زاویه‌ی بیش از ~۴۴ درجه
+      } else {
+        ecrease[e] = 1;
+      }
+      e++;
+    }
+
+    /* برای هر وجه، ایندکس یال‌هایش — تا هنگام رسم بتوانیم خطوط را
+       همراه با همان وجه بکشیم و مرتب‌سازی عمقی روی خطوط هم اعمال شود. */
+    const fe = new Int32Array(total);
+    c = 0;
+    for (const face of this.faces) {
+      for (let i = 0; i < face.length; i++) {
+        const a = face[i];
+        const b = face[(i + 1) % face.length];
+        fe[c++] = eIndex.get(Math.min(a, b) * 100000 + Math.max(a, b))!;
+      }
+    }
+
+    return {
+      vx: new Float32Array(this.verts),
+      fi,
+      fo,
+      fn,
+      ev,
+      ecrease,
+      fe,
+      faceCount,
+      edgeCount,
+    };
+  }
 }
 
-export type PartKind = "gear" | "flange" | "spacer" | "drum" | "collar" | "endcap";
+/**
+ * جسم دورانی از پروفیل (x, r).
+ * قرارداد: سطح بیرونی در جهت +x پیموده می‌شود، پس نرمال = (-dr, dx).
+ */
+function lathe(
+  mb: MeshBuilder,
+  profile: [number, number][],
+  seg: number,
+  dx0: number,
+  closed = true
+) {
+  const m = profile.length;
+  const last = closed ? m : m - 1;
+  const ang = Array.from({ length: seg }, (_, j) => (j / seg) * Math.PI * 2);
+  const cosA = ang.map(Math.cos);
+  const sinA = ang.map(Math.sin);
 
-export type PartSpec = {
-  kind: PartKind;
-  /** شعاع بیرونی */
-  r: number;
-  /** ضخامت در راستای محور */
-  d: number;
+  const vid = (x: number, r: number, j: number) =>
+    r < 0.002
+      ? mb.vertex(x + dx0, 0, 0)
+      : mb.vertex(x + dx0, r * cosA[j], r * sinA[j]);
+
+  for (let i = 0; i < last; i++) {
+    const [x0, r0] = profile[i];
+    const [x1, r1] = profile[(i + 1) % m];
+    const dx = x1 - x0, dr = r1 - r0;
+    const len = Math.hypot(dx, dr);
+    if (len < 0.002) continue;
+    const nx = -dr / len, nr = dx / len;
+    for (let j = 0; j < seg; j++) {
+      const j2 = (j + 1) % seg;
+      const am = ((j + 0.5) / seg) * Math.PI * 2;
+      mb.face(
+        [vid(x0, r0, j), vid(x1, r1, j), vid(x1, r1, j2), vid(x0, r0, j2)],
+        [nx, nr * Math.cos(am), nr * Math.sin(am)]
+      );
+    }
+  }
+}
+
+/** منشور: مقطع پادساعتگرد در صفحه‌ی (y, z)، کشیده در راستای x */
+function prism(
+  mb: MeshBuilder,
+  section: [number, number][],
+  x0: number,
+  x1: number,
+  dx0: number
+) {
+  const n = section.length;
+  const A = section.map((s) => mb.vertex(x0 + dx0, s[0], s[1]));
+  const B = section.map((s) => mb.vertex(x1 + dx0, s[0], s[1]));
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const dy = section[j][0] - section[i][0];
+    const dz = section[j][1] - section[i][1];
+    const l = Math.hypot(dy, dz) || 1;
+    mb.face([A[i], B[i], B[j], A[j]], [0, dz / l, -dy / l]);
+  }
+  mb.face([...B], [1, 0, 0]);
+  mb.face([...A].reverse(), [-1, 0, 0]);
+}
+
+/* ------------------------------------------------------------------ */
+/* قطعات                                                               */
+/* ------------------------------------------------------------------ */
+
+const BORE = 15;
+const SEG = 44;
+
+type PartDef = { d: number; build: (mb: MeshBuilder, dx: number) => void };
+
+/** ۱ — پولی شیاردار */
+const drum: PartDef = {
+  d: 56,
+  build: (mb, dx) =>
+    lathe(
+      mb,
+      [
+        [-28, BORE], [-28, 90], [-20, 90], [-20, 72],
+        [20, 72], [20, 90], [28, 90], [28, BORE],
+      ],
+      SEG,
+      dx
+    ),
 };
 
-/** ترتیب قطعات روی محور — ریتم اندازه‌ها عمدی است */
-export const PARTS: PartSpec[] = [
-  { kind: "drum", r: 92, d: 54 },
-  { kind: "gear", r: 84, d: 26 },
-  { kind: "spacer", r: 40, d: 14 },
-  { kind: "flange", r: 68, d: 22 },
-  { kind: "collar", r: 50, d: 26 },
-  { kind: "endcap", r: 78, d: 24 },
-];
+/** ۲ — چرخ‌دنده */
+const gear: PartDef = {
+  d: 28,
+  build: (mb, dx) => {
+    const hx = 14, rRoot = 66, rTip = 84, teeth = 22;
+    lathe(
+      mb,
+      [
+        [-hx, BORE], [-hx, 30], [-6, 30], [-6, rRoot],
+        [6, rRoot], [6, 30], [hx, 30], [hx, BORE],
+      ],
+      SEG,
+      dx
+    );
+    const step = (Math.PI * 2) / teeth;
+    for (let i = 0; i < teeth; i++) {
+      const a = i * step;
+      const w0 = step * 0.3, w1 = step * 0.19;
+      prism(
+        mb,
+        [
+          [rRoot * Math.cos(a - w0) - 1, rRoot * Math.sin(a - w0) - 1],
+          [rTip * Math.cos(a - w1), rTip * Math.sin(a - w1)],
+          [rTip * Math.cos(a + w1), rTip * Math.sin(a + w1)],
+          [rRoot * Math.cos(a + w0) + 1, rRoot * Math.sin(a + w0) + 1],
+        ],
+        -hx,
+        hx,
+        dx
+      );
+    }
+  },
+};
 
-export const BORE = 15;
-export const SHAFT_R = 11;
+/** ۳ — واشر پخ‌دار */
+const spacer: PartDef = {
+  d: 18,
+  build: (mb, dx) =>
+    lathe(mb, [[-9, BORE], [-9, 30], [-4, 38], [4, 38], [9, 30], [9, BORE]], SEG, dx),
+};
 
-/** طول کل مجموعه در حالت سرهم */
-const ASSEMBLED_LEN = PARTS.reduce((a, p) => a + p.d, 0);
-const GAP = 118;
-const EXPLODED_LEN = ASSEMBLED_LEN + GAP * (PARTS.length - 1);
+/** ۴ — فلنج با بوس‌های پیچ */
+const flange: PartDef = {
+  d: 24,
+  build: (mb, dx) => {
+    lathe(
+      mb,
+      [[-12, BORE], [-12, 28], [-5, 28], [-5, 64], [5, 64], [5, 28], [12, 28], [12, BORE]],
+      SEG,
+      dx
+    );
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const cy = 46 * Math.cos(a), cz = 46 * Math.sin(a);
+      prism(
+        mb,
+        Array.from({ length: 6 }, (_, j) => {
+          const t = a + (j / 6) * Math.PI * 2;
+          return [cy + 11 * Math.cos(t), cz + 11 * Math.sin(t)] as [number, number];
+        }),
+        5,
+        14,
+        dx
+      );
+    }
+  },
+};
 
-/** مرکز محوری هر قطعه در حالت سرهم و باز */
+/** ۵ — مهره‌ی نه‌ضلعی */
+const collar: PartDef = {
+  d: 28,
+  build: (mb, dx) => lathe(mb, [[-14, BORE], [-14, 48], [14, 48], [14, BORE]], 9, dx),
+};
+
+/** ۶ — درپوش کاسه‌ای */
+const endcap: PartDef = {
+  d: 26,
+  build: (mb, dx) =>
+    lathe(
+      mb,
+      [
+        [-16, BORE], [-16, 70], [-10, 78], [-10, 70],
+        [8, 30], [2, 26], [14, 30], [14, BORE],
+      ].reverse() as [number, number][],
+      SEG,
+      dx
+    ),
+};
+
+const PART_DEFS = [drum, gear, spacer, flange, collar, endcap];
+export const PART_COUNT = PART_DEFS.length;
+
+/* در حالت سرهم هم کمی درز می‌ماند: قطعات یک مجموعه‌ی به‌هم‌چسبیده‌اند نه
+   یک توده‌ی درهم. بدون این، لبه‌ها روی هم می‌افتند و تصویر مبهم می‌شود. */
+const TIGHT_GAP = 6;
+const ASSEMBLED =
+  PART_DEFS.reduce((a, p) => a + p.d, 0) + TIGHT_GAP * (PART_DEFS.length - 1);
+const GAP = 112;
+
 export function axialPositions(open: number): number[] {
-  const gap = GAP * open;
-  const total = ASSEMBLED_LEN + gap * (PARTS.length - 1);
+  const gap = TIGHT_GAP + GAP * open;
+  const total =
+    PART_DEFS.reduce((a, p) => a + p.d, 0) + gap * (PART_DEFS.length - 1);
   let cursor = -total / 2;
-  return PARTS.map((p, i) => {
+  return PART_DEFS.map((p, i) => {
     const c = cursor + p.d / 2;
-    cursor += p.d + (i < PARTS.length - 1 ? gap : 0);
+    cursor += p.d + (i < PART_DEFS.length - 1 ? gap : 0);
     return c;
   });
 }
 
-export const shaftHalfLength = (open: number) =>
-  (ASSEMBLED_LEN + GAP * (PARTS.length - 1) * open) / 2 + 46;
+const shaftHalf = (open: number) =>
+  (ASSEMBLED + GAP * (PART_DEFS.length - 1) * open) / 2 + 30;
 
-export const EXPLODED_SCREEN_W = EXPLODED_LEN * W[0];
+/* هر قطعه یک بار در مبدأ ساخته می‌شود؛ جابه‌جایی محوری هنگام رندر اعمال می‌شود */
+const PART_MESHES: Mesh[] = PART_DEFS.map((p) => {
+  const mb = new MeshBuilder();
+  p.build(mb, 0);
+  return mb.build();
+});
+
+/* شفت با طول واحد ساخته می‌شود و در رندر کشیده می‌شود */
+const SHAFT_MESH: Mesh = (() => {
+  const mb = new MeshBuilder();
+  lathe(mb, [[-1, 0], [-1, 10.5], [1, 10.5], [1, 0]], 24, 0);
+  return mb.build();
+})();
 
 /* ------------------------------------------------------------------ */
+/* رندر                                                                */
+/* ------------------------------------------------------------------ */
 
-function buildPart(b: Buckets, spec: PartSpec, cx: number, spin: number) {
-  const { r, d } = spec;
-  const zf = -d / 2; // یک وجه
-  const zb = d / 2; // وجه دیگر
-  // کدام وجه به دوربین نزدیک‌تر است؟
-  const nearIsFront = depthOf(cx + zf, 0, 0) < depthOf(cx + zb, 0, 0);
-  const A = nearIsFront ? cx + zf : cx + zb; // وجه نزدیک
-  const B = nearIsFront ? cx + zb : cx + zf; // وجه دور
+export type Palette = {
+  base: [number, number, number];
+  lit: [number, number, number];
+  line: string;
+  lineSoft: string;
+};
 
-  /** خط محیطی: نیمه‌ی دور کم‌رنگ‌تر */
-  const rim = (ax: number, radius: number, key: keyof Buckets, n = 64) => {
-    loop(b, key, ring(ax, radius, spin, n));
-  };
+/* بافرهای بازاستفاده تا در هر فریم حافظه تخصیص ندهیم */
+let bufSize = 0;
+let px = new Float32Array(0);
+let py = new Float32Array(0);
+let pz = new Float32Array(0);
 
-  /** خطوط موازی محور بین دو وجه، در زاویه‌های مشخص */
-  const axials = (radius: number, count: number, phase = 0) => {
-    for (let i = 0; i < count; i++) {
-      const a = spin + phase + (i / count) * Math.PI * 2;
-      const near = depthOf(cx, radius, a) < depthOf(cx, 0, 0);
-      line(b, near ? "near" : "far", pt(A, radius, a), pt(B, radius, a));
-    }
-  };
+const ensure = (n: number) => {
+  if (n <= bufSize) return;
+  bufSize = n * 2;
+  px = new Float32Array(bufSize);
+  py = new Float32Array(bufSize);
+  pz = new Float32Array(bufSize);
+};
 
-  /** پره‌های شعاعی روی یک وجه */
-  const spokes = (ax: number, r0: number, r1: number, count: number, key: keyof Buckets) => {
-    for (let i = 0; i < count; i++) {
-      const a = spin + (i / count) * Math.PI * 2;
-      line(b, key, pt(ax, r0, a), pt(ax, r1, a));
-    }
-  };
+type Item = {
+  mesh: Mesh;
+  vOff: number;
+  /** جابه‌جایی محوری */
+  off: number;
+  /** کشش در راستای محور (فقط برای شفت) */
+  sx: number;
+  facing: Uint8Array;
+  shade: Float32Array;
+  /** عمق مرکز جسم — برای مرتب‌سازی بین اجسام */
+  z: number;
+};
 
-  if (spec.kind === "drum") {
-    rim(A, r, "near");
-    rim(B, r, "far");
-    rim(A, r * 0.62, "mid");
-    rim(B, r * 0.62, "far");
-    axials(r, 40);
-    axials(r * 0.62, 20);
-    spokes(A, r * 0.62, r, 40, "mid");
-  } else if (spec.kind === "gear") {
-    const rRoot = r * 0.84;
-    loop(b, "near", toothProfile(A, r, rRoot, 26, spin));
-    loop(b, "far", toothProfile(B, r, rRoot, 26, spin));
-    // یال‌های نوک دندانه‌ها
-    const step = (Math.PI * 2) / 26;
-    for (let i = 0; i < 26; i++) {
-      const a = spin + i * step;
-      const near = depthOf(cx, r, a) < depthOf(cx, 0, 0);
-      const k: keyof Buckets = near ? "near" : "far";
-      line(b, k, pt(A, r, a - step * 0.13), pt(B, r, a - step * 0.13));
-      line(b, k, pt(A, r, a + step * 0.13), pt(B, r, a + step * 0.13));
-    }
-    rim(A, r * 0.5, "mid");
-    rim(B, r * 0.5, "far");
-    spokes(A, r * 0.5, rRoot, 6, "mid");
-  } else if (spec.kind === "spacer") {
-    rim(A, r, "near");
-    rim(B, r, "far");
-    axials(r, 16);
-  } else if (spec.kind === "flange") {
-    rim(A, r, "near");
-    rim(B, r, "far");
-    axials(r, 24);
-    // سوراخ‌های پیچ روی وجه نزدیک
-    for (let i = 0; i < 6; i++) {
-      const a = spin + (i / 6) * Math.PI * 2;
-      const hc = pt(A, r * 0.66, a);
-      const hr = r * 0.13;
-      const holeA = Array.from({ length: 16 }, (_, j) => {
-        const t = (j / 16) * Math.PI * 2;
-        return [hc[0] + U[0] * hr * Math.cos(t) + V[0] * hr * Math.sin(t),
-                hc[1] + U[1] * hr * Math.cos(t) + V[1] * hr * Math.sin(t)] as Pt;
-      });
-      loop(b, depthOf(cx, r * 0.66, a) < depthOf(cx, 0, 0) ? "mid" : "far", holeA);
-    }
-    rim(A, r * 0.4, "mid");
-  } else if (spec.kind === "collar") {
-    const sides = 9;
-    loop(b, "near", ngon(A, r, spin, sides));
-    loop(b, "far", ngon(B, r, spin, sides));
-    for (let i = 0; i < sides; i++) {
-      const a = spin + (i / sides) * Math.PI * 2;
-      const near = depthOf(cx, r, a) < depthOf(cx, 0, 0);
-      line(b, near ? "near" : "far", pt(A, r, a), pt(B, r, a));
-    }
-    rim(A, r * 0.55, "mid");
-    rim(B, r * 0.55, "far");
-  } else {
-    // درپوش: بدنه‌ی مخروطی + بوس‌های شش‌گوش
-    rim(A, r, "near");
-    rim(B, r * 0.8, "far");
-    for (let i = 0; i < 28; i++) {
-      const a = spin + (i / 28) * Math.PI * 2;
-      const near = depthOf(cx, r, a) < depthOf(cx, 0, 0);
-      line(b, near ? "near" : "far", pt(A, r, a), pt(B, r * 0.8, a));
-    }
-    for (let i = 0; i < 6; i++) {
-      const a = spin + (i / 6) * Math.PI * 2;
-      const bossR = r * 0.62;
-      const hr = r * 0.17;
-      const c1 = pt(A, bossR, a);
-      const c2 = pt(A - (nearIsFront ? 12 : -12), bossR, a);
-      const hex = (c: Pt) =>
-        Array.from({ length: 6 }, (_, j) => {
-          const t = spin + (j / 6) * Math.PI * 2;
-          return [c[0] + U[0] * hr * Math.cos(t) + V[0] * hr * Math.sin(t),
-                  c[1] + U[1] * hr * Math.cos(t) + V[1] * hr * Math.sin(t)] as Pt;
-        });
-      const k: keyof Buckets = depthOf(cx, bossR, a) < depthOf(cx, 0, 0) ? "mid" : "far";
-      loop(b, k, hex(c2));
-      loop(b, k, hex(c1));
-      const h1 = hex(c1), h2 = hex(c2);
-      for (let j = 0; j < 6; j += 2) line(b, k, h1[j], h2[j]);
-    }
-  }
+const items: Item[] = [];
+const facingPool: Uint8Array[] = [];
+const shadePool: Float32Array[] = [];
 
-  // سوراخ محور (بور) روی هر دو وجه — نشان می‌دهد قطعه روی شفت سوار است
-  rim(A, BORE, "mid", 24);
-  rim(B, BORE, "far", 24);
-}
-
-/** شفت مرکزی که همه‌ی قطعات روی آن سوارند */
-function buildShaft(b: Buckets, half: number, spin: number) {
-  const a0 = -half, a1 = half;
-  loop(b, "mid", ring(a0, SHAFT_R, spin, 24));
-  loop(b, "mid", ring(a1, SHAFT_R, spin, 24));
-  for (let i = 0; i < 10; i++) {
-    const a = spin + (i / 10) * Math.PI * 2;
-    const near = depthOf(0, SHAFT_R, a) < depthOf(0, 0, 0);
-    line(b, near ? "mid" : "far", pt(a0, SHAFT_R, a), pt(a1, SHAFT_R, a));
-  }
-  // خط مرکز
-  line(b, "far", pt(a0 - 34, 0, 0), pt(a1 + 34, 0, 0));
-}
+type FaceRef = { it: number; f: number; z: number };
+const faceRefs: FaceRef[] = [];
 
 /**
- * ساخت کل صحنه.
+ * صحنه را روی canvas می‌کشد.
  * @param spin زاویه‌ی چرخش شفت (رادیان)
- * @param open میزان بازشدن ۰ تا ۱
+ * @param open میزان بازشدن (۰ سرهم، ۱ کاملاً جدا)
+ * @param scale بزرگ‌نمایی
  */
-export function buildScene(spin: number, open: number): { far: string; mid: string; near: string } {
-  const b = emptyBuckets();
-  buildShaft(b, shaftHalfLength(open), spin);
-
+export function renderScene(
+  ctx: CanvasRenderingContext2D,
+  spin: number,
+  open: number,
+  scale: number,
+  pal: Palette
+) {
+  const cs = Math.cos(spin), sn = Math.sin(spin);
   const xs = axialPositions(open);
-  // از دور به نزدیک رسم شود
-  const order = xs
-    .map((cx, i) => ({ cx, i, z: depthOf(cx, 0, 0) }))
-    .sort((p, q) => q.z - p.z);
-  for (const o of order) buildPart(b, PARTS[o.i], o.cx, spin);
+  const half = shaftHalf(open);
 
-  return {
-    far: b.far.join(""),
-    mid: b.mid.join(""),
-    near: b.near.join(""),
+  /* --- جمع‌آوری اجسام و شمارش رأس‌ها ---
+     شفت به تکه‌های بین قطعات شکسته می‌شود تا مرتب‌سازی عمقیِ جسم‌به‌جسم
+     درست کار کند: یک استوانه‌ی بلند یک مرکز عمقی دارد و یا کاملاً جلوی
+     همه می‌افتد یا کاملاً پشت همه. */
+  items.length = 0;
+  let totalV = 0;
+  const add = (mesh: Mesh, off: number, sx: number) => {
+    const vOff = totalV;
+    totalV += mesh.vx.length / 3;
+    const n = items.length;
+    let facing = facingPool[n];
+    let shade = shadePool[n];
+    if (!facing || facing.length < mesh.faceCount) {
+      facing = new Uint8Array(mesh.faceCount);
+      shade = new Float32Array(mesh.faceCount);
+      facingPool[n] = facing;
+      shadePool[n] = shade;
+    }
+    items.push({ mesh, vOff, off, sx, facing, shade: shade!, z: 0 });
   };
+
+  /* شفت فقط در فاصله‌ی بین قطعات (و دو سر) کشیده می‌شود؛ داخل قطعات
+     پنهان است، پس هیچ‌وقت روی قطعه نمی‌افتد. */
+  const edges: [number, number][] = [];
+  let prev = -half;
+  for (let i = 0; i < xs.length; i++) {
+    const a = xs[i] - PART_DEFS[i].d / 2;
+    if (a - prev > 1) edges.push([prev, a]);
+    prev = xs[i] + PART_DEFS[i].d / 2;
+  }
+  if (half - prev > 1) edges.push([prev, half]);
+  for (const [a, b] of edges) add(SHAFT_MESH, (a + b) / 2, (b - a) / 2);
+  for (let i = 0; i < PART_MESHES.length; i++) add(PART_MESHES[i], xs[i], 1);
+  ensure(totalV);
+
+  /* --- تبدیل رأس‌ها --- */
+  for (let i = 0; i < items.length; i++) {
+    const { mesh, vOff, off, sx } = items[i];
+    const v = mesh.vx;
+    const n = v.length / 3;
+    for (let k = 0; k < n; k++) {
+      const x = v[k * 3] * sx + off;
+      const y0 = v[k * 3 + 1];
+      const z0 = v[k * 3 + 2];
+      const y = y0 * cs - z0 * sn;
+      const z = y0 * sn + z0 * cs;
+      const j = vOff + k;
+      px[j] = CX + (W[0] * x + U[0] * y + V[0] * z) * scale;
+      py[j] = CY + (W[1] * x + U[1] * y + V[1] * z) * scale;
+      pz[j] = x * DIR[0] + y * DIR[1] + z * DIR[2];
+    }
+    // عمق مرکز جسم
+    const yc = 0, zc = 0;
+    items[i].z = off * DIR[0] + yc * DIR[1] + zc * DIR[2];
+  }
+
+  /* اجسام از دور به نزدیک؛ داخل هر جسم هم وجه‌ها مرتب می‌شوند */
+  const order = items.map((_, i) => i).sort((a, b) => items[b].z - items[a].z);
+
+  /* --- رو/پشت بودن، سایه، و رسم به‌ترتیب عمق --- */
+  const [br, bg, bb] = pal.base;
+  const [lr, lg, lb] = pal.lit;
+  ctx.lineJoin = "round";
+
+  for (const i of order) {
+    const it = items[i];
+    const { mesh, vOff, facing, shade } = it;
+    const { fn, fo, fi, faceCount } = mesh;
+
+    faceRefs.length = 0;
+    for (let f = 0; f < faceCount; f++) {
+      const nx = fn[f * 3];
+      const ny0 = fn[f * 3 + 1], nz0 = fn[f * 3 + 2];
+      const ny = ny0 * cs - nz0 * sn;
+      const nz = ny0 * sn + nz0 * cs;
+      const front = nx * DIR[0] + ny * DIR[1] + nz * DIR[2] < 0;
+      facing[f] = front ? 1 : 0;
+      if (!front) continue;
+      const key = Math.max(0, nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]);
+      const fillL = Math.max(0, nx * FILL[0] + ny * FILL[1] + nz * FILL[2]);
+      /* لبه‌ی درخشان: سطوحی که تقریباً موازی دیدند کمی روشن می‌شوند،
+         مثل بازتاب فلز پولیش‌شده. بدون این، بدنه‌ها یکنواخت و مات‌اند. */
+      const graze = 1 - Math.abs(nx * DIR[0] + ny * DIR[1] + nz * DIR[2]);
+      shade[f] = Math.min(
+        1,
+        0.08 + 0.72 * Math.pow(key, 0.7) + 0.2 * fillL + 0.14 * Math.pow(graze, 3)
+      );
+      let zs = 0;
+      const a = fo[f], b = fo[f + 1];
+      for (let k = a; k < b; k++) zs += pz[vOff + fi[k]];
+      faceRefs.push({ it: i, f, z: zs / (b - a) });
+    }
+    faceRefs.sort((a, b) => b.z - a.z);
+
+    /* سطوح و خطوط با هم، به‌ترتیب عمق. اگر خطوط را جدا و بعد از همه‌ی
+       سطوح می‌کشیدیم، لبه‌های پشتیِ همان قطعه از داخلش دیده می‌شد و
+       تصویر شفاف به‌نظر می‌رسید. */
+    const { ev, ecrease, fe } = mesh;
+    for (let r = 0; r < faceRefs.length; r++) {
+      const f = faceRefs[r].f;
+      const a = fo[f], b = fo[f + 1];
+
+      ctx.beginPath();
+      const v0 = vOff + fi[a];
+      ctx.moveTo(px[v0], py[v0]);
+      for (let k = a + 1; k < b; k++) {
+        const v = vOff + fi[k];
+        ctx.lineTo(px[v], py[v]);
+      }
+      ctx.closePath();
+      const t = shade[f];
+      const col = `rgb(${Math.round(br + (lr - br) * t)},${Math.round(
+        bg + (lg - bg) * t
+      )},${Math.round(bb + (lb - bb) * t)})`;
+      ctx.fillStyle = col;
+      ctx.fill();
+      // خط هم‌رنگ فقط برای پوشاندن درز ضدپله‌ای بین وجه‌های همسایه
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+
+      // یال‌های دیدنی همین وجه
+      let started = false;
+      for (let k = a; k < b; k++) {
+        const e = fe[k];
+        const fA = ev[e * 4 + 2];
+        const fB = ev[e * 4 + 3];
+        const isSilhouette = fB < 0 || facing[fA] !== facing[fB];
+        if (!isSilhouette && !ecrease[e]) continue;
+        if (!started) {
+          ctx.beginPath();
+          started = true;
+        }
+        const a0 = vOff + ev[e * 4];
+        const a1 = vOff + ev[e * 4 + 1];
+        ctx.moveTo(px[a0], py[a0]);
+        ctx.lineTo(px[a1], py[a1]);
+      }
+      if (started) {
+        ctx.strokeStyle = pal.line;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+  }
 }
