@@ -13,11 +13,12 @@ import {
 /**
  * نمای انفجاری قطعات پروفایل شغلی.
  *
+ * بخش «چسبان» است: تا وقتی روایت تمام نشده صحنه در وسط صفحه قفل می‌ماند.
  * روایت با اسکرول:
- *   ۱. شش قطعه روی یک شفت در هم چفت‌اند و با هم می‌چرخند.
- *   ۲. مجموعه کمی بزرگ می‌شود.
- *   ۳. قطعات در امتداد همان محور جدا می‌شوند، خط راهنما از هر کدام
- *      پایین می‌آید و به توضیح آن بُعد وصل می‌شود.
+ *   ۱. شش قطعه در هم چفت‌اند و با هم می‌چرخند.
+ *   ۲. قطعات در امتداد محور جدا می‌شوند، خط راهنما از هر کدام پایین
+ *      می‌آید و به توضیح آن بُعد وصل می‌شود.
+ *   ۳. دوباره جمع می‌شوند و مجموعه یکپارچه به بخش بعدی تحویل داده می‌شود.
  *
  * چرا canvas و نه SVG: قطعات باید سطح تو‌پُر داشته باشند و جلوی هم را
  * بگیرند. حدود ۳۰۰۰ وجه در هر فریم رسم می‌شود که برای canvas سبک است
@@ -29,6 +30,15 @@ const easeInOut = (t: number) =>
 
 const phase = (t: number, from: number, to: number) =>
   Math.max(0, Math.min(1, (t - from) / (to - from)));
+
+/* نگاشت پیشرفت کل بخش به «میزان باز بودن».
+   ۰–۲۰٪ سرهم، ۲۰–۵۰٪ باز شدن، ۵۰–۷۲٪ مکث در حالت باز، ۷۲–۱۰۰٪ جمع شدن. */
+function openness(p: number) {
+  if (p < 0.2) return 0;
+  if (p < 0.5) return easeInOut(phase(p, 0.2, 0.5));
+  if (p < 0.72) return 1;
+  return 1 - easeInOut(phase(p, 0.72, 1));
+}
 
 /* رنگ قطعات از توکن‌های CSS نمی‌آید چون سایه‌پردازی به فضای HSL نیاز
    دارد؛ اما فام‌ها حول --accent (#5e6ad2 ≈ ۲۳۱ درجه) چیده شده‌اند.
@@ -55,6 +65,7 @@ const LIGHT: Palette = {
 export default function ExplodedProfile() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stickyRef = useRef<HTMLDivElement>(null);
   const progress = useRef(0);
   const spin = useRef(0.4);
   const [openT, setOpenT] = useState(0);
@@ -67,11 +78,12 @@ export default function ExplodedProfile() {
     const update = () => {
       const r = el.getBoundingClientRect();
       const vh = window.innerHeight;
-      const startAt = vh * 0.55;
-      const distance = Math.max(1, Math.min(r.height * 0.8, vh * 0.85));
-      const p = Math.max(0, Math.min(1, (startAt - r.top) / distance));
+      /* بخش از لحظه‌ای که بالایش به سقف پنجره می‌رسد تا لحظه‌ای که
+         پایینش از کف رد می‌شود، یک نوار پیشرفت کامل است. */
+      const travel = Math.max(1, r.height - vh);
+      const p = Math.max(0, Math.min(1, -r.top / travel));
       progress.current = p;
-      setOpenT(easeInOut(phase(p, 0.22, 0.94)));
+      setOpenT(openness(p));
       ticking = false;
     };
     const onScroll = () => {
@@ -123,8 +135,8 @@ export default function ExplodedProfile() {
       const w = canvas.clientWidth;
       const k = (w / VIEW_W) * dpr;
       const p = progress.current;
-      const o = easeInOut(phase(p, 0.22, 0.94));
-      const zoom = easeInOut(phase(p, 0, 0.26));
+      const o = openness(p);
+      const zoom = easeInOut(phase(p, 0, 0.2));
       const scale = 1.24 + 0.1 * zoom - 0.4 * o;
       const pal = palette();
 
@@ -192,46 +204,48 @@ export default function ExplodedProfile() {
 
   return (
     <div ref={wrapRef} className="k2-exp">
-      <div className="k2-exp-head">
-        <span className="k2-exp-eyebrow">
-          <span className="k2-exp-tri" />
-          پروفایل شغلی
-        </span>
-        <h2 className="k2-exp-title">شش قطعه، یک تصویر کامل</h2>
-        <p className="k2-exp-sub">
-          شخصیت شغلی شما از شش بُعد ساخته شده است. آزمون Karex این قطعات را
-          کنار هم می‌گذارد تا ببینید کدام مسیر واقعاً به شما می‌آید.
-        </p>
-      </div>
+      <div ref={stickyRef} className="k2-exp-sticky">
+        <div className="k2-exp-head">
+          <span className="k2-exp-eyebrow">
+            <span className="k2-exp-tri" />
+            پروفایل شغلی
+          </span>
+          <h2 className="k2-exp-title">شش قطعه، یک تصویر کامل</h2>
+          <p className="k2-exp-sub">
+            شخصیت شغلی شما از شش بُعد ساخته شده است. آزمون Karex این قطعات را
+            کنار هم می‌گذارد تا ببینید کدام مسیر واقعاً به شما می‌آید.
+          </p>
+        </div>
 
-      <div className="k2-exp-stage">
-        <canvas
-          ref={canvasRef}
-          className="k2-exp-canvas"
-          role="img"
-          aria-label="نمای انفجاری شش بُعد شخصیت شغلی روی یک محور"
-        />
+        <div className="k2-exp-stage">
+          <canvas
+            ref={canvasRef}
+            className="k2-exp-canvas"
+            role="img"
+            aria-label="نمای انفجاری شش بُعد شخصیت شغلی روی یک محور"
+          />
 
-        {/* ستون‌ها دقیقاً زیر انتهای خطوط راهنما می‌نشینند؛ چیدمان با
-            همان تقسیم‌بندی (i + 0.5) / 6 در renderLeaders هم‌راستاست. */}
-        <div className="k2-exp-legend" dir="ltr">
-          {RIASEC_AXES.map((ax, i) => {
-            const shown = openT > 0.5 + i * 0.045;
-            return (
-              <div
-                key={ax.key}
-                className={`k2-exp-item ${shown ? "on" : ""}`}
-                style={{ transitionDelay: `${i * 40}ms` }}
-                dir="rtl"
-              >
-                <span className="k2-exp-num" data-axis={ax.key}>
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <div className="k2-exp-name">{ax.label}</div>
-                <div className="k2-exp-hint">{ax.hint}</div>
-              </div>
-            );
-          })}
+          {/* ستون‌ها دقیقاً زیر انتهای خطوط راهنما می‌نشینند؛ چیدمان با
+              همان تقسیم‌بندی (i + 0.5) / 6 در renderLeaders هم‌راستاست. */}
+          <div className="k2-exp-legend" dir="ltr">
+            {RIASEC_AXES.map((ax, i) => {
+              const shown = openT > 0.5 + i * 0.045;
+              return (
+                <div
+                  key={ax.key}
+                  className={`k2-exp-item ${shown ? "on" : ""}`}
+                  style={{ transitionDelay: `${i * 40}ms` }}
+                  dir="rtl"
+                >
+                  <span className="k2-exp-num" data-axis={ax.key}>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div className="k2-exp-name">{ax.label}</div>
+                  <div className="k2-exp-hint">{ax.hint}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

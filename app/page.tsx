@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import ExplodedProfile from "@/app/components/ExplodedProfile";
+import ScreenShowcase from "@/app/components/ScreenShowcase";
 
 /* مسیر عمودی که بین گام‌ها می‌پیچد. عمداً کاملاً صاف نیست تا حس
    خط کشیده‌شده با دست بدهد نه یک خط برداری بی‌روح. */
@@ -380,11 +381,24 @@ export default function CareerHub() {
 
 
         /* ── نمای انفجاری پروفایل ── */
+        /* بخش بلند است تا اسکرول جا برای روایت داشته باشد؛ محتوا داخلش
+           چسبان می‌ماند. ۲۶۰vh یعنی حدود دو صفحه اسکرول برای باز و بسته
+           شدن مجموعه. */
         .k2-exp {
           color: var(--foreground-muted);
+          height: 260vh;
+          position: relative;
+        }
+        .k2-exp-sticky {
+          position: sticky;
+          top: 0;
+          min-height: 100svh;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
           max-width: 1080px;
           margin: 0 auto;
-          padding: clamp(72px, 11vw, 140px) clamp(16px, 4vw, 40px);
+          padding: clamp(24px, 4vw, 48px) clamp(16px, 4vw, 40px);
           text-align: center;
         }
         .k2-exp-eyebrow {
@@ -454,6 +468,7 @@ export default function CareerHub() {
         }
 
         @media (max-width: 720px) {
+          .k2-exp { height: 240vh; }
           .k2-exp-hint { display: none; }
           .k2-exp-name { font-size: 12px; }
           .k2-exp-item { padding: 0 4px; }
@@ -464,6 +479,137 @@ export default function CareerHub() {
         }
         @media (prefers-reduced-motion: reduce) {
           .k2-exp-item { opacity: 1; transform: none; }
+        }
+
+        /* ── نمایشگر: قاب دستگاه با محتوای دلخواه ── */
+        .k2-screen {
+          position: relative;
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: clamp(72px, 10vw, 130px) clamp(16px, 4vw, 40px)
+            clamp(80px, 12vw, 150px);
+          display: grid;
+          grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
+          gap: clamp(28px, 5vw, 72px);
+          align-items: center;
+        }
+        .k2-screen-copy { text-align: right; }
+        .k2-screen-eyebrow {
+          display: inline-flex; align-items: center; gap: 8px;
+          font-family: var(--font-mono); font-size: 11px;
+          letter-spacing: .18em; color: var(--accent);
+        }
+        .k2-screen-title {
+          font-weight: 700; font-size: clamp(30px, 4.6vw, 48px);
+          letter-spacing: -.03em; color: var(--foreground);
+          margin: 14px 0 0; line-height: 1.2;
+        }
+        .k2-screen-sub {
+          font-size: 15px; line-height: 2; color: var(--foreground-muted);
+          margin: 18px 0 0; max-width: 40ch;
+        }
+        .k2-screen-dots {
+          display: flex; gap: 7px; margin-top: 26px;
+          justify-content: flex-start;
+        }
+        .k2-screen-dot {
+          width: 7px; height: 7px; border-radius: 100px;
+          background: var(--border-hover);
+          border: 0; padding: 0; cursor: pointer;
+          transition: width .35s cubic-bezier(.16,1,.3,1), background .3s ease;
+        }
+        .k2-screen-dot.on { width: 26px; background: var(--accent); }
+
+        /* قاب دستگاه: از لبه‌ی راست بیرون می‌زند، مثل مرجع طراحی */
+        .k2-device { position: relative; }
+        .k2-device-frame {
+          position: relative;
+          border-radius: 14px;
+          padding: 11px 11px 0;
+          background: linear-gradient(
+            160deg,
+            color-mix(in srgb, var(--foreground) 16%, var(--background-elevated)),
+            var(--background-elevated) 42%
+          );
+          box-shadow:
+            0 0 0 1px var(--border-hover),
+            0 40px 90px -30px rgba(0, 0, 0, .55),
+            0 8px 24px -8px rgba(0, 0, 0, .35);
+        }
+        .k2-device-bar {
+          display: flex; align-items: center; gap: 8px;
+          padding: 0 4px 10px;
+        }
+        .k2-device-lights { display: flex; gap: 5px; }
+        .k2-device-lights i {
+          width: 8px; height: 8px; border-radius: 100px;
+          background: var(--border-hover); display: block;
+        }
+        .k2-device-label {
+          font-family: var(--font-mono); font-size: 10.5px;
+          color: var(--foreground-subtle); letter-spacing: .04em;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .k2-device-viewport {
+          position: relative;
+          aspect-ratio: 16 / 10;
+          border-radius: 8px 8px 0 0;
+          overflow: hidden;
+          background: var(--background-deep);
+        }
+        .k2-device-slide {
+          position: absolute; inset: 0;
+          opacity: 0;
+          transform: scale(1.03);
+          transition: opacity .7s ease, transform 1.1s cubic-bezier(.16,1,.3,1);
+        }
+        .k2-device-slide.on { opacity: 1; transform: scale(1); }
+        .k2-device-slide img,
+        .k2-device-slide video {
+          width: 100%; height: 100%;
+          object-fit: cover; display: block;
+        }
+        /* جای‌گیر تا وقتی تصویری گذاشته نشده قاب خالی نماند */
+        .k2-device-placeholder {
+          width: 100%; height: 100%;
+          display: flex; align-items: center; justify-content: center;
+          background:
+            radial-gradient(120% 90% at 30% 0%, var(--blob-1), transparent 62%),
+            radial-gradient(100% 80% at 90% 100%, var(--blob-2), transparent 60%),
+            var(--background-deep);
+        }
+        .k2-device-placeholder span {
+          font-family: var(--font-mono); font-size: 11px;
+          letter-spacing: .12em; color: var(--foreground-subtle);
+        }
+        /* پایه‌ی نمایشگر */
+        .k2-device-stand {
+          width: clamp(90px, 16%, 170px);
+          height: clamp(34px, 5vw, 56px);
+          margin: 0 auto;
+          background: linear-gradient(
+            to bottom,
+            color-mix(in srgb, var(--foreground) 13%, var(--background-elevated)),
+            color-mix(in srgb, var(--foreground) 5%, var(--background-elevated))
+          );
+          border-inline: 1px solid var(--border-default);
+        }
+        .k2-device-base {
+          width: clamp(160px, 30%, 300px);
+          height: 7px; margin: 0 auto;
+          border-radius: 100px;
+          background: color-mix(in srgb, var(--foreground) 11%, var(--background-elevated));
+          box-shadow: 0 12px 26px -12px rgba(0, 0, 0, .6);
+        }
+
+        @media (max-width: 900px) {
+          .k2-screen {
+            grid-template-columns: 1fr;
+            gap: clamp(28px, 6vw, 44px);
+          }
+          .k2-screen-copy { text-align: center; }
+          .k2-screen-sub { margin-inline: auto; }
+          .k2-screen-dots { justify-content: center; }
         }
 
         .k2-mobile-actions { display: none; gap: 8px; align-items: center; }
@@ -820,8 +966,11 @@ export default function CareerHub() {
             </div>
           </section>
 
-          {/* نمای انفجاری — شش بُعد که با اسکرول کنار هم می‌نشینند */}
+          {/* نمای انفجاری — با اسکرول باز و دوباره جمع می‌شود */}
           <ExplodedProfile />
+
+          {/* نمایشگر — محتوای دلخواه داخل قاب دستگاه */}
+          <ScreenShowcase />
 
           {/* Footer */}
           <footer style={{ borderTop: "1px solid var(--border-default)", padding: "28px clamp(16px, 4vw, 40px)", textAlign: "center" }}>
