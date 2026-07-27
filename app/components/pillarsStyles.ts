@@ -32,11 +32,22 @@ export const pillarsStyles = `
 
   /* ── دو ستون ── */
   .pl-split {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
     gap: clamp(28px, 4.5vw, 68px);
     align-items: start;
   }
+
+  /* خطوط راهنما روی هر دو ستون کشیده می‌شوند */
+  .pl-leaders {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 1;
+  }
+  .pl-list { position: relative; z-index: 2; }
 
   .pl-visual {
     aspect-ratio: 1 / 1;
@@ -54,11 +65,28 @@ export const pillarsStyles = `
 
   /* ── موارد ── */
   .pl-item {
+    position: relative;
     padding: clamp(20px, 2.6vw, 30px) 0;
     border-bottom: 1px solid var(--border-default);
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity .55s ease, transform .6s cubic-bezier(.22,1,.36,1);
   }
+  .pl-item.on { opacity: 1; transform: translateY(0); }
   .pl-item:first-child { padding-top: 0; }
   .pl-item:last-child { border-bottom: 0; }
+
+  /* نقطه‌ی هم‌رنگِ لایه، جایی که خط راهنما می‌رسد */
+  .pl-item-t::before {
+    content: "";
+    display: inline-block; vertical-align: middle;
+    width: 7px; height: 7px; border-radius: 100px;
+    background: var(--pl-hue, var(--accent));
+    margin-inline-end: 9px;
+    transform: scale(0);
+    transition: transform .4s cubic-bezier(.22,1,.36,1) .1s;
+  }
+  .pl-item.on .pl-item-t::before { transform: scale(1); }
 
   .pl-item-t {
     font-weight: 700; font-size: clamp(18px, 2.3vw, 24px);
@@ -92,8 +120,12 @@ export const pillarsStyles = `
   @media (max-width: 880px) {
     .pl-split { grid-template-columns: 1fr; }
     .pl-visual { aspect-ratio: 16 / 10; max-height: 280px; }
+    /* در یک‌ستونه خط راهنما معنا ندارد */
+    .pl-leaders { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .pl-cta { transition-duration: .01ms; }
+    .pl-cta, .pl-item, .pl-item-t::before { transition-duration: .01ms; }
+    .pl-item { opacity: 1; transform: none; }
+    .pl-item-t::before { transform: scale(1); }
   }
 `;
