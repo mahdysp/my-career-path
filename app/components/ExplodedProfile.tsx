@@ -192,33 +192,37 @@ type Spec = {
   speed: number;
 };
 
+/* اندازه‌ها عمداً ریتم دارند (بزرگ ← ریز ← بزرگ) تا ردیف یکنواخت نشود */
 const RAW: Omit<Spec, "key" | "cx" | "ex">[] = [
-  { kind: "drum", r: 76, depth: 58, live: true, speed: 1 },
-  { kind: "nut", r: 56, depth: 50, live: false, speed: 0 },
-  { kind: "block", r: 56, depth: 44, live: false, speed: 0 },
-  { kind: "stack", r: 62, depth: 48, live: true, speed: -1.4 },
-  { kind: "shaft", r: 52, depth: 38, live: false, speed: 0 },
-  { kind: "cap", r: 70, depth: 46, live: true, speed: 0.8 },
+  { kind: "drum", r: 84, depth: 62, live: true, speed: 1 },
+  { kind: "nut", r: 50, depth: 46, live: false, speed: 0 },
+  { kind: "block", r: 38, depth: 36, live: false, speed: 0 },
+  { kind: "stack", r: 72, depth: 54, live: true, speed: -1.4 },
+  { kind: "shaft", r: 44, depth: 34, live: false, speed: 0 },
+  { kind: "cap", r: 78, depth: 52, live: true, speed: 0.8 },
 ];
 
 const SPECS: Spec[] = (() => {
-  const gapOpen = 22;
+  /* فاصله‌ها متناسب با اندازه‌ی همسایه‌ها، نه یک عدد ثابت */
   const widths = RAW.map((p) => p.r * 2);
-  const total = widths.reduce((a, b) => a + b, 0) + gapOpen * (RAW.length - 1);
+  const gapAt = (i: number) => 14 + (RAW[i].r + RAW[i + 1].r) * 0.1;
+  const totalGaps = RAW.slice(0, -1).reduce((a, _, i) => a + gapAt(i), 0);
+  const total = widths.reduce((a, b) => a + b, 0) + totalGaps;
   let cursor = -total / 2;
   const ex = RAW.map((p, i) => {
     const c = cursor + p.r;
-    cursor += widths[i] + gapOpen;
+    cursor += widths[i] + (i < RAW.length - 1 ? gapAt(i) : 0);
     return c;
   });
 
   // حالت سرهم: قطعات نزدیک هم، با کمی همپوشانی عمدی
-  const gapTight = -14;
-  const totalT = widths.reduce((a, b) => a + b, 0) + gapTight * (RAW.length - 1);
+  const tightAt = (i: number) => -(RAW[i].r + RAW[i + 1].r) * 0.22;
+  const totalTight = RAW.slice(0, -1).reduce((a, _, i) => a + tightAt(i), 0);
+  const totalT = widths.reduce((a, b) => a + b, 0) + totalTight;
   let c2 = -totalT / 2;
   const cx = RAW.map((p, i) => {
     const c = c2 + p.r;
-    c2 += widths[i] + gapTight;
+    c2 += widths[i] + (i < RAW.length - 1 ? tightAt(i) : 0);
     return c;
   });
 
@@ -296,7 +300,9 @@ export default function ExplodedProfile() {
   const openT = easeInOut(phase(p, 0.28, 0.95));
 
   const scale = 0.86 + 0.14 * zoomT;
-  const ry = zoomT * 0.16;
+  /* چرخش حول محور Y روی چیدمانی که خودش روی X است، قطعات را کج می‌کند
+     و هر کدام را به اندازه‌ی متفاوتی جابه‌جا می‌کند. زاویه ثابت می‌ماند. */
+  const ry = 0;
   const opened = openT > 0.9;
   const t = tick * 0.05;
 
