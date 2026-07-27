@@ -81,7 +81,7 @@ const GROUPS: Group[] = [
       { label: "روش کار", desc: "شش مرحله از انتخاب حوزه تا نتیجه", href: "/how-it-works", icon: "spark" },
       { label: "پشتوانه‌ی علمی", desc: "مدل هالند، داده‌های O*NET و روش محاسبه", href: "/science", icon: "book" },
       { label: "داده و یکپارچگی", desc: "روی چه منابعی ساخته شده‌ایم", href: "/data", icon: "layers" },
-      { label: "پرسش‌های متداول", desc: "پاسخ سؤال‌های رایج", href: "/faq", icon: "spark" },
+      { label: "پرسش‌های متداول", desc: "پاسخ سؤال‌های رایج", href: "/#faq", icon: "spark" },
     ],
   },
   {

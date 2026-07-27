@@ -6,6 +6,7 @@ import SiteNav from "@/app/components/SiteNav";
 import ExplodedProfile from "@/app/components/ExplodedProfile";
 import ScreenShowcase from "@/app/components/ScreenShowcase";
 import Pillars from "@/app/components/Pillars";
+import FaqSection from "@/app/components/FaqSection";
 import type { SiteContent } from "@/lib/site-content";
 
 /* مسیر عمودی که بین گام‌ها می‌پیچد. عمداً کاملاً صاف نیست تا حس
@@ -957,6 +958,9 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           {/* پشتوانه — منابع داده و چارچوب سنجش */}
           {content.flags.pillarsVisible && <Pillars data={content.pillars} />}
 
+          {/* پرسش‌های متداول — انتهای صفحه، قبل از فوتر */}
+          {content.flags.faqVisible && <FaqSection faq={content.faq} />}
+
           {/* Footer */}
           {/* فوتر — جای مرسوم و مورد انتظار برای «درباره‌ی ما» و تماس */}
           <footer
@@ -977,7 +981,7 @@ export default function HomeClient({ content }: { content: SiteContent }) {
               <a href="/how-it-works" className="k2-foot-link">روش کار</a>
               <a href="/science" className="k2-foot-link">پشتوانه‌ی علمی</a>
               {content.flags.faqVisible && (
-                <a href="/faq" className="k2-foot-link">پرسش‌های متداول</a>
+                <a href="#faq" className="k2-foot-link">پرسش‌های متداول</a>
               )}
             </nav>
             <p style={{ fontSize: 12, color: "var(--foreground-subtle)", fontFamily: "var(--font-mono)", margin: 0 }}>

@@ -1,18 +1,30 @@
 /**
  * استایل بخش «پشتوانه» روی صفحه‌ی اصلی.
  *
- * الگو از مرجع طراحی: تصویر بزرگ در یک سمت، فهرست موارد با خط جداکننده
- * در سمت دیگر. تفاوتش با صفحه‌ی /data این است که اینجا خلاصه است و
- * تصویر ثابت می‌ماند (نه چسبان)، چون بخش کوتاه‌تر است.
+ * بخش چسبان است — مثل نمای انفجاری. تا وقتی شبکه شکل نگرفته و ستون‌ها
+ * خوانده نشده‌اند، صحنه در پنجره قفل می‌ماند.
  */
 export const pillarsStyles = `
-  .pl {
-    max-width: 1240px;
-    margin: 0 auto;
-    padding: clamp(64px, 9vw, 120px) clamp(16px, 4vw, 40px);
+  /* ظرف بلند = طول نوار پیشرفت روایت */
+  .pl-wrap {
+    position: relative;
+    height: 230vh;
   }
 
-  .pl-head { margin-bottom: clamp(28px, 4.5vw, 52px); }
+  .pl {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: clamp(16px, 3vh, 40px) clamp(16px, 4vw, 40px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(14px, 2.5vh, 34px);
+  }
+
+  .pl-head { flex: 0 0 auto; }
   .pl-eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
     font-family: var(--font-mono); font-size: 11px;
@@ -25,48 +37,64 @@ export const pillarsStyles = `
     border-bottom: 7px solid var(--accent);
   }
   .pl-title {
-    font-weight: 700; font-size: clamp(28px, 4.4vw, 46px);
+    font-weight: 700; font-size: clamp(26px, 4.2vw, 44px);
     letter-spacing: -.032em; color: var(--foreground);
-    margin: 16px 0 0; line-height: 1.2; max-width: 16ch;
+    margin: 12px 0 0; line-height: 1.22; max-width: 17ch;
+  }
+
+  /* ── برچسب گذار: حدس ← داده ── */
+  .pl-shift {
+    display: inline-flex; align-items: center; gap: 10px;
+    margin-top: 14px;
+  }
+  .pl-shift-s {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: .1em;
+    padding: 5px 13px; border-radius: 100px;
+    border: 1px solid var(--border-default);
+    color: var(--foreground-subtle);
+    transition: color .4s ease, border-color .4s ease, background .4s ease;
+  }
+  .pl-shift-s.on {
+    color: var(--accent);
+    border-color: var(--border-accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+  .pl-shift-arrow {
+    font-size: 13px; color: var(--foreground-subtle);
   }
 
   /* ── دو ستون ── */
   .pl-split {
-    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
     display: grid;
-    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
-    gap: clamp(28px, 4.5vw, 68px);
-    align-items: start;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: clamp(20px, 3.5vw, 56px);
+    align-items: center;
   }
-
-  /* خطوط راهنما روی هر دو ستون کشیده می‌شوند */
-  .pl-leaders {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    overflow: visible;
-    z-index: 1;
-  }
-  .pl-list { position: relative; z-index: 2; }
 
   .pl-visual {
-    aspect-ratio: 1 / 1;
-    border-radius: 20px;
-    overflow: hidden;
     position: relative;
-    background:
-      radial-gradient(130% 100% at 28% 8%, var(--blob-1), transparent 58%),
-      radial-gradient(110% 90% at 82% 96%, var(--blob-2), transparent 56%),
-      var(--background-deep);
-    border: 1px solid var(--border-default);
-    display: flex; align-items: center; justify-content: center;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .pl-visual svg { width: 86%; height: auto; display: block; }
+  /* ابعاد بوم را جاوااسکریپت ست می‌کند */
+  .pl-canvas {
+    display: block;
+    width: 100%;
+    max-width: min(100%, 60vh);
+    margin: 0 auto;
+  }
+
+  .pl-list { min-width: 0; }
 
   /* ── موارد ── */
   .pl-item {
-    position: relative;
-    padding: clamp(20px, 2.6vw, 30px) 0;
+    padding: clamp(12px, 1.8vh, 22px) 0;
     border-bottom: 1px solid var(--border-default);
     opacity: 0;
     transform: translateY(14px);
@@ -76,28 +104,27 @@ export const pillarsStyles = `
   .pl-item:first-child { padding-top: 0; }
   .pl-item:last-child { border-bottom: 0; }
 
-  /* نقطه‌ی هم‌رنگِ لایه، جایی که خط راهنما می‌رسد */
+  .pl-item-t {
+    font-weight: 700; font-size: clamp(16px, 2.1vw, 22px);
+    letter-spacing: -.026em; margin: 0; line-height: 1.35;
+    color: var(--foreground);
+    display: flex; align-items: center; gap: 9px;
+  }
+  /* نقطه‌ی هم‌رنگ گره‌های شبکه */
   .pl-item-t::before {
-    content: "";
-    display: inline-block; vertical-align: middle;
+    content: ""; flex: 0 0 auto;
     width: 7px; height: 7px; border-radius: 100px;
     background: var(--pl-hue, var(--accent));
-    margin-inline-end: 9px;
     transform: scale(0);
-    transition: transform .4s cubic-bezier(.22,1,.36,1) .1s;
+    transition: transform .45s cubic-bezier(.22,1,.36,1) .12s;
   }
   .pl-item.on .pl-item-t::before { transform: scale(1); }
 
-  .pl-item-t {
-    font-weight: 700; font-size: clamp(18px, 2.3vw, 24px);
-    letter-spacing: -.026em; margin: 0; line-height: 1.35;
-    color: var(--foreground);
-  }
   .pl-item-b {
-    font-size: 14px; line-height: 2.05; color: var(--foreground-muted);
-    margin: 10px 0 0; max-width: 58ch;
+    font-size: 13.5px; line-height: 1.95; color: var(--foreground-muted);
+    margin: 8px 0 0; max-width: 56ch;
   }
-  .pl-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 13px; }
+  .pl-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .pl-tag {
     font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .04em;
     padding: 4px 10px; border-radius: 100px;
@@ -107,25 +134,40 @@ export const pillarsStyles = `
 
   .pl-cta {
     display: inline-flex; align-items: center; gap: 7px;
-    margin-top: clamp(20px, 3vw, 30px);
+    margin-top: clamp(12px, 2vh, 24px);
     font-size: 14px; font-weight: 600; color: var(--accent);
     text-decoration: none;
-    transition: gap .18s cubic-bezier(.22,1,.36,1);
+    opacity: 0; transform: translateY(8px);
+    transition: opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1),
+      gap .18s cubic-bezier(.22,1,.36,1);
   }
+  .pl-cta.on { opacity: 1; transform: translateY(0); }
   .pl-cta::after { content: "←"; font-size: 15px; }
   @media (hover: hover) and (pointer: fine) {
-    .pl-cta:hover { gap: 11px; }
+    .pl-cta.on:hover { gap: 11px; }
   }
 
   @media (max-width: 880px) {
-    .pl-split { grid-template-columns: 1fr; }
-    .pl-visual { aspect-ratio: 16 / 10; max-height: 280px; }
-    /* در یک‌ستونه خط راهنما معنا ندارد */
-    .pl-leaders { display: none; }
+    .pl-split {
+      grid-template-columns: 1fr;
+      gap: clamp(14px, 2.5vh, 26px);
+      align-content: center;
+    }
+    .pl-canvas { max-width: min(100%, 34vh); }
+    .pl-item-b { font-size: 12.5px; }
+    .pl-title { font-size: clamp(22px, 5.4vw, 32px); }
+  }
+  /* روی نمایشگرهای کوتاه، قفل‌کردن محتوا را می‌بُرد */
+  @media (max-height: 620px) {
+    .pl-wrap { height: auto; }
+    .pl { position: static; height: auto; padding-block: 56px; }
+    .pl-canvas { max-width: 320px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .pl-cta, .pl-item, .pl-item-t::before { transition-duration: .01ms; }
-    .pl-item { opacity: 1; transform: none; }
+    .pl-item, .pl-cta, .pl-item-t::before, .pl-shift-s {
+      transition-duration: .01ms;
+    }
+    .pl-item, .pl-cta { opacity: 1; transform: none; }
     .pl-item-t::before { transform: scale(1); }
   }
 `;

@@ -1,20 +1,22 @@
 /**
- * استایل صفحه‌ی پرسش‌های متداول.
+ * استایل بخش پرسش‌های متداول (انتهای صفحه‌ی اصلی).
  *
  * الگو: آکاردئون کارت‌محور — هر پرسش یک کارت مستقل با دکمه‌ی + / − در
  * سمت مقابل متن. باز و بسته شدن با ارتفاع پویا انیمیت می‌شود.
  */
 export const faqStyles = `
   .fq {
+    display: block;
     max-width: 940px;
     margin: 0 auto;
-    padding: 0 clamp(16px, 4vw, 40px) clamp(72px, 10vw, 128px);
+    padding: clamp(48px, 7vw, 96px) clamp(16px, 4vw, 40px) clamp(56px, 8vw, 104px);
     color: var(--foreground);
+    scroll-margin-top: 90px;
   }
 
   /* ── سربرگ ── */
   .fq-hero {
-    padding: clamp(40px, 7vw, 90px) 0 clamp(28px, 4.5vw, 52px);
+    padding: 0 0 clamp(26px, 4vw, 46px);
     text-align: center;
   }
   .fq-eyebrow {
@@ -29,9 +31,9 @@ export const faqStyles = `
     border-bottom: 7px solid var(--accent);
   }
   .fq-h1 {
-    font-weight: 700; font-size: clamp(32px, 5.6vw, 56px);
-    letter-spacing: -.035em; line-height: 1.15;
-    margin: 18px 0 0;
+    font-weight: 700; font-size: clamp(28px, 4.6vw, 46px);
+    letter-spacing: -.033em; line-height: 1.18;
+    margin: 16px 0 0;
   }
   .fq-lede {
     font-size: clamp(14.5px, 1.6vw, 16px); line-height: 2;

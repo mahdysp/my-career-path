@@ -18,5 +18,31 @@ export const revalidate = 60;
 
 export default async function Page() {
   const content = await getSiteContent();
-  return <HomeClient content={content} />;
+
+  /* داده‌ی ساختاریافته‌ی پرسش و پاسخ — گوگل می‌تواند پاسخ‌ها را مستقیم
+     در نتایج نشان دهد. محتوا از پنل خودمان می‌آید، نه ورودی عمومی. */
+  const faqJsonLd =
+    content.flags.faqVisible && content.faq.items.length
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: content.faq.items.map((i) => ({
+            "@type": "Question",
+            name: i.q,
+            acceptedAnswer: { "@type": "Answer", text: i.a },
+          })),
+        }
+      : null;
+
+  return (
+    <>
+      {faqJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
+      <HomeClient content={content} />
+    </>
+  );
 }
