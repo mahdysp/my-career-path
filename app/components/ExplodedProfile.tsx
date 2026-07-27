@@ -2,20 +2,26 @@
 
 import { useEffect, useRef, useState } from "react";
 import { RIASEC_AXES } from "@/lib/onet-profiles";
-import { VIEW_H, VIEW_W, renderScene, type Palette } from "./explodedGeometry";
+import {
+  VIEW_H,
+  VIEW_W,
+  renderLeaders,
+  renderScene,
+  type Palette,
+} from "./explodedGeometry";
 
 /**
  * نمای انفجاری قطعات پروفایل شغلی.
  *
  * روایت با اسکرول:
- *   ۱. شش قطعه روی یک شفت سرهم‌اند و همه با هم می‌چرخند.
+ *   ۱. شش قطعه روی یک شفت در هم چفت‌اند و با هم می‌چرخند.
  *   ۲. مجموعه کمی بزرگ می‌شود.
- *   ۳. قطعات در امتداد همان محور از هم جدا می‌شوند و شش بُعد RIASEC آشکار می‌گردد.
+ *   ۳. قطعات در امتداد همان محور جدا می‌شوند، خط راهنما از هر کدام
+ *      پایین می‌آید و به توضیح آن بُعد وصل می‌شود.
  *
  * چرا canvas و نه SVG: قطعات باید سطح تو‌پُر داشته باشند و جلوی هم را
- * بگیرند. با خط تنها، در حالت سرهم خطوط پشتی از داخل قطعه‌ی جلویی دیده
- * می‌شد و تصویر به هم می‌ریخت. حدود ۶۰۰ وجه در هر فریم رسم می‌شود که برای
- * canvas سبک است ولی برای SVG (۶۰۰ گره DOM در هر فریم) نبود.
+ * بگیرند. حدود ۳۰۰۰ وجه در هر فریم رسم می‌شود که برای canvas سبک است
+ * ولی برای SVG (همان تعداد گره DOM در هر فریم) نبود.
  */
 
 const easeInOut = (t: number) =>
@@ -24,19 +30,29 @@ const easeInOut = (t: number) =>
 const phase = (t: number, from: number, to: number) =>
   Math.max(0, Math.min(1, (t - from) / (to - from)));
 
-/* پالت‌ها: فلز مات. base سایه‌ی عمیق، lit سطحی که مستقیم زیر نور است. */
+/* رنگ قطعات از توکن‌های سایت نمی‌آید چون سایه‌پردازی به فضای HSL نیاز
+   دارد؛ اما فام‌ها (۲۲۰ تا ۲۸۳ درجه) عمداً همان خانواده‌ی --accent
+   (#5e6ad2 ≈ ۲۳۱ درجه) هستند. */
 const DARK: Palette = {
-  base: [24, 25, 32],
-  lit: [200, 204, 218],
-  line: "rgba(255,255,255,0.34)",
-  lineSoft: "rgba(255,255,255,0.08)",
+  baseSat: 0.34,
+  baseLum: 0.13,
+  litSat: 0.4,
+  litLum: 0.71,
+  shaftBase: [36, 38, 47],
+  shaftLit: [168, 173, 192],
+  line: "rgba(255,255,255,0.26)",
+  leader: "rgba(255,255,255,0.3)",
 };
 
 const LIGHT: Palette = {
-  base: [126, 124, 120],
-  lit: [252, 251, 248],
-  line: "rgba(26,26,31,0.42)",
-  lineSoft: "rgba(26,26,31,0.10)",
+  baseSat: 0.3,
+  baseLum: 0.44,
+  litSat: 0.36,
+  litLum: 0.94,
+  shaftBase: [132, 132, 140],
+  shaftLit: [252, 252, 254],
+  line: "rgba(26,26,31,0.3)",
+  leader: "rgba(26,26,31,0.34)",
 };
 
 export default function ExplodedProfile() {
@@ -105,18 +121,21 @@ export default function ExplodedProfile() {
     const frame = (now: number) => {
       const dt = Math.min(80, now - last);
       last = now;
-      if (!reduce) spin.current += dt * 0.00038;
+      if (!reduce) spin.current += dt * 0.00034;
 
       const w = canvas.clientWidth;
       const k = (w / VIEW_W) * dpr;
-      const o = easeInOut(phase(progress.current, 0.22, 0.94));
-      const zoom = easeInOut(phase(progress.current, 0, 0.26));
-      const scale = 1.28 + 0.12 * zoom - 0.42 * o;
+      const p = progress.current;
+      const o = easeInOut(phase(p, 0.22, 0.94));
+      const zoom = easeInOut(phase(p, 0, 0.26));
+      const scale = 1.24 + 0.1 * zoom - 0.4 * o;
+      const pal = palette();
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.setTransform(k, 0, 0, k, 0, 0);
-      renderScene(ctx, spin.current, o, scale, palette());
+      renderScene(ctx, spin.current, o, scale, pal);
+      renderLeaders(ctx, o, scale, phase(o, 0.45, 0.95), pal.leader);
 
       raf = requestAnimationFrame(frame);
     };
@@ -143,10 +162,22 @@ export default function ExplodedProfile() {
     );
     io.observe(wrap);
 
+    /* وقتی تم عوض می‌شود و بخش در دید نیست، یک فریم دوباره بکش */
+    const mo = new MutationObserver(() => {
+      if (!visible) {
+        last = performance.now();
+        requestAnimationFrame(frame);
+        stop();
+      }
+    });
+    mo.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
     const onResize = () => {
       resize();
       if (!visible) {
-        // یک فریم ثابت بکش تا قاب خالی نماند
         last = performance.now();
         requestAnimationFrame(frame);
         stop();
@@ -156,12 +187,11 @@ export default function ExplodedProfile() {
 
     return () => {
       io.disconnect();
+      mo.disconnect();
       window.removeEventListener("resize", onResize);
       stop();
     };
   }, []);
-
-  const opened = openT > 0.9;
 
   return (
     <div ref={wrapRef} className="k2-exp">
@@ -184,24 +214,28 @@ export default function ExplodedProfile() {
           role="img"
           aria-label="نمای انفجاری شش بُعد شخصیت شغلی روی یک محور"
         />
-        <div className={`k2-exp-badge ${opened ? "on" : ""}`}>
-          <span>شش بُعد شخصیت شغلی</span>
-        </div>
-      </div>
 
-      <div className="k2-exp-legend">
-        {RIASEC_AXES.map((ax, i) => {
-          const shown = openT > 0.1 + i * 0.1;
-          return (
-            <div key={ax.key} className={`k2-exp-item ${shown ? "on" : ""}`}>
-              <span className="k2-exp-num">{String(i + 1).padStart(2, "0")}</span>
-              <div>
+        {/* ستون‌ها دقیقاً زیر انتهای خطوط راهنما می‌نشینند؛ چیدمان با
+            همان تقسیم‌بندی (i + 0.5) / 6 در renderLeaders هم‌راستاست. */}
+        <div className="k2-exp-legend" dir="ltr">
+          {RIASEC_AXES.map((ax, i) => {
+            const shown = openT > 0.5 + i * 0.045;
+            return (
+              <div
+                key={ax.key}
+                className={`k2-exp-item ${shown ? "on" : ""}`}
+                style={{ transitionDelay: `${i * 40}ms` }}
+                dir="rtl"
+              >
+                <span className="k2-exp-num" data-axis={ax.key}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
                 <div className="k2-exp-name">{ax.label}</div>
                 <div className="k2-exp-hint">{ax.hint}</div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

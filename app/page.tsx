@@ -381,8 +381,6 @@ export default function CareerHub() {
 
         /* ── نمای انفجاری پروفایل ── */
         .k2-exp {
-          --exp-fill: color-mix(in srgb, var(--foreground) 4%, transparent);
-          --exp-face: color-mix(in srgb, var(--background-base) 92%, var(--foreground) 3%);
           color: var(--foreground-muted);
           max-width: 1080px;
           margin: 0 auto;
@@ -413,51 +411,56 @@ export default function CareerHub() {
         .k2-exp-stage { position: relative; margin-top: clamp(28px, 5vw, 56px); }
         .k2-exp-canvas { width: 100%; display: block; }
 
-        .k2-exp-badge {
-          position: absolute; left: 50%; bottom: 4%;
-          transform: translate(-50%, 8px);
-          opacity: 0; pointer-events: none;
-          transition: opacity .45s ease, transform .45s cubic-bezier(.16,1,.3,1);
-        }
-        .k2-exp-badge.on { opacity: 1; transform: translate(-50%, 0); }
-        .k2-exp-badge span {
-          display: inline-block;
-          font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em;
-          color: #fff; background: var(--accent);
-          border-radius: 100px; padding: 6px 16px;
-          box-shadow: 0 4px 18px var(--accent-glow);
-        }
-
+        /* ستون‌ها با ترتیب LTR چیده می‌شوند تا با ترتیب قطعات روی محور
+           (چپ به راست) هم‌راستا بمانند؛ متن هر ستون خودش RTL است. */
         .k2-exp-legend {
           display: grid; grid-template-columns: repeat(6, 1fr);
-          gap: 0; margin-top: clamp(24px, 4vw, 44px);
+          margin-top: -6px;
           text-align: right;
         }
         .k2-exp-item {
-          display: flex; gap: 10px; align-items: flex-start;
-          padding: 0 14px;
-          border-right: 1px solid var(--border-default);
-          opacity: 0; transform: translateY(10px);
-          transition: opacity .45s ease, transform .5s cubic-bezier(.16,1,.3,1);
+          padding: 0 clamp(6px, 1vw, 12px);
+          opacity: 0; transform: translateY(8px);
+          transition: opacity .5s ease, transform .55s cubic-bezier(.16,1,.3,1);
         }
         .k2-exp-item.on { opacity: 1; transform: translateY(0); }
         .k2-exp-num {
-          font-family: var(--font-mono); font-size: 11px;
-          color: var(--accent); padding-top: 2px;
+          display: block;
+          font-family: var(--font-mono); font-size: 10.5px;
+          letter-spacing: .08em;
+          color: var(--exp-hue);
         }
-        .k2-exp-name { font-weight: 700; font-size: 13.5px; color: var(--foreground); }
+        /* فام‌ها همان‌هایی است که در explodedGeometry.ts به قطعات داده شده */
+        .k2-exp-num[data-axis="R"] { --exp-hue: hsl(220 58% 68%); }
+        .k2-exp-num[data-axis="I"] { --exp-hue: hsl(231 58% 70%); }
+        .k2-exp-num[data-axis="A"] { --exp-hue: hsl(243 55% 72%); }
+        .k2-exp-num[data-axis="S"] { --exp-hue: hsl(255 52% 73%); }
+        .k2-exp-num[data-axis="E"] { --exp-hue: hsl(268 50% 73%); }
+        .k2-exp-num[data-axis="C"] { --exp-hue: hsl(283 48% 73%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="R"] { --exp-hue: hsl(220 48% 46%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="I"] { --exp-hue: hsl(231 48% 48%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="A"] { --exp-hue: hsl(243 45% 50%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="S"] { --exp-hue: hsl(255 43% 51%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="E"] { --exp-hue: hsl(268 41% 51%); }
+        :root[data-theme="light"] .k2-exp-num[data-axis="C"] { --exp-hue: hsl(283 40% 50%); }
+
+        .k2-exp-name {
+          font-weight: 700; font-size: 13.5px; color: var(--foreground);
+          margin-top: 5px;
+        }
         .k2-exp-hint {
           font-size: 11.5px; line-height: 1.7;
-          color: var(--foreground-subtle); margin-top: 4px;
+          color: var(--foreground-subtle); margin-top: 5px;
         }
 
-        @media (max-width: 860px) {
-          .k2-exp-legend { grid-template-columns: repeat(3, 1fr); gap: 18px 0; }
-        }
-        @media (max-width: 520px) {
-          .k2-exp-legend { grid-template-columns: repeat(2, 1fr); }
-          .k2-exp-item { padding: 0 10px; }
+        @media (max-width: 720px) {
           .k2-exp-hint { display: none; }
+          .k2-exp-name { font-size: 12px; }
+          .k2-exp-item { padding: 0 4px; }
+        }
+        @media (max-width: 440px) {
+          .k2-exp-name { font-size: 10.5px; letter-spacing: -.01em; }
+          .k2-exp-num { font-size: 9px; }
         }
         @media (prefers-reduced-motion: reduce) {
           .k2-exp-item { opacity: 1; transform: none; }
