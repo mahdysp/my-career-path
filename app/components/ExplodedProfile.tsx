@@ -1,65 +1,77 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RIASEC_AXES } from "@/lib/onet-profiles";
 
 /**
- * پروفایل شغلی به‌صورت یک ماشین سه‌مرحله‌ای که با اسکرول باز می‌شود.
+ * پروفایل شغلی به‌صورت یک مجموعه‌ی چرخ‌دنده که با اسکرول باز می‌شود.
  *
  * روایت:
- *   ۱. ابتدا فقط عنوان دیده می‌شود و قطعات کاملاً سرهم‌اند (پروفایل یکپارچه).
- *   ۲. با اسکرول، مجموعه کمی می‌چرخد و بزرگ‌تر می‌شود (نزدیک شدن دوربین).
+ *   ۱. ابتدا فقط عنوان دیده می‌شود و قطعات کاملاً سرهم‌اند.
+ *   ۲. با اسکرول، مجموعه می‌چرخد و بزرگ‌تر می‌شود.
  *   ۳. سپس قطعات از هم جدا می‌شوند و شش بُعد RIASEC آشکار می‌گردد.
  *
- * با SVG خالص رسم می‌شود (بدون کتابخانه و بدون WebGL) تا روی موبایل سبک بماند.
+ * روش رسم: به‌جای کشیدن بیضی‌های تخت (که ظاهر شماتیک و ساده می‌داد)، نقاط
+ * سه‌بعدی واقعی ساخته و با ماتریس چرخش تصویر می‌شوند — همان کاری که یک
+ * نرم‌افزار CAD انجام می‌دهد. نتیجه: دندانه‌ها و پره‌ها حجم واقعی دارند.
  */
 
 type Part = {
   key: string;
   /** شعاع بیرونی */
   r: number;
-  /** عمق دیده‌شده در پرسپکتیو */
+  /** ضخامت روی محور Z */
   depth: number;
-  /** جای اولیه وقتی سرهم است */
+  /** جای اولیه روی محور X وقتی سرهم است */
   assembled: number;
   /** جای نهایی وقتی باز شده */
   exploded: number;
-  /** تعداد دندانه */
   teeth: number;
 };
 
 const PARTS: Part[] = [
-  { key: "R", r: 104, depth: 34, assembled: 372, exploded: 96, teeth: 34 },
-  { key: "I", r: 74, depth: 26, assembled: 410, exploded: 236, teeth: 26 },
-  { key: "A", r: 46, depth: 18, assembled: 438, exploded: 350, teeth: 16 },
-  { key: "S", r: 88, depth: 40, assembled: 462, exploded: 508, teeth: 30 },
-  { key: "E", r: 60, depth: 24, assembled: 506, exploded: 644, teeth: 20 },
-  { key: "C", r: 96, depth: 32, assembled: 536, exploded: 786, teeth: 32 },
+  { key: "R", r: 98, depth: 80, assembled: -134, exploded: -345, teeth: 30 },
+  { key: "I", r: 72, depth: 62, assembled: -72, exploded: -190, teeth: 22 },
+  { key: "A", r: 46, depth: 44, assembled: -26, exploded: -62, teeth: 16 },
+  { key: "S", r: 86, depth: 76, assembled: 24, exploded: 68, teeth: 26 },
+  { key: "E", r: 60, depth: 54, assembled: 84, exploded: 210, teeth: 20 },
+  { key: "C", r: 94, depth: 72, assembled: 138, exploded: 345, teeth: 28 },
 ];
 
+/** زاویه‌ی دید ثابت — همه‌ی قطعات از یک زاویه دیده می‌شوند */
+const RX = -0.17;
+const RY = 0.34;
+const CX = 450;
 const CY = 200;
-/** نسبت عرض به ارتفاع بیضی — کوچک‌تر یعنی پرسپکتیو عمیق‌تر */
-const E = 0.3;
 
 const easeInOut = (t: number) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-/** نگاشت خطی یک بازه به ۰..۱ */
 const phase = (t: number, from: number, to: number) =>
   Math.max(0, Math.min(1, (t - from) / (to - from)));
 
-/** دندانه‌های واقعی: چهارضلعی‌های بیرون‌زده از لبه، نه خط ساده */
-function teethPath(x: number, r: number, n: number) {
-  let d = "";
-  for (let i = 0; i < n; i++) {
-    const a0 = (i / n) * Math.PI * 2;
-    const a1 = ((i + 0.42) / n) * Math.PI * 2;
-    const ro = r * 1.09;
-    const px = (a: number, rad: number) => x + Math.cos(a) * rad * E;
-    const py = (a: number, rad: number) => CY + Math.sin(a) * rad;
-    d += `M${px(a0, r).toFixed(1)},${py(a0, r).toFixed(1)} L${px(a0, ro).toFixed(1)},${py(a0, ro).toFixed(1)} L${px(a1, ro).toFixed(1)},${py(a1, ro).toFixed(1)} L${px(a1, r).toFixed(1)},${py(a1, r).toFixed(1)}Z `;
-  }
-  return d;
+type P3 = [number, number, number];
+
+/** تصویر یک نقطه‌ی سه‌بعدی روی صفحه */
+function project([x, y, z]: P3, ry: number): [number, number] {
+  const cx = Math.cos(RX), sx = Math.sin(RX);
+  const cy = Math.cos(ry), sy = Math.sin(ry);
+  const X = x * cy + z * sy;
+  const Z = -x * sy + z * cy;
+  const Y2 = y * cx - Z * sx;
+  const Z2 = y * sx + Z * cx;
+  const d = 1 / (1 + Z2 * 0.0009); // پرسپکتیو ملایم
+  return [CX + X * d, CY + Y2 * d];
+}
+
+const toPoints = (pts: P3[], ry: number) =>
+  pts.map((p) => project(p, ry).map((v) => v.toFixed(1)).join(",")).join(" ");
+
+function ring(r: number, z: number, n = 56, phaseOff = 0): P3[] {
+  return Array.from({ length: n }, (_, i) => {
+    const a = phaseOff + (i / n) * Math.PI * 2;
+    return [Math.cos(a) * r, Math.sin(a) * r, z] as P3;
+  });
 }
 
 function Gear({
@@ -67,60 +79,83 @@ function Gear({
   x,
   dim,
   spin,
+  ry,
 }: {
   part: Part;
   x: number;
   dim: number;
   spin: number;
+  ry: number;
 }) {
   const { r, depth, teeth } = part;
-  const teethD = teethPath(x, r, teeth);
+  const hw = depth / 2;
 
-  // پره‌های شعاعی داخل صفحه — با چرخش مجموعه می‌چرخند
-  const spokes = Array.from({ length: 8 }, (_, i) => {
-    const a = (i / 8) * Math.PI * 2 + spin;
-    return (
-      <line
-        key={i}
-        x1={x + Math.cos(a) * r * E * 0.34}
-        y1={CY + Math.sin(a) * r * 0.34}
-        x2={x + Math.cos(a) * r * E * 0.62}
-        y2={CY + Math.sin(a) * r * 0.62}
-        stroke="currentColor"
-        strokeWidth="1"
-        opacity={0.5}
-      />
+  const shift = (pts: P3[]): P3[] => pts.map(([px, py, pz]) => [px + x, py, pz]);
+
+  const els = useMemo(() => {
+    const out: React.ReactNode[] = [];
+    let k = 0;
+    const poly = (pts: P3[], o: number, w: number) => (
+      <polygon key={`p${k++}`} points={toPoints(pts, ry)} fill="none" stroke="currentColor" strokeWidth={w} opacity={o} />
     );
-  });
+    const seg = (a: P3, b: P3, o: number, w: number) => {
+      const A = project(a, ry), B = project(b, ry);
+      return <line key={`l${k++}`} x1={A[0]} y1={A[1]} x2={B[0]} y2={B[1]} stroke="currentColor" strokeWidth={w} opacity={o} />;
+    };
 
-  return (
-    <g style={{ opacity: dim }}>
-      <ellipse cx={x + depth} cy={CY} rx={r * E} ry={r} fill="none" stroke="currentColor" strokeWidth="1.2" opacity={0.55} />
-      <line x1={x} y1={CY - r} x2={x + depth} y2={CY - r} stroke="currentColor" strokeWidth="1.2" opacity={0.7} />
-      <line x1={x} y1={CY + r} x2={x + depth} y2={CY + r} stroke="currentColor" strokeWidth="1.2" opacity={0.7} />
+    // حلقه‌ی بدنه، جلو و عقب
+    out.push(poly(shift(ring(r * 0.72, -hw)), 0.85, 1.1));
+    out.push(poly(shift(ring(r * 0.72, hw)), 0.5, 1.1));
 
-      <g opacity={0.35} transform={`translate(${depth},0)`}>
-        <path d={teethD} fill="none" stroke="currentColor" strokeWidth="1" />
-      </g>
-      <path d={teethD} fill="none" stroke="currentColor" strokeWidth="1" />
+    // دندانه‌های سه‌بعدی: وجه جلو، وجه عقب، و یال‌های اتصال
+    for (let i = 0; i < teeth; i++) {
+      const a0 = spin + (i / teeth) * Math.PI * 2;
+      const a1 = spin + ((i + 0.5) / teeth) * Math.PI * 2;
+      const ri = r * 0.72;
+      const quad: [number, number][] = [
+        [Math.cos(a0) * ri, Math.sin(a0) * ri],
+        [Math.cos(a0) * r, Math.sin(a0) * r],
+        [Math.cos(a1) * r, Math.sin(a1) * r],
+        [Math.cos(a1) * ri, Math.sin(a1) * ri],
+      ];
+      out.push(poly(quad.map(([qx, qy]) => [qx + x, qy, -hw] as P3), 0.9, 0.85));
+      out.push(poly(quad.map(([qx, qy]) => [qx + x, qy, hw] as P3), 0.32, 0.7));
+      quad.forEach(([qx, qy]) => {
+        out.push(seg([qx + x, qy, -hw], [qx + x, qy, hw], 0.38, 0.6));
+      });
+    }
 
-      <ellipse cx={x} cy={CY} rx={r * E} ry={r} fill="var(--exp-face)" stroke="currentColor" strokeWidth="1.5" />
+    // پره‌های داخلی با حجم
+    const spokes = 6;
+    for (let i = 0; i < spokes; i++) {
+      const a = spin + (i / spokes) * Math.PI * 2;
+      const w = 0.13;
+      const rin = r * 0.2, rout = r * 0.7;
+      const quad: [number, number][] = [
+        [Math.cos(a - w) * rin, Math.sin(a - w) * rin],
+        [Math.cos(a - w) * rout, Math.sin(a - w) * rout],
+        [Math.cos(a + w) * rout, Math.sin(a + w) * rout],
+        [Math.cos(a + w) * rin, Math.sin(a + w) * rin],
+      ];
+      out.push(poly(quad.map(([qx, qy]) => [qx + x, qy, -hw * 0.5] as P3), 0.7, 0.8));
+      out.push(poly(quad.map(([qx, qy]) => [qx + x, qy, hw * 0.5] as P3), 0.26, 0.6));
+    }
 
-      {[0.82, 0.62, 0.34].map((k, i) => (
-        <ellipse
-          key={k}
-          cx={x} cy={CY} rx={r * E * k} ry={r * k}
-          fill="none" stroke="currentColor"
-          strokeWidth={i === 1 ? 1.2 : 0.8}
-          opacity={0.75 - i * 0.12}
-        />
-      ))}
+    // توپی مرکزی
+    out.push(poly(shift(ring(r * 0.2, -hw, 28)), 0.9, 1));
+    out.push(poly(shift(ring(r * 0.2, hw, 28)), 0.45, 1));
+    out.push(poly(shift(ring(r * 0.09, -hw, 20)), 0.8, 1));
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const px = x + Math.cos(a) * r * 0.2, py = Math.sin(a) * r * 0.2;
+      out.push(seg([px, py, -hw], [px, py, hw], 0.28, 0.6));
+    }
 
-      {spokes}
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r, depth, teeth, x, spin, ry]);
 
-      <ellipse cx={x} cy={CY} rx={r * E * 0.13} ry={r * 0.13} fill="currentColor" opacity={0.8} />
-    </g>
-  );
+  return <g style={{ opacity: dim }}>{els}</g>;
 }
 
 export default function ExplodedProfile() {
@@ -135,7 +170,6 @@ export default function ExplodedProfile() {
     const update = () => {
       const r = el.getBoundingClientRect();
       const vh = window.innerHeight;
-      // انیمیشن وقتی آغاز می‌شود که بخش واقعاً در میدان دید نشسته باشد
       const startAt = vh * 0.55;
       const distance = Math.max(1, Math.min(r.height * 0.8, vh * 0.85));
       setP(Math.max(0, Math.min(1, (startAt - r.top) / distance)));
@@ -157,15 +191,14 @@ export default function ExplodedProfile() {
     };
   }, []);
 
-  /* سه مرحله‌ی پشت‌سرهم:
-     ۰٪–۳۰٪  → سرهم، فقط کمی می‌چرخد و بزرگ می‌شود
-     ۳۰٪–۹۵٪ → قطعات از هم باز می‌شوند
-     برچسب‌ها همراه باز شدن یکی‌یکی ظاهر می‌شوند */
+  /* ۰–۳۲٪: سرهم، می‌چرخد و بزرگ می‌شود
+     ۳۰–۹۵٪: قطعات از هم جدا می‌شوند */
   const zoomT = easeInOut(phase(p, 0, 0.32));
   const openT = easeInOut(phase(p, 0.3, 0.95));
 
-  const scale = 0.86 + 0.14 * zoomT;
-  const spin = zoomT * 0.42; // رادیان
+  const scale = 0.82 + 0.18 * zoomT;
+  const spin = zoomT * 0.5;
+  const ry = RY + zoomT * 0.1;
   const opened = openT > 0.9;
 
   return (
@@ -189,20 +222,27 @@ export default function ExplodedProfile() {
           role="img"
           aria-label="شش بُعد شخصیت شغلی که با اسکرول از هم باز می‌شوند"
         >
-          {/* کل مجموعه با هم می‌چرخد و بزرگ می‌شود */}
           <g
             style={{
-              transform: `translate(450px, ${CY}px) scale(${scale}) rotate(${(-spin * 8).toFixed(2)}deg) translate(-450px, -${CY}px)`,
+              transform: `translate(${CX}px, ${CY}px) scale(${scale}) translate(-${CX}px, -${CY}px)`,
               transformOrigin: "0 0",
             }}
           >
             {PARTS.map((part, i) => {
-              // قطعات بیرونی زودتر جدا می‌شوند
               const delay = i * 0.045;
               const local = Math.max(0, Math.min(1, (openT - delay) / (1 - delay || 1)));
               const e = easeInOut(local);
               const x = part.assembled + (part.exploded - part.assembled) * e;
-              return <Gear key={part.key} part={part} x={x} dim={1 - 0.28 * e} spin={spin} />;
+              return (
+                <Gear
+                  key={part.key}
+                  part={part}
+                  x={x}
+                  dim={0.9 - 0.18 * e}
+                  spin={spin + i * 0.18}
+                  ry={ry}
+                />
+              );
             })}
           </g>
         </svg>
