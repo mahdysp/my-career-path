@@ -895,10 +895,23 @@ export default function HomeClient({ content }: { content: SiteContent }) {
               })}
             </div>
 
-            <div style={{ textAlign: "center", marginTop: 44 }}>
+            <div
+              style={{
+                display: "flex", gap: 10, justifyContent: "center",
+                marginTop: 44, flexWrap: "wrap",
+              }}
+            >
               <button className="k2-btn k2-btn-primary" onClick={handleStart} disabled={isLoading} style={{ fontSize: 15, padding: "0 30px", height: 46 }}>
                 {isLoading ? "در حال آماده‌سازی..." : "شروع آزمون"}
               </button>
+              {/* توضیح کامل هر شش مرحله در صفحه‌ی جدا */}
+              <a
+                href="/how-it-works"
+                className="k2-btn k2-btn-secondary"
+                style={{ fontSize: 15, padding: "0 26px", height: 46, textDecoration: "none" }}
+              >
+                جزئیات کامل روش کار
+              </a>
             </div>
           </section>
 

@@ -72,13 +72,13 @@ const GROUPS: Group[] = [
       { label: "آزمون شخصیت شغلی", desc: "شش بُعد RIASEC بر پایه‌ی استاندارد O*NET", href: "/quiz", icon: "compass" },
       { label: "پروفایل شغلی", desc: "نمودار مهارت‌ها و نقاط قوت شما", href: "/#features", icon: "chart" },
       { label: "مقایسه‌ی مشاغل", desc: "درصد تطابق واقعی، نه حدس", href: "/#features", icon: "layers" },
-      { label: "مسیر پیشنهادی", desc: "قدم بعدی که باید بردارید", href: "/#how-it-works", icon: "target" },
+      { label: "مسیر پیشنهادی", desc: "قدم بعدی که باید بردارید", href: "/how-it-works#stage-06", icon: "target" },
     ],
   },
   {
     label: "منابع",
     items: [
-      { label: "روش کار", desc: "از آزمون تا نتیجه در سه گام", href: "/#how-it-works", icon: "spark" },
+      { label: "روش کار", desc: "شش مرحله از انتخاب حوزه تا نتیجه", href: "/how-it-works", icon: "spark" },
       { label: "پشتوانه‌ی علمی", desc: "مدل هالند، داده‌های O*NET و روش محاسبه", href: "/science", icon: "book" },
     ],
   },

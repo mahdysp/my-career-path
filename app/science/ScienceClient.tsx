@@ -415,8 +415,8 @@ export default function ScienceClient() {
                 <Link href="/quiz" className="sc-btn primary">
                   شروع آزمون
                 </Link>
-                <Link href="/" className="sc-btn ghost">
-                  بازگشت به صفحه‌ی اصلی
+                <Link href="/how-it-works" className="sc-btn ghost">
+                  روش کار گام‌به‌گام
                 </Link>
               </div>
             </div>
