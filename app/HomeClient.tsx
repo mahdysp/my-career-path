@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import SiteNav from "@/app/components/SiteNav";
 import ExplodedProfile from "@/app/components/ExplodedProfile";
 import ScreenShowcase from "@/app/components/ScreenShowcase";
+import Pillars from "@/app/components/Pillars";
 import type { SiteContent } from "@/lib/site-content";
 
 /* مسیر عمودی که بین گام‌ها می‌پیچد. عمداً کاملاً صاف نیست تا حس
@@ -952,6 +953,9 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           {content.flags.showcaseVisible && (
             <ScreenShowcase slides={content.showcase.slides} />
           )}
+
+          {/* پشتوانه — منابع داده و چارچوب سنجش */}
+          {content.flags.pillarsVisible && <Pillars data={content.pillars} />}
 
           {/* Footer */}
           {/* فوتر — جای مرسوم و مورد انتظار برای «درباره‌ی ما» و تماس */}

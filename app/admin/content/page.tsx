@@ -10,6 +10,7 @@ import type {
   ContactChannel,
   FaqItem,
   IntegrationItem,
+  PillarItem,
   ShowcaseSlide,
   SiteContent,
 } from "@/lib/site-content";
@@ -35,6 +36,13 @@ const CHANNEL_KINDS: { v: ContactChannel["kind"]; t: string }[] = [
   { v: "address", t: "نشانی" },
   { v: "link", t: "لینک دیگر" },
 ];
+
+const blankPillar = (): PillarItem => ({
+  id: `p-${rid()}`,
+  title: "",
+  body: "",
+  tags: [],
+});
 
 const blankFaq = (): FaqItem => ({ id: `f-${rid()}`, q: "", a: "" });
 const blankIntegration = (): IntegrationItem => ({
@@ -65,6 +73,7 @@ export default function AdminContentPage() {
   const [slides, setSlides] = useState<ShowcaseSlide[]>([]);
   const [exploded, setExploded] = useState({ eyebrow: "", title: "", subtitle: "" });
   const [about, setAbout] = useState<SiteContent["about"] | null>(null);
+  const [pillars, setPillars] = useState<SiteContent["pillars"] | null>(null);
   const [faq, setFaq] = useState<SiteContent["faq"] | null>(null);
   const [integrations, setIntegrations] =
     useState<SiteContent["integrations"] | null>(null);
@@ -79,6 +88,7 @@ export default function AdminContentPage() {
         setSlides(d.content.showcase.slides);
         setExploded(d.content.exploded);
         setAbout(d.content.about);
+        setPillars(d.content.pillars);
         setFaq(d.content.faq);
         setIntegrations(d.content.integrations);
       })
@@ -597,6 +607,187 @@ export default function AdminContentPage() {
                 </div>
               </div>
             )}
+            {pillars && (
+              <div className="ad-card">
+                <div className="ad-slide-top" style={{ marginBottom: 6 }}>
+                  <div>
+                    <p className="ad-card-title">بخش پشتوانه (صفحه‌ی اصلی)</p>
+                    <p className="ad-card-note" style={{ marginBottom: 0 }}>
+                      بخشی که بعد از نمایشگر روی صفحه‌ی اصلی می‌آید.
+                    </p>
+                  </div>
+                  <button
+                    className="ad-btn sm"
+                    onClick={() =>
+                      setPillars({ ...pillars, items: [...pillars.items, blankPillar()] })
+                    }
+                  >
+                    + ستون
+                  </button>
+                </div>
+
+                <div className="ad-field">
+                  <label className="ad-label">عنوان بالا (کوچک)</label>
+                  <input
+                    className="ad-input"
+                    value={pillars.eyebrow}
+                    onChange={(e) => setPillars({ ...pillars, eyebrow: e.target.value })}
+                  />
+                </div>
+                <div className="ad-field">
+                  <label className="ad-label">تیتر</label>
+                  <input
+                    className="ad-input"
+                    value={pillars.title}
+                    onChange={(e) => setPillars({ ...pillars, title: e.target.value })}
+                  />
+                </div>
+                <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
+                  <div className="ad-field">
+                    <label className="ad-label">متن لینک پایین</label>
+                    <input
+                      className="ad-input"
+                      value={pillars.ctaLabel}
+                      placeholder="خالی بگذارید تا نمایش داده نشود"
+                      onChange={(e) => setPillars({ ...pillars, ctaLabel: e.target.value })}
+                    />
+                  </div>
+                  <div className="ad-field">
+                    <label className="ad-label">آدرس لینک</label>
+                    <input
+                      className="ad-input"
+                      dir="ltr"
+                      value={pillars.ctaHref}
+                      placeholder="/data"
+                      onChange={(e) => setPillars({ ...pillars, ctaHref: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 16 }}>
+                  {pillars.items.map((it, i) => (
+                    <div key={it.id} className="ad-slide">
+                      <div className="ad-slide-top">
+                        <span className="ad-badge accent">{i + 1}</span>
+                        <div className="ad-row">
+                          <button
+                            className="ad-btn sm"
+                            disabled={i === 0}
+                            onClick={() => {
+                              const a = [...pillars.items];
+                              [a[i - 1], a[i]] = [a[i], a[i - 1]];
+                              setPillars({ ...pillars, items: a });
+                            }}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            className="ad-btn sm"
+                            disabled={i === pillars.items.length - 1}
+                            onClick={() => {
+                              const a = [...pillars.items];
+                              [a[i + 1], a[i]] = [a[i], a[i + 1]];
+                              setPillars({ ...pillars, items: a });
+                            }}
+                          >
+                            ↓
+                          </button>
+                          <button
+                            className="ad-btn sm danger"
+                            onClick={() =>
+                              setPillars({
+                                ...pillars,
+                                items: pillars.items.filter((_, j) => j !== i),
+                              })
+                            }
+                          >
+                            حذف
+                          </button>
+                        </div>
+                      </div>
+                      <div className="ad-field" style={{ marginTop: 0 }}>
+                        <label className="ad-label">عنوان</label>
+                        <input
+                          className="ad-input"
+                          value={it.title}
+                          onChange={(e) =>
+                            setPillars({
+                              ...pillars,
+                              items: pillars.items.map((x, j) =>
+                                j === i ? { ...x, title: e.target.value } : x
+                              ),
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="ad-field">
+                        <label className="ad-label">توضیح</label>
+                        <textarea
+                          className="ad-textarea"
+                          value={it.body}
+                          onChange={(e) =>
+                            setPillars({
+                              ...pillars,
+                              items: pillars.items.map((x, j) =>
+                                j === i ? { ...x, body: e.target.value } : x
+                              ),
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="ad-field">
+                        <label className="ad-label">برچسب‌ها — با ویرگول جدا کنید</label>
+                        <input
+                          className="ad-input"
+                          value={it.tags.join("، ")}
+                          onChange={(e) =>
+                            setPillars({
+                              ...pillars,
+                              items: pillars.items.map((x, j) =>
+                                j === i
+                                  ? {
+                                      ...x,
+                                      tags: e.target.value
+                                        .split(/[،,]/)
+                                        .map((t) => t.trim())
+                                        .filter(Boolean),
+                                    }
+                                  : x
+                              ),
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="ad-row" style={{ marginTop: 16 }}>
+                  <button
+                    className="ad-btn primary"
+                    disabled={busy}
+                    onClick={() => save("pillars", pillars)}
+                  >
+                    {busy ? "در حال ذخیره…" : "ذخیره‌ی بخش پشتوانه"}
+                  </button>
+                  <button
+                    className="ad-btn"
+                    disabled={busy}
+                    onClick={() => setPillars(data.content.pillars)}
+                  >
+                    بازگردانی تغییرات
+                  </button>
+                  <button
+                    className="ad-btn"
+                    disabled={busy}
+                    onClick={() => setPillars(data.defaults.pillars)}
+                  >
+                    بازگردانی به پیش‌فرض
+                  </button>
+                </div>
+              </div>
+            )}
+
             {faq && (
               <div className="ad-card">
                 <div className="ad-slide-top" style={{ marginBottom: 6 }}>

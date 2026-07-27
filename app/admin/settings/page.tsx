@@ -103,6 +103,12 @@ export default function AdminSettingsPage() {
                 onToggle={() => set({ aboutVisible: !flags.aboutVisible })}
               />
               <Switch
+                on={flags.pillarsVisible}
+                label="بخش پشتوانه"
+                note="سه ستون «داده، چارچوب، محاسبه» که بعد از نمایشگر روی صفحه‌ی اصلی می‌آید."
+                onToggle={() => set({ pillarsVisible: !flags.pillarsVisible })}
+              />
+              <Switch
                 on={flags.faqVisible}
                 label="صفحه‌ی پرسش‌های متداول"
                 note="اگر خاموش شود، صفحه‌ی /faq پیام «یافت نشد» می‌دهد."

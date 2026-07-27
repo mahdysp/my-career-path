@@ -39,6 +39,13 @@ export default function AuthClient() {
 
     if (lockTaps.current >= 3) {
       lockTaps.current = 0;
+
+      // کلید دوحالته: سه ضربه‌ی دیگر به حالت کاربر عادی برمی‌گردد
+      if (adminMode) {
+        setAdminMode(false);
+        return;
+      }
+
       setAdminMode(true);
       // اگر همین حالا نشست دارد، معطلش نکنیم
       fetch("/api/auth/me", { credentials: "same-origin" })
@@ -487,7 +494,7 @@ export default function AuthClient() {
                       type="button"
                       className={`k2-icon-box k2-icon-btn ${adminMode ? "armed" : ""}`}
                       onClick={handleLockTap}
-                      aria-label="ورود به حساب کاربری"
+                      aria-label={adminMode ? "ورود مدیران" : "ورود به حساب کاربری"}
                       title=""
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

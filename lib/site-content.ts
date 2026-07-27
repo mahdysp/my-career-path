@@ -44,6 +44,14 @@ export type IntegrationItem = {
   tags: string[];
 };
 
+export type PillarItem = {
+  id: string;
+  title: string;
+  body: string;
+  /** برچسب‌های کوچک زیر متن */
+  tags: string[];
+};
+
 export type SiteContent = {
   showcase: { slides: ShowcaseSlide[] };
   hero: {
@@ -70,6 +78,14 @@ export type SiteContent = {
     /** زمان پاسخ‌گویی — خالی یعنی نمایش داده نشود */
     responseTime: string;
   };
+  pillars: {
+    eyebrow: string;
+    title: string;
+    /** لینک پایین بخش — خالی یعنی نمایش داده نشود */
+    ctaLabel: string;
+    ctaHref: string;
+    items: PillarItem[];
+  };
   faq: {
     eyebrow: string;
     title: string;
@@ -91,6 +107,8 @@ export type SiteContent = {
     registrationOpen: boolean;
     /** صفحه‌ی درباره‌ی ما در منو و فوتر دیده شود */
     aboutVisible: boolean;
+    /** بخش «بر چه چیزی ساخته شده» روی صفحه‌ی اصلی */
+    pillarsVisible: boolean;
     /** صفحه‌ی پرسش‌های متداول */
     faqVisible: boolean;
     /** صفحه‌ی یکپارچه‌سازی و داده */
@@ -200,6 +218,35 @@ export const DEFAULT_CONTENT: SiteContent = {
       },
     ],
     responseTime: "معمولاً ظرف ۲ روز کاری پاسخ می‌دهیم.",
+  },
+  pillars: {
+    eyebrow: "پشتوانه",
+    title: "روی داده ساخته شده، نه حدس",
+    ctaLabel: "جزئیات کامل منابع",
+    ctaHref: "/data",
+    items: [
+      {
+        id: "p-onet",
+        title: "داده‌ی رسمی مشاغل",
+        body:
+          "نمره‌ی شخصیتی هر شغل مستقیماً از پایگاه O*NET وزارت کار آمریکا نقل می‌شود. هیچ عددی را ما نساخته‌ایم و هرکدام با کد استاندارد شغل قابل بررسی است.",
+        tags: ["O*NET 30.0", "CC BY 4.0"],
+      },
+      {
+        id: "p-riasec",
+        title: "چارچوب شش‌بُعدی هالند",
+        body:
+          "مدل RIASEC از سال ۱۹۵۹ توسعه یافته و بیش از شصت سال در پژوهش‌های روان‌شناسی شغلی آزموده شده است. همان چارچوبی که پایگاه‌های رسمی مشاغل هم بر آن استوارند.",
+        tags: ["Holland 1959", "شش بُعد"],
+      },
+      {
+        id: "p-formula",
+        title: "محاسبه‌ی قابل تکرار",
+        body:
+          "درصد تطابق با شباهت کسینوسی بین پروفایل شما و بردار شغل حساب می‌شود — نه با حدس مدل زبانی. با پاسخ‌های یکسان، همیشه همان عدد در می‌آید.",
+        tags: ["فرمول ثابت", "بدون دخالت AI"],
+      },
+    ],
   },
   faq: {
     eyebrow: "پرسش‌های متداول",
@@ -314,6 +361,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     explodedVisible: true,
     registrationOpen: true,
     aboutVisible: true,
+    pillarsVisible: true,
     faqVisible: true,
     integrationsVisible: true,
     banner: "",
