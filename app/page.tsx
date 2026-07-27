@@ -382,23 +382,23 @@ export default function CareerHub() {
 
         /* ── نمای انفجاری پروفایل ── */
         /* بخش بلند است تا اسکرول جا برای روایت داشته باشد؛ محتوا داخلش
-           چسبان می‌ماند. ۲۶۰vh یعنی حدود دو صفحه اسکرول برای باز و بسته
-           شدن مجموعه. */
+           چسبان می‌ماند. ارتفاع اضافی = طول نوار پیشرفت روایت. */
         .k2-exp {
           color: var(--foreground-muted);
-          height: 260vh;
+          height: 215vh;
           position: relative;
         }
         .k2-exp-sticky {
           position: sticky;
           top: 0;
-          min-height: 100svh;
+          height: 100svh;
           display: flex;
           flex-direction: column;
           justify-content: center;
+          gap: clamp(10px, 2vh, 26px);
           max-width: 1080px;
           margin: 0 auto;
-          padding: clamp(24px, 4vw, 48px) clamp(16px, 4vw, 40px);
+          padding: clamp(16px, 3vh, 36px) clamp(16px, 4vw, 40px);
           text-align: center;
         }
         .k2-exp-eyebrow {
@@ -422,14 +422,25 @@ export default function CareerHub() {
           max-width: 560px; margin: 16px auto 0;
         }
 
-        .k2-exp-stage { position: relative; margin-top: clamp(28px, 5vw, 56px); }
-        .k2-exp-canvas { width: 100%; display: block; }
+        /* صحنه فضای باقی‌مانده را می‌گیرد و بوم داخلش نسبتش را حفظ
+           می‌کند، پس روی نمایشگرهای کوتاه هم توضیحات از قاب بیرون نمی‌زند. */
+        .k2-exp-stage {
+          position: relative;
+          flex: 1 1 auto;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+        }
+        /* ابعاد را جاوااسکریپت ست می‌کند (متناسب با عرض و ارتفاع موجود) */
+        .k2-exp-canvas { display: block; margin: 0 auto; }
 
         /* ستون‌ها با ترتیب LTR چیده می‌شوند تا با ترتیب قطعات روی محور
            (چپ به راست) هم‌راستا بمانند؛ متن هر ستون خودش RTL است. */
         .k2-exp-legend {
           display: grid; grid-template-columns: repeat(6, 1fr);
-          margin-top: -6px;
+          margin: -4px auto 0;
+          flex: 0 0 auto;
           text-align: right;
         }
         .k2-exp-item {
@@ -486,8 +497,8 @@ export default function CareerHub() {
           position: relative;
           max-width: 1280px;
           margin: 0 auto;
-          padding: clamp(72px, 10vw, 130px) clamp(16px, 4vw, 40px)
-            clamp(80px, 12vw, 150px);
+          padding: clamp(8px, 2vw, 28px) clamp(16px, 4vw, 40px)
+            clamp(72px, 10vw, 130px);
           display: grid;
           grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
           gap: clamp(28px, 5vw, 72px);
@@ -522,19 +533,18 @@ export default function CareerHub() {
 
         /* قاب دستگاه: از لبه‌ی راست بیرون می‌زند، مثل مرجع طراحی */
         .k2-device { position: relative; }
+        /* بدنه‌ی دستگاه از خود پس‌زمینه رنگ نمی‌گیرد؛ در تم روشن باید
+           تیره‌تر از کاغذ باشد وگرنه حاشیه‌اش گم می‌شود. */
         .k2-device-frame {
           position: relative;
-          border-radius: 14px;
+          border-radius: 15px;
           padding: 11px 11px 0;
-          background: linear-gradient(
-            160deg,
-            color-mix(in srgb, var(--foreground) 16%, var(--background-elevated)),
-            var(--background-elevated) 42%
-          );
+          background: var(--device-body);
+          border: 1px solid var(--device-edge);
           box-shadow:
-            0 0 0 1px var(--border-hover),
-            0 40px 90px -30px rgba(0, 0, 0, .55),
-            0 8px 24px -8px rgba(0, 0, 0, .35);
+            inset 0 1px 0 var(--device-sheen),
+            0 40px 90px -34px var(--device-shadow),
+            0 10px 26px -12px var(--device-shadow);
         }
         .k2-device-bar {
           display: flex; align-items: center; gap: 8px;
@@ -543,11 +553,11 @@ export default function CareerHub() {
         .k2-device-lights { display: flex; gap: 5px; }
         .k2-device-lights i {
           width: 8px; height: 8px; border-radius: 100px;
-          background: var(--border-hover); display: block;
+          background: var(--device-dot); display: block;
         }
         .k2-device-label {
           font-family: var(--font-mono); font-size: 10.5px;
-          color: var(--foreground-subtle); letter-spacing: .04em;
+          color: var(--device-label); letter-spacing: .04em;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .k2-device-viewport {
@@ -585,21 +595,18 @@ export default function CareerHub() {
         /* پایه‌ی نمایشگر */
         .k2-device-stand {
           width: clamp(90px, 16%, 170px);
-          height: clamp(34px, 5vw, 56px);
+          height: clamp(30px, 4.4vw, 50px);
           margin: 0 auto;
-          background: linear-gradient(
-            to bottom,
-            color-mix(in srgb, var(--foreground) 13%, var(--background-elevated)),
-            color-mix(in srgb, var(--foreground) 5%, var(--background-elevated))
-          );
-          border-inline: 1px solid var(--border-default);
+          background: var(--device-stand);
+          border-inline: 1px solid var(--device-edge);
         }
         .k2-device-base {
           width: clamp(160px, 30%, 300px);
-          height: 7px; margin: 0 auto;
+          height: 8px; margin: 0 auto;
           border-radius: 100px;
-          background: color-mix(in srgb, var(--foreground) 11%, var(--background-elevated));
-          box-shadow: 0 12px 26px -12px rgba(0, 0, 0, .6);
+          background: var(--device-body);
+          border: 1px solid var(--device-edge);
+          box-shadow: 0 14px 28px -14px var(--device-shadow);
         }
 
         @media (max-width: 900px) {

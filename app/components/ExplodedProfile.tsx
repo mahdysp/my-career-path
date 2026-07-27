@@ -32,12 +32,13 @@ const phase = (t: number, from: number, to: number) =>
   Math.max(0, Math.min(1, (t - from) / (to - from)));
 
 /* نگاشت پیشرفت کل بخش به «میزان باز بودن».
-   ۰–۲۰٪ سرهم، ۲۰–۵۰٪ باز شدن، ۵۰–۷۲٪ مکث در حالت باز، ۷۲–۱۰۰٪ جمع شدن. */
+   قفل‌شدن بخش کمی قبل از رسیدن به بالای پنجره شروع می‌شود، پس بازشدن
+   هم باید زود آغاز شود؛ وگرنه کاربر مدت زیادی یک تصویر ثابت می‌بیند. */
 function openness(p: number) {
-  if (p < 0.2) return 0;
-  if (p < 0.5) return easeInOut(phase(p, 0.2, 0.5));
-  if (p < 0.72) return 1;
-  return 1 - easeInOut(phase(p, 0.72, 1));
+  if (p < 0.06) return 0; // تازه قفل شده — هنوز سرهم
+  if (p < 0.42) return easeInOut(phase(p, 0.06, 0.42));
+  if (p < 0.74) return 1; // مکث برای خواندن توضیحات
+  return 1 - easeInOut(phase(p, 0.74, 1));
 }
 
 /* رنگ قطعات از توکن‌های CSS نمی‌آید چون سایه‌پردازی به فضای HSL نیاز
@@ -66,6 +67,7 @@ export default function ExplodedProfile() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
+  const legendRef = useRef<HTMLDivElement>(null);
   const progress = useRef(0);
   const spin = useRef(0.4);
   const [openT, setOpenT] = useState(0);
@@ -78,8 +80,8 @@ export default function ExplodedProfile() {
     const update = () => {
       const r = el.getBoundingClientRect();
       const vh = window.innerHeight;
-      /* بخش از لحظه‌ای که بالایش به سقف پنجره می‌رسد تا لحظه‌ای که
-         پایینش از کف رد می‌شود، یک نوار پیشرفت کامل است. */
+      /* نوار پیشرفت دقیقاً بازه‌ی قفل‌بودن بخش است: از لحظه‌ای که بالای
+         بخش به سقف پنجره می‌رسد تا لحظه‌ای که پایینش به کف می‌رسد. */
       const travel = Math.max(1, r.height - vh);
       const p = Math.max(0, Math.min(1, -r.top / travel));
       progress.current = p;
@@ -117,14 +119,30 @@ export default function ExplodedProfile() {
     const palette = () =>
       document.documentElement.dataset.theme === "light" ? LIGHT : DARK;
 
+    /* بوم باید هم در عرض و هم در ارتفاعِ موجود جا شود. اگر فقط از روی
+       عرض محاسبه شود، روی نمایشگرهای کوتاه بلندتر از فضای موجود می‌شود
+       و ستون توضیحات زیرش از قاب بیرون می‌ماند. */
+    let cssW = 0;
     const resize = () => {
-      const w = canvas.clientWidth;
-      if (!w) return;
+      const stage = canvas.parentElement;
+      if (!stage) return;
+      const availW = stage.clientWidth;
+      if (!availW) return;
+      const legendH = legendRef.current?.offsetHeight ?? 0;
+      const availH = stage.clientHeight - legendH;
       dpr = Math.min(2, window.devicePixelRatio || 1);
-      const h = Math.round((w * VIEW_H) / VIEW_W);
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-      canvas.style.height = `${h}px`;
+      const k = Math.min(
+        availW / VIEW_W,
+        availH > 40 ? availH / VIEW_H : Infinity
+      );
+      cssW = Math.max(1, Math.round(VIEW_W * k));
+      const cssH = Math.max(1, Math.round(VIEW_H * k));
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      canvas.style.width = `${cssW}px`;
+      canvas.style.height = `${cssH}px`;
+      // ستون‌ها هم‌عرض بوم بمانند تا با انتهای خطوط راهنما بخوانند
+      if (legendRef.current) legendRef.current.style.width = `${cssW}px`;
     };
 
     const frame = (now: number) => {
@@ -132,11 +150,10 @@ export default function ExplodedProfile() {
       last = now;
       if (!reduce) spin.current += dt * 0.00034;
 
-      const w = canvas.clientWidth;
-      const k = (w / VIEW_W) * dpr;
+      const k = (cssW / VIEW_W) * dpr;
       const p = progress.current;
       const o = openness(p);
-      const zoom = easeInOut(phase(p, 0, 0.2));
+      const zoom = easeInOut(phase(p, 0, 0.12));
       const scale = 1.24 + 0.1 * zoom - 0.4 * o;
       const pal = palette();
 
@@ -144,7 +161,7 @@ export default function ExplodedProfile() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.setTransform(k, 0, 0, k, 0, 0);
       renderScene(ctx, spin.current, o, scale, pal);
-      renderLeaders(ctx, o, scale, phase(o, 0.45, 0.95), pal.leader);
+      renderLeaders(ctx, o, scale, phase(o, 0.3, 0.85), pal.leader);
 
       raf = requestAnimationFrame(frame);
     };
@@ -161,6 +178,17 @@ export default function ExplodedProfile() {
     };
 
     resize();
+    /* اندازه‌ی صحنه با ارتفاع پنجره عوض می‌شود، نه فقط با عرض */
+    const ro = new ResizeObserver(() => {
+      resize();
+      if (!visible) {
+        last = performance.now();
+        requestAnimationFrame(frame);
+        stop();
+      }
+    });
+    if (canvas.parentElement) ro.observe(canvas.parentElement);
+
     const io = new IntersectionObserver(
       ([e]) => {
         visible = e.isIntersecting;
@@ -197,6 +225,7 @@ export default function ExplodedProfile() {
     return () => {
       io.disconnect();
       mo.disconnect();
+      ro.disconnect();
       window.removeEventListener("resize", onResize);
       stop();
     };
@@ -226,10 +255,11 @@ export default function ExplodedProfile() {
           />
 
           {/* ستون‌ها دقیقاً زیر انتهای خطوط راهنما می‌نشینند؛ چیدمان با
-              همان تقسیم‌بندی (i + 0.5) / 6 در renderLeaders هم‌راستاست. */}
-          <div className="k2-exp-legend" dir="ltr">
+              همان تقسیم‌بندی (i + 0.5) / 6 در renderLeaders هم‌راستاست.
+              عرضشان به بوم گره خورده تا با جابه‌جایی خطوط هم‌راستا بماند. */}
+          <div className="k2-exp-legend" dir="ltr" ref={legendRef}>
             {RIASEC_AXES.map((ax, i) => {
-              const shown = openT > 0.5 + i * 0.045;
+              const shown = openT > 0.34 + i * 0.05;
               return (
                 <div
                   key={ax.key}

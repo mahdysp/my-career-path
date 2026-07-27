@@ -63,6 +63,15 @@
   --heat-4: #c084fc;
   --heat-edge: rgba(255, 255, 255, 0.06);
 
+  /* قاب دستگاه در بخش نمایشگر */
+  --device-body: linear-gradient(160deg, #26262e, #131318 46%);
+  --device-edge: rgba(255, 255, 255, 0.13);
+  --device-sheen: rgba(255, 255, 255, 0.09);
+  --device-shadow: rgba(0, 0, 0, 0.7);
+  --device-stand: linear-gradient(to bottom, #22222a, #17171d);
+  --device-dot: rgba(255, 255, 255, 0.18);
+  --device-label: rgba(255, 255, 255, 0.42);
+
   --font-sans: var(--font-vazirmatn), Vazirmatn, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", var(--font-vazirmatn),
     Vazirmatn, monospace;
@@ -130,6 +139,16 @@
   --heat-3: #6b6bd0;
   --heat-4: #4a3fa8;
   --heat-edge: rgba(30, 27, 22, 0.1);
+
+  /* در تم روشن بدنه باید تیره‌تر از کاغذ کرمی باشد، وگرنه حاشیه‌ی
+     نمایشگر با پس‌زمینه یکی می‌شود و قاب دیده نمی‌شود. */
+  --device-body: linear-gradient(160deg, #d9d5cb, #bfbab0 52%);
+  --device-edge: rgba(30, 27, 22, 0.26);
+  --device-sheen: rgba(255, 255, 255, 0.75);
+  --device-shadow: rgba(48, 42, 32, 0.34);
+  --device-stand: linear-gradient(to bottom, #cdc8be, #b6b1a7);
+  --device-dot: rgba(30, 27, 22, 0.22);
+  --device-label: rgba(30, 27, 22, 0.52);
 
   --background: var(--background-base);
   --foreground-token: var(--foreground);
