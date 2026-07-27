@@ -86,9 +86,50 @@ export const featureStyles = `
     .fw-toc a:hover { color: var(--foreground); }
   }
 
+  /* ── خط زمانی ── */
+  .fw-track { position: relative; }
+  .fw-track::before {
+    content: "";
+    position: absolute; top: 14px; bottom: 30px;
+    inset-inline-start: 15px; width: 2px;
+    background: var(--border-default);
+    border-radius: 2px;
+  }
+  /* بخش پرشده — با اسکرول رشد می‌کند */
+  .fw-fill {
+    position: absolute; top: 14px;
+    inset-inline-start: 15px; width: 2px;
+    background: linear-gradient(
+      to bottom,
+      var(--accent),
+      color-mix(in srgb, var(--accent) 45%, transparent)
+    );
+    border-radius: 2px;
+    transition: height .18s linear;
+  }
+  .fw-dot {
+    position: absolute; top: 8px; inset-inline-start: 8px;
+    width: 18px; height: 18px; border-radius: 100px;
+    background: var(--background-base);
+    border: 2px solid var(--border-hover);
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .3s ease, transform .3s cubic-bezier(.22,1,.36,1);
+  }
+  .fw-dot::after {
+    content: ""; width: 6px; height: 6px; border-radius: 100px;
+    background: var(--border-hover);
+    transition: background .3s ease;
+  }
+  .fw-sec.on .fw-dot { border-color: var(--accent); transform: scale(1.1); }
+  .fw-sec.on .fw-dot::after { background: var(--accent); }
+
   /* ── بخش ── */
-  .fw-sec { padding-top: clamp(38px, 5.5vw, 68px); scroll-margin-top: 96px; }
-  .fw-sec:first-child { padding-top: clamp(20px, 3vw, 34px); }
+  .fw-sec {
+    position: relative;
+    padding: 0 0 clamp(30px, 4.5vw, 48px) 0;
+    padding-inline-start: 52px;
+    scroll-margin-top: 96px;
+  }
   .fw-h2 {
     font-weight: 700; font-size: clamp(19px, 2.6vw, 27px);
     letter-spacing: -.025em; margin: 0; line-height: 1.32;
@@ -253,8 +294,13 @@ export const featureStyles = `
   @media (max-width: 520px) {
     .fw-detail-r { flex-direction: column; align-items: flex-start; gap: 4px; }
     .fw-detail-v { max-width: 100%; }
+    .fw-sec { padding-inline-start: 40px; }
+    .fw-track::before, .fw-fill { inset-inline-start: 11px; }
+    .fw-dot { inset-inline-start: 4px; width: 16px; height: 16px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .fw-btn, .fw-toc a, .fw-related-c { transition-duration: .01ms; }
+    .fw-btn, .fw-toc a, .fw-related-c, .fw-fill, .fw-dot {
+      transition-duration: .01ms;
+    }
   }
 `;

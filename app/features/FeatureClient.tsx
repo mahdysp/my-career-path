@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import SiteNav from "@/app/components/SiteNav";
+import { useScrollTrack } from "@/app/components/useScrollTrack";
 import type { FeaturePage } from "@/lib/feature-content";
 import { featureStyles } from "./featureStyles";
 
@@ -14,27 +14,7 @@ import { featureStyles } from "./featureStyles";
  * ناهماهنگی حتمی بود. تفاوت‌ها همه در داده است، نه در ساختار.
  */
 export default function FeatureClient({ page }: { page: FeaturePage }) {
-  const [active, setActive] = useState(page.blocks[0]?.id ?? "");
-
-  /* برجسته کردن بخش فعال در فهرست کناری */
-  useEffect(() => {
-    const els = page.blocks
-      .map((b) => document.getElementById(b.id))
-      .filter((e): e is HTMLElement => Boolean(e));
-    if (!els.length) return;
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible[0]) setActive(visible[0].target.id);
-      },
-      { rootMargin: "-96px 0px -62% 0px" }
-    );
-    els.forEach((e) => io.observe(e));
-    return () => io.disconnect();
-  }, [page.blocks]);
+  const { trackRef, fill, reached } = useScrollTrack(page.blocks.length);
 
   return (
     <main
@@ -83,16 +63,25 @@ export default function FeatureClient({ page }: { page: FeaturePage }) {
 
         <div className="fw-layout">
           <nav className="fw-toc" aria-label="فهرست مطالب">
-            {page.blocks.map((b) => (
-              <a key={b.id} href={`#${b.id}`} className={active === b.id ? "on" : ""}>
+            {page.blocks.map((b, i) => (
+              <a key={b.id} href={`#${b.id}`} className={reached === i ? "on" : ""}>
                 {b.short}
               </a>
             ))}
           </nav>
 
           <div>
-            {page.blocks.map((b) => (
-              <section key={b.id} id={b.id} className="fw-sec">
+            <div className="fw-track" ref={trackRef}>
+              <span className="fw-fill" style={{ height: fill }} aria-hidden="true" />
+
+            {page.blocks.map((b, i) => (
+              <section
+                key={b.id}
+                id={b.id}
+                data-stage={b.id}
+                className={`fw-sec ${i <= reached ? "on" : ""}`}
+              >
+                <span className="fw-dot" aria-hidden="true" />
                 <h2 className="fw-h2">{b.title}</h2>
                 {b.gist && <p className="fw-gist">{b.gist}</p>}
 
@@ -139,6 +128,7 @@ export default function FeatureClient({ page }: { page: FeaturePage }) {
                 )}
               </section>
             ))}
+            </div>
 
             <div className="fw-related">
               <div className="fw-related-t">صفحات مرتبط</div>
@@ -152,20 +142,6 @@ export default function FeatureClient({ page }: { page: FeaturePage }) {
               </div>
             </div>
 
-            <div className="fw-cta">
-              <h2>{page.cta.label}</h2>
-              <p>
-                آزمون حدود ده دقیقه وقت می‌گیرد و نتیجه در حساب شما ذخیره می‌شود.
-              </p>
-              <div className="fw-row">
-                <Link href={page.cta.href} className="fw-btn primary">
-                  {page.cta.label}
-                </Link>
-                <Link href="/how-it-works" className="fw-btn ghost">
-                  روش کار
-                </Link>
-              </div>
-            </div>
           </div>
         </div>
       </div>

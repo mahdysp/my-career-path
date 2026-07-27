@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import { navStyles } from "./navStyles";
@@ -95,6 +95,7 @@ type Me = { id: string; email: string; firstName: string; lastName: string } | n
 
 export default function SiteNav() {
   const router = useRouter();
+  const pathname = usePathname();
   const [me, setMe] = useState<Me>(null);
   const [meLoaded, setMeLoaded] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -203,6 +204,13 @@ export default function SiteNav() {
     router.push(href);
   };
 
+  /** آیا این لینک همان صفحه‌ای است که کاربر روی آن است؟ */
+  const isCurrent = (href: string) => {
+    const base = href.split("#")[0].replace(/\/$/, "") || "/";
+    const here = (pathname ?? "/").replace(/\/$/, "") || "/";
+    return base === here;
+  };
+
   const logout = async () => {
     setOpen(null);
     setSheet(false);
@@ -307,7 +315,12 @@ export default function SiteNav() {
                 <div className={`kn-pop ${g.wide ? "wide" : ""}`}>
                   <div className="kn-grid">
                     {g.items.map((it) => (
-                      <button key={it.label} className="kn-link" onClick={() => go(it.href)}>
+                      <button
+                        key={it.label}
+                        className={`kn-link ${isCurrent(it.href) ? "current" : ""}`}
+                        aria-current={isCurrent(it.href) ? "page" : undefined}
+                        onClick={() => go(it.href)}
+                      >
                         <span className="kn-ico">{ICONS[it.icon]}</span>
                         <span className="kn-txt">
                           <b>{it.label}</b>
@@ -342,7 +355,12 @@ export default function SiteNav() {
               <div key={g.label} className="kn-group">
                 <div className="kn-group-t">{g.label}</div>
                 {g.items.map((it) => (
-                  <button key={it.label} className="kn-link" onClick={() => go(it.href)}>
+                  <button
+                    key={it.label}
+                    className={`kn-link ${isCurrent(it.href) ? "current" : ""}`}
+                    aria-current={isCurrent(it.href) ? "page" : undefined}
+                    onClick={() => go(it.href)}
+                  >
                     <span className="kn-ico">{ICONS[it.icon]}</span>
                     <span className="kn-txt">
                       <b>{it.label}</b>

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import SiteNav from "@/app/components/SiteNav";
+import { useScrollTrack } from "@/app/components/useScrollTrack";
 import {
   AI_DOES,
   AI_DOES_NOT,
@@ -56,27 +56,7 @@ function Ref({ id }: { id: string }) {
 }
 
 export default function ScienceClient() {
-  const [active, setActive] = useState("model");
-
-  /* برجسته کردن بخش فعال در فهرست کناری */
-  useEffect(() => {
-    const els = SECTIONS.map((s) => document.getElementById(s.id)).filter(
-      (e): e is HTMLElement => Boolean(e)
-    );
-    if (!els.length) return;
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible[0]) setActive(visible[0].target.id);
-      },
-      { rootMargin: "-96px 0px -62% 0px" }
-    );
-    els.forEach((e) => io.observe(e));
-    return () => io.disconnect();
-  }, []);
+  const { trackRef, fill, reached } = useScrollTrack(SECTIONS.length);
 
   return (
     <main
@@ -112,16 +92,24 @@ export default function ScienceClient() {
 
         <div className="sc-layout">
           <nav className="sc-toc" aria-label="فهرست مطالب">
-            {SECTIONS.map((s) => (
-              <a key={s.id} href={`#${s.id}`} className={active === s.id ? "on" : ""}>
+            {SECTIONS.map((s, i) => (
+              <a key={s.id} href={`#${s.id}`} className={reached === i ? "on" : ""}>
                 {s.label}
               </a>
             ))}
           </nav>
 
           <div>
+            <div className="sc-track" ref={trackRef}>
+              <span className="sc-fill" style={{ height: fill }} aria-hidden="true" />
+
             {/* ── مدل ── */}
-            <section id="model" className="sc-sec">
+            <section
+              id="model"
+              data-stage="model"
+              className={`sc-sec ${0 <= reached ? "on" : ""}`}
+            >
+              <span className="sc-dot" aria-hidden="true" />
               <span className="sc-sec-n">01</span>
               <h2 className="sc-h2">مدل RIASEC هالند</h2>
               <div className="sc-body">
@@ -153,7 +141,12 @@ export default function ScienceClient() {
             </section>
 
             {/* ── ابعاد ── */}
-            <section id="dimensions" className="sc-sec">
+            <section
+              id="dimensions"
+              data-stage="dimensions"
+              className={`sc-sec ${1 <= reached ? "on" : ""}`}
+            >
+              <span className="sc-dot" aria-hidden="true" />
               <span className="sc-sec-n">02</span>
               <h2 className="sc-h2">شش بُعد، و اینکه هرکدام چه می‌سنجند</h2>
               <p className="sc-intro">
@@ -197,7 +190,12 @@ export default function ScienceClient() {
             </section>
 
             {/* ── شواهد ── */}
-            <section id="evidence" className="sc-sec">
+            <section
+              id="evidence"
+              data-stage="evidence"
+              className={`sc-sec ${2 <= reached ? "on" : ""}`}
+            >
+              <span className="sc-dot" aria-hidden="true" />
               <span className="sc-sec-n">03</span>
               <h2 className="sc-h2">شواهد کمّی — و اینکه چقدر قوی‌اند</h2>
               <p className="sc-intro">
@@ -234,7 +232,12 @@ export default function ScienceClient() {
             </section>
 
             {/* ── داده ── */}
-            <section id="data" className="sc-sec">
+            <section
+              id="data"
+              data-stage="data"
+              className={`sc-sec ${3 <= reached ? "on" : ""}`}
+            >
+              <span className="sc-dot" aria-hidden="true" />
               <span className="sc-sec-n">04</span>
               <h2 className="sc-h2">داده‌ی مشاغل از کجا می‌آید</h2>
               <div className="sc-body">
@@ -264,7 +267,12 @@ export default function ScienceClient() {
             </section>
 
             {/* ── روش ── */}
-            <section id="method" className="sc-sec">
+            <section
+              id="method"
+              data-stage="method"
+              className={`sc-sec ${4 <= reached ? "on" : ""}`}
+            >
+              <span className="sc-dot" aria-hidden="true" />
               <span className="sc-sec-n">05</span>
               <h2 className="sc-h2">درصد تطابق دقیقاً چطور حساب می‌شود</h2>
               <p className="sc-intro">
@@ -299,7 +307,12 @@ export default function ScienceClient() {
             </section>
 
             {/* ── هوش مصنوعی ── */}
-            <section id="ai" className="sc-sec">
+            <section
+              id="ai"
+              data-stage="ai"
+              className={`sc-sec ${5 <= reached ? "on" : ""}`}
+            >
+              <span className="sc-dot" aria-hidden="true" />
               <span className="sc-sec-n">06</span>
               <h2 className="sc-h2">هوش مصنوعی کجا دخالت دارد و کجا ندارد</h2>
               <p className="sc-intro">
@@ -351,7 +364,12 @@ export default function ScienceClient() {
             </section>
 
             {/* ── محدودیت‌ها ── */}
-            <section id="limits" className="sc-sec">
+            <section
+              id="limits"
+              data-stage="limits"
+              className={`sc-sec ${6 <= reached ? "on" : ""}`}
+            >
+              <span className="sc-dot" aria-hidden="true" />
               <span className="sc-sec-n">07</span>
               <h2 className="sc-h2">محدودیت‌ها</h2>
               <p className="sc-intro">
@@ -373,7 +391,12 @@ export default function ScienceClient() {
             </section>
 
             {/* ── منابع ── */}
-            <section id="refs" className="sc-sec">
+            <section
+              id="refs"
+              data-stage="refs"
+              className={`sc-sec ${7 <= reached ? "on" : ""}`}
+            >
+              <span className="sc-dot" aria-hidden="true" />
               <span className="sc-sec-n">08</span>
               <h2 className="sc-h2">منابع</h2>
               <p className="sc-intro">
@@ -405,21 +428,24 @@ export default function ScienceClient() {
               </ol>
             </section>
 
-            <div className="sc-cta">
-              <h2>حالا که می‌دانید چطور کار می‌کند</h2>
-              <p>
-                آزمون حدود ده دقیقه وقت می‌گیرد. نتیجه یک نقطه‌ی شروع برای فکر
-                کردن است، نه یک حکم قطعی.
-              </p>
-              <div className="sc-cta-row">
-                <Link href="/quiz" className="sc-btn primary">
-                  شروع آزمون
-                </Link>
-                <Link href="/how-it-works" className="sc-btn ghost">
-                  روش کار گام‌به‌گام
-                </Link>
+            </div>
+
+            <div className="sc-related">
+              <div className="sc-related-t">صفحات مرتبط</div>
+              <div className="sc-related-grid">
+                {[
+                  { h: "/how-it-works", t: "روش کار", d: "شش مرحله از انتخاب حوزه تا نتیجه" },
+                  { h: "/features/compare", t: "مقایسه‌ی مشاغل", d: "فرمول تطابق و منبع داده" },
+                  { h: "/features/profile", t: "پروفایل شغلی", d: "شش بُعد چطور اندازه گرفته می‌شوند" },
+                ].map((x) => (
+                  <Link key={x.h} href={x.h} className="sc-related-c">
+                    <b>{x.t}</b>
+                    <span>{x.d}</span>
+                  </Link>
+                ))}
               </div>
             </div>
+
           </div>
         </div>
       </div>

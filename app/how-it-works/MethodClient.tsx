@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import SiteNav from "@/app/components/SiteNav";
+import { useScrollTrack } from "@/app/components/useScrollTrack";
 import { STAGES } from "@/lib/method-content";
 import { methodStyles } from "./methodStyles";
 
@@ -19,69 +19,7 @@ import { methodStyles } from "./methodStyles";
  */
 
 export default function MethodClient() {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [fill, setFill] = useState(0);
-  /** ایندکس آخرین ایستگاهی که از خط میانی پنجره رد شده (-1 = هیچ‌کدام) */
-  const [reached, setReached] = useState(-1);
-
-  /* پر شدن خط زمانی همراه با اسکرول */
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-
-    let ticking = false;
-    const update = () => {
-      const stages = Array.from(
-        track.querySelectorAll<HTMLElement>("[data-stage]")
-      );
-      if (!stages.length) return;
-
-      /* خط تا نقطه‌ای پر می‌شود که آخرین ایستگاهِ ردشده از خط میانی
-         پنجره است. اگر از ارتفاع کل استفاده می‌کردیم، خط زودتر از
-         ایستگاه‌ها پر می‌شد و حس هم‌زمانی از بین می‌رفت. */
-      const mid = window.innerHeight * 0.55;
-      const top = track.getBoundingClientRect().top;
-
-      let last = -1;
-      let filled = 0;
-      stages.forEach((el, i) => {
-        const dot = el.getBoundingClientRect().top + 14;
-        if (dot <= mid) {
-          last = i;
-          filled = el.offsetTop + 14;
-        }
-      });
-
-      // بین دو ایستگاه، خط را نرم پیش ببر
-      const next = stages[last + 1];
-      if (next && last >= 0) {
-        const a = stages[last].getBoundingClientRect().top + 14;
-        const b = next.getBoundingClientRect().top + 14;
-        const t = Math.max(0, Math.min(1, (mid - a) / Math.max(1, b - a)));
-        filled += (next.offsetTop - stages[last].offsetTop) * t;
-      } else if (last < 0) {
-        filled = Math.max(0, Math.min(stages[0].offsetTop, mid - top));
-      }
-
-      setFill(Math.max(0, filled));
-      setReached(last);
-      ticking = false;
-    };
-
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(update);
-    };
-
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, []);
+  const { trackRef, fill, reached } = useScrollTrack(STAGES.length);
 
   return (
     <main
@@ -252,21 +190,6 @@ export default function MethodClient() {
               </Link>
             </div>
 
-            <div className="mw-cta">
-              <h2>آماده‌اید شروع کنید؟</h2>
-              <p>
-                حوزه‌ی کاری‌تان را بنویسید و ده دقیقه وقت بگذارید. نتیجه یک نقطه‌ی
-                شروع برای فکر کردن است، نه یک حکم قطعی.
-              </p>
-              <div className="mw-row">
-                <Link href="/quiz" className="mw-btn primary">
-                  شروع آزمون
-                </Link>
-                <Link href="/" className="mw-btn ghost">
-                  بازگشت به صفحه‌ی اصلی
-                </Link>
-              </div>
-            </div>
           </div>
         </div>
       </div>

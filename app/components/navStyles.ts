@@ -144,7 +144,17 @@ export const navStyles = `
     width: 34px; height: 34px; border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
     background: var(--nav-ico); color: var(--nav-ico-fg);
+    transition: background .2s ease, color .2s ease, box-shadow .2s ease;
   }
+
+  /* صفحه‌ی جاری: مربع آیکن رنگ لهجه می‌گیرد تا کاربر بداند کجاست */
+  .kn-link.current .kn-ico {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 14px var(--accent-glow);
+  }
+  .kn-link.current .kn-txt b { color: var(--accent); }
+  .kn-link.current { background: var(--surface); }
   .kn-txt b {
     display: block; font-size: 13.5px; font-weight: 600;
     color: var(--foreground); margin-bottom: 2px;
