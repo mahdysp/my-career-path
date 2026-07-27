@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/app/components/ThemeToggle";
+import ExplodedProfile from "@/app/components/ExplodedProfile";
 
 /* مسیر عمودی که بین گام‌ها می‌پیچد. عمداً کاملاً صاف نیست تا حس
    خط کشیده‌شده با دست بدهد نه یک خط برداری بی‌روح. */
@@ -354,6 +355,90 @@ export default function CareerHub() {
 
         @media (prefers-reduced-motion: reduce) {
           .k2-journey-step { opacity: 1; transform: none; transition: none; }
+        }
+
+        /* ── نمای انفجاری پروفایل ── */
+        .k2-exp {
+          --exp-fill: color-mix(in srgb, var(--foreground) 4%, transparent);
+          --exp-face: color-mix(in srgb, var(--background-base) 92%, var(--foreground) 3%);
+          color: var(--foreground-muted);
+          max-width: 1080px;
+          margin: 0 auto;
+          padding: clamp(72px, 11vw, 140px) clamp(16px, 4vw, 40px);
+          text-align: center;
+        }
+        .k2-exp-eyebrow {
+          display: inline-flex; align-items: center; gap: 8px;
+          font-family: var(--font-mono); font-size: 11px;
+          letter-spacing: .18em; color: var(--accent);
+        }
+        .k2-exp-tri {
+          width: 0; height: 0;
+          border-left: 4.5px solid transparent;
+          border-right: 4.5px solid transparent;
+          border-bottom: 7px solid var(--accent);
+        }
+        .k2-exp-title {
+          font-weight: 700; font-size: clamp(28px, 4.4vw, 44px);
+          letter-spacing: -.025em; color: var(--foreground);
+          margin: 14px 0 0; line-height: 1.25;
+        }
+        .k2-exp-sub {
+          font-size: 15px; line-height: 1.95; color: var(--foreground-muted);
+          max-width: 560px; margin: 16px auto 0;
+        }
+
+        .k2-exp-stage { position: relative; margin-top: clamp(28px, 5vw, 56px); }
+        .k2-exp-svg { width: 100%; height: auto; display: block; color: var(--foreground); }
+
+        .k2-exp-badge {
+          position: absolute; left: 50%; bottom: 4%;
+          transform: translate(-50%, 8px);
+          opacity: 0; pointer-events: none;
+          transition: opacity .45s ease, transform .45s cubic-bezier(.16,1,.3,1);
+        }
+        .k2-exp-badge.on { opacity: 1; transform: translate(-50%, 0); }
+        .k2-exp-badge span {
+          display: inline-block;
+          font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em;
+          color: #fff; background: var(--accent);
+          border-radius: 100px; padding: 6px 16px;
+          box-shadow: 0 4px 18px var(--accent-glow);
+        }
+
+        .k2-exp-legend {
+          display: grid; grid-template-columns: repeat(6, 1fr);
+          gap: 0; margin-top: clamp(24px, 4vw, 44px);
+          text-align: right;
+        }
+        .k2-exp-item {
+          display: flex; gap: 10px; align-items: flex-start;
+          padding: 0 14px;
+          border-right: 1px solid var(--border-default);
+          opacity: 0; transform: translateY(10px);
+          transition: opacity .45s ease, transform .5s cubic-bezier(.16,1,.3,1);
+        }
+        .k2-exp-item.on { opacity: 1; transform: translateY(0); }
+        .k2-exp-num {
+          font-family: var(--font-mono); font-size: 11px;
+          color: var(--accent); padding-top: 2px;
+        }
+        .k2-exp-name { font-weight: 700; font-size: 13.5px; color: var(--foreground); }
+        .k2-exp-hint {
+          font-size: 11.5px; line-height: 1.7;
+          color: var(--foreground-subtle); margin-top: 4px;
+        }
+
+        @media (max-width: 860px) {
+          .k2-exp-legend { grid-template-columns: repeat(3, 1fr); gap: 18px 0; }
+        }
+        @media (max-width: 520px) {
+          .k2-exp-legend { grid-template-columns: repeat(2, 1fr); }
+          .k2-exp-item { padding: 0 10px; }
+          .k2-exp-hint { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .k2-exp-item { opacity: 1; transform: none; }
         }
 
         .k2-mobile-actions { display: none; gap: 8px; align-items: center; }
@@ -712,6 +797,9 @@ export default function CareerHub() {
               </button>
             </div>
           </section>
+
+          {/* نمای انفجاری — شش بُعد که با اسکرول کنار هم می‌نشینند */}
+          <ExplodedProfile />
 
           {/* Footer */}
           <footer style={{ borderTop: "1px solid var(--border-default)", padding: "28px clamp(16px, 4vw, 40px)", textAlign: "center" }}>
