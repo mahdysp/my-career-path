@@ -17,17 +17,29 @@ import { faqStyles } from "./faqStyles";
  *
  * محتوا از پنل مدیریت می‌آید و در جدول `site_content` ذخیره می‌شود.
  */
+/** تعداد پرسش‌هایی که در حالت جمع‌شده نمایش داده می‌شود */
+const INITIAL = 4;
+
 export default function FaqSection({ faq }: { faq: SiteContent["faq"] }) {
   const [open, setOpen] = useState<string | null>(faq.items[0]?.id ?? null);
   const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState(false);
 
-  const shown = useMemo(() => {
+  const matched = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return faq.items;
     return faq.items.filter(
       (i) => i.q.toLowerCase().includes(q) || i.a.toLowerCase().includes(q)
     );
   }, [faq.items, query]);
+
+  /* در حالت عادی فقط چند پرسش اول دیده می‌شود تا انتهای صفحه‌ی اصلی
+     را اشغال نکند. هنگام جست‌وجو همه‌ی نتایج نشان داده می‌شوند —
+     پنهان کردن نتیجه‌ی جست‌وجو گیج‌کننده است. */
+  const searching = query.trim().length > 0;
+  const collapsed = !expanded && !searching;
+  const shown = collapsed ? matched.slice(0, INITIAL) : matched;
+  const hiddenCount = matched.length - shown.length;
 
   return (
     <section className="fq" id="faq">
@@ -92,6 +104,24 @@ export default function FaqSection({ faq }: { faq: SiteContent["faq"] }) {
           );
         })}
       </div>
+
+      {hiddenCount > 0 && (
+        <button className="fq-expand" onClick={() => setExpanded(true)}>
+          {hiddenCount} سؤال دیگر
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+      )}
+
+      {expanded && !searching && faq.items.length > INITIAL && (
+        <button className="fq-expand" onClick={() => setExpanded(false)}>
+          نمایش کمتر
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m6 15 6-6 6 6" />
+          </svg>
+        </button>
+      )}
 
       <div className="fq-more">
         <p>

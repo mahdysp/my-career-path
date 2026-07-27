@@ -142,6 +142,27 @@ export const faqStyles = `
     color: var(--foreground-subtle); font-size: 14px; line-height: 2;
   }
 
+  /* ── دکمه‌ی سؤال‌های بیشتر ── */
+  .fq-expand {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; margin-top: 12px;
+    font-family: inherit; font-size: 13.5px; font-weight: 600;
+    color: var(--foreground-muted);
+    background: none; cursor: pointer;
+    border: 1px dashed var(--border-hover);
+    border-radius: 14px; padding: 14px 18px;
+    transition: color .18s ease, border-color .18s ease, background .18s ease;
+  }
+  .fq-expand svg { opacity: .7; transition: transform .22s cubic-bezier(.22,1,.36,1); }
+  @media (hover: hover) and (pointer: fine) {
+    .fq-expand:hover {
+      color: var(--foreground);
+      border-color: var(--border-accent);
+      background: var(--surface);
+    }
+    .fq-expand:hover svg { transform: translateY(1px); }
+  }
+
   /* ── پایان صفحه ── */
   .fq-more {
     margin-top: clamp(34px, 5vw, 56px);

@@ -539,14 +539,6 @@ export default function HomeClient({ content }: { content: SiteContent }) {
         }
         .k2-screen-dot.on { width: 26px; background: var(--accent); }
 
-        /* لینک‌های فوتر */
-        .k2-foot-link {
-          font-size: 13px; color: var(--foreground-muted);
-          text-decoration: none; transition: color .18s ease;
-        }
-        @media (hover: hover) and (pointer: fine) {
-          .k2-foot-link:hover { color: var(--foreground); }
-        }
 
         /* قاب دستگاه: از لبه‌ی راست بیرون می‌زند، مثل مرجع طراحی */
         .k2-device { position: relative; }
@@ -961,29 +953,14 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           {/* پرسش‌های متداول — انتهای صفحه، قبل از فوتر */}
           {content.flags.faqVisible && <FaqSection faq={content.faq} />}
 
-          {/* Footer */}
-          {/* فوتر — جای مرسوم و مورد انتظار برای «درباره‌ی ما» و تماس */}
+          {/* فوتر — فقط خط حق نشر، وسط‌چین. لینک‌ها در منوی بالا هستند. */}
           <footer
             style={{
               borderTop: "1px solid var(--border-default)",
               padding: "26px clamp(16px, 4vw, 40px) 30px",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 14,
-              alignItems: "center",
-              justifyContent: "space-between",
+              textAlign: "center",
             }}
           >
-            <nav style={{ display: "flex", flexWrap: "wrap", gap: 18 }}>
-              {content.flags.aboutVisible && (
-                <a href="/about" className="k2-foot-link">درباره‌ی ما</a>
-              )}
-              <a href="/how-it-works" className="k2-foot-link">روش کار</a>
-              <a href="/science" className="k2-foot-link">پشتوانه‌ی علمی</a>
-              {content.flags.faqVisible && (
-                <a href="#faq" className="k2-foot-link">پرسش‌های متداول</a>
-              )}
-            </nav>
             <p style={{ fontSize: 12, color: "var(--foreground-subtle)", fontFamily: "var(--font-mono)", margin: 0 }}>
               © Karex — تمامی حقوق محفوظ است
             </p>
