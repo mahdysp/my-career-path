@@ -378,43 +378,6 @@ export default function CareerHub() {
           justify-content: center;
         }
 
-        .k2-scroll-cue {
-          position: absolute;
-          bottom: 26px;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 7px;
-          font-family: var(--font-mono);
-          font-size: 10px;
-          letter-spacing: .14em;
-          color: var(--foreground-subtle);
-          pointer-events: none;
-        }
-        .k2-scroll-cue i {
-          display: block;
-          width: 1px;
-          height: 30px;
-          background: linear-gradient(to bottom, transparent, var(--border-hover));
-          position: relative;
-          overflow: hidden;
-        }
-        .k2-scroll-cue i::after {
-          content: "";
-          position: absolute;
-          inset: 0 auto auto 0;
-          width: 1px;
-          height: 12px;
-          background: var(--accent);
-          animation: k2CueSlide 1.9s ease-in-out infinite;
-        }
-        @keyframes k2CueSlide {
-          0% { transform: translateY(-14px); opacity: 0; }
-          40% { opacity: 1; }
-          100% { transform: translateY(30px); opacity: 0; }
-        }
 
         /* ── نمای انفجاری پروفایل ── */
         .k2-exp {
@@ -686,10 +649,6 @@ export default function CareerHub() {
               </a>
             </div>
 
-            <span className="k2-scroll-cue" aria-hidden="true">
-              <i />
-              اسکرول کنید
-            </span>
           </section>
 
           {/* Features — Bento */}
