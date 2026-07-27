@@ -4,12 +4,24 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/app/components/ThemeToggle";
 
+/* مسیر عمودی که بین گام‌ها می‌پیچد. عمداً کاملاً صاف نیست تا حس
+   خط کشیده‌شده با دست بدهد نه یک خط برداری بی‌روح. */
+const JOURNEY_PATH =
+  "M30 8 C 44 62, 16 96, 30 148 S 48 214, 30 266 S 12 330, 30 382 S 46 448, 29 512";
+const JOURNEY_LEN = 516;
+/* زاویه‌ی کمی متفاوت برای هر کارت — ناقرینگی عمدی */
+const STEP_TILTS = ["-0.5deg", "0.7deg", "-0.35deg"];
+
 export default function CareerHub() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // پیشرفت رسم مسیر «سه گام» (۰ تا ۱) و گام فعال
+  const stepsRef = useRef<HTMLDivElement | null>(null);
+  const [pathProgress, setPathProgress] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -28,6 +40,46 @@ export default function CareerHub() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [router]);
+
+  /* رسم تدریجی مسیر هنگام عبور بخش «سه گام» از دید.
+     از موقعیت خود بخش نسبت به پنجره استفاده می‌شود تا مسیر دقیقاً همراه
+     حرکت انگشت/اسکرول کشیده شود، نه با یک انیمیشن زمان‌بندی‌شده. */
+  useEffect(() => {
+    const el = stepsRef.current;
+    if (!el) return;
+
+    let ticking = false;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+
+      /* مسیر از لحظه‌ای شروع می‌شود که بالای بخش وارد ۸۰٪ ارتفاع پنجره شود،
+         و وقتی کامل است که پایین بخش به ۴۵٪ پنجره برسد. فاصله‌ی بین این دو
+         حالت، «مسافت اسکرول» است؛ باید ارتفاع خود بخش را هم شامل شود وگرنه
+         مسیر خیلی زودتر از دیده‌شدن گام آخر تمام می‌شود. */
+      const startAt = vh * 0.8;
+      const endAt = vh * 0.45;
+      const distance = Math.max(1, r.height + startAt - endAt);
+      const travelled = startAt - r.top;
+
+      setPathProgress(Math.max(0, Math.min(1, travelled / distance)));
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
 
   const handleStart = () => {
     setIsLoading(true);
@@ -202,13 +254,107 @@ export default function CareerHub() {
           flex-shrink: 0;
         }
 
-        .k2-step-row {
+        /* ── مسیر سه‌گام ── */
+        .k2-journey {
           position: relative;
-          border-bottom: 1px solid var(--border-default);
-          transition: background 0.2s ease;
+          padding-right: 62px;
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
         }
-        .k2-step-row:last-child { border-bottom: none; }
-        .k2-step-row:hover { background: rgba(255,255,255,0.02); }
+        .k2-journey-line {
+          position: absolute;
+          top: 4px;
+          right: 8px;
+          width: 46px;
+          height: 100%;
+          pointer-events: none;
+          overflow: visible;
+        }
+
+        .k2-journey-step {
+          position: relative;
+          opacity: 0;
+          transform: translateY(16px) rotate(0deg);
+          transition:
+            opacity .5s cubic-bezier(.16,1,.3,1),
+            transform .55s cubic-bezier(.16,1,.3,1);
+        }
+        .k2-journey-step.on {
+          opacity: 1;
+          transform: translateY(0) rotate(var(--tilt));
+        }
+
+        /* نقطه‌ی روی مسیر */
+        .k2-journey-dot {
+          position: absolute;
+          top: 26px;
+          right: -40px;
+          width: 11px;
+          height: 11px;
+          border-radius: 50%;
+          background: var(--background-base);
+          border: 2px solid var(--border-hover);
+          transition: all .35s cubic-bezier(.16,1,.3,1);
+        }
+        .k2-journey-step.on .k2-journey-dot {
+          background: var(--accent);
+          border-color: var(--accent);
+          box-shadow: 0 0 0 4px var(--background-base), 0 0 14px var(--accent-glow);
+          transform: scale(1.15);
+        }
+
+        .k2-journey-card {
+          display: flex;
+          align-items: flex-start;
+          gap: 18px;
+          padding: 20px 22px;
+          border-radius: 14px;
+          background: var(--card-gradient);
+          border: 1px solid var(--border-default);
+          box-shadow: var(--card-shadow);
+          transition: border-color .3s ease, box-shadow .3s ease, transform .3s ease;
+        }
+        .k2-journey-step.on .k2-journey-card {
+          border-color: var(--border-hover);
+        }
+        /* با هاور، کارت صاف می‌شود — انگار دست رویش گذاشته‌اید */
+        .k2-journey-step:hover { transform: translateY(-2px) rotate(0deg); }
+        .k2-journey-step:hover .k2-journey-card {
+          box-shadow: var(--card-shadow-hover);
+        }
+
+        .k2-journey-num {
+          font-family: var(--font-mono);
+          font-size: 12px;
+          color: var(--foreground-subtle);
+          padding-top: 3px;
+          min-width: 22px;
+          transition: color .3s ease;
+        }
+        .k2-journey-step.on .k2-journey-num { color: var(--accent); }
+        .k2-journey-title {
+          font-weight: 700;
+          font-size: 15.5px;
+          color: var(--foreground);
+          margin-bottom: 5px;
+        }
+        .k2-journey-desc {
+          font-size: 13px;
+          line-height: 1.9;
+          color: var(--foreground-muted);
+        }
+
+        @media (max-width: 560px) {
+          .k2-journey { padding-right: 42px; }
+          .k2-journey-line { width: 32px; right: 4px; }
+          .k2-journey-dot { right: -28px; top: 24px; }
+          .k2-journey-card { padding: 17px 16px; gap: 13px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .k2-journey-step { opacity: 1; transform: none; transition: none; }
+        }
 
         .k2-mobile-actions { display: none; gap: 8px; align-items: center; }
 
@@ -245,7 +391,6 @@ export default function CareerHub() {
         @media (max-width: 430px) {
           .k2-hero-title { font-size: 33px !important; line-height: 1.3 !important; }
           .k2-card { padding: 22px 18px !important; }
-          .k2-step-row { padding: 18px 16px !important; gap: 14px !important; }
         }
 
         @media (max-width: 360px) {
@@ -512,18 +657,57 @@ export default function CareerHub() {
               </h2>
             </div>
 
-            <div className="k2-card" style={{ overflow: "hidden" }}>
-              {steps.map((s) => (
-                <div key={s.num} className="k2-step-row" style={{ display: "flex", alignItems: "center", gap: 22, padding: "22px 26px", textAlign: "right" }}>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--foreground-subtle)", minWidth: 28 }}>
-                    {s.num}
-                  </span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: "var(--foreground)", marginBottom: 4 }}>{s.title}</div>
-                    <div style={{ fontSize: 13, color: "var(--foreground-muted)" }}>{s.desc}</div>
+            {/* مسیر دست‌کشیده که همراه اسکرول رسم می‌شود */}
+            <div ref={stepsRef} className="k2-journey">
+              <svg
+                className="k2-journey-line"
+                viewBox="0 0 60 520"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                {/* رد کم‌رنگ کل مسیر */}
+                <path
+                  d={JOURNEY_PATH}
+                  fill="none"
+                  stroke="var(--border-hover)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeDasharray="1 7"
+                />
+                {/* بخش کشیده‌شده — ضخامتش عمداً یکنواخت نیست */}
+                <path
+                  d={JOURNEY_PATH}
+                  fill="none"
+                  stroke="var(--accent)"
+                  strokeWidth="2.6"
+                  strokeLinecap="round"
+                  strokeDasharray={JOURNEY_LEN}
+                  strokeDashoffset={JOURNEY_LEN * (1 - pathProgress)}
+                  style={{ transition: "stroke-dashoffset .12s linear" }}
+                />
+              </svg>
+
+              {steps.map((st, i) => {
+                // هر گام وقتی مسیر به آن می‌رسد فعال می‌شود
+                const threshold = (i + 0.55) / steps.length;
+                const active = pathProgress >= threshold;
+                return (
+                  <div
+                    key={st.num}
+                    className={`k2-journey-step ${active ? "on" : ""}`}
+                    style={{ ["--tilt" as string]: STEP_TILTS[i] }}
+                  >
+                    <span className="k2-journey-dot" aria-hidden="true" />
+                    <div className="k2-journey-card">
+                      <span className="k2-journey-num">{st.num}</span>
+                      <div>
+                        <div className="k2-journey-title">{st.title}</div>
+                        <div className="k2-journey-desc">{st.desc}</div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div style={{ textAlign: "center", marginTop: 44 }}>
