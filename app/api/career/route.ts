@@ -1,44 +1,67 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/route-error";
+import { runPrompt } from "@/lib/ai-runtime";
+
+/**
+ * نقشه‌ی راه کوتاه مهندسی.
+ *
+ * پیش‌تر کلید Gemini به‌صورت ثابت داخل همین فایل نوشته شده بود (یک مقدار
+ * جای‌گیر). حالا از همان لایه‌ی سرویس‌دهنده‌های /admin/ai استفاده می‌کند تا
+ * کلید در یک جای امن و رمزشده بماند.
+ *
+ * اگر هیچ سرویسی تنظیم نشده باشد، به‌جای خطا یک نقشه‌ی راه ثابت برمی‌گرداند —
+ * این مسیر باید همیشه چیزی برای نمایش داشته باشد.
+ */
+
+/** نقشه‌های راه ثابت، وقتی سرویس هوش مصنوعی در دسترس نیست */
+const CANNED: Record<string, string> = {
+  embedded:
+    "⚡ ۱. تسلط بر زبان C/C++ و میکروکنترلرهای AVR/ARM\n" +
+    "🛠️ ۲. شبیه‌سازی مدارها در Proteus و کار با سنسورها\n" +
+    "🎯 ۳. پیاده‌سازی سیستم‌های RTOS و کار روی بردهای تعبیه‌شده (Embedded)",
+  fpga:
+    "📐 ۱. یادگیری زبان‌های توصیف سخت‌افزار (Verilog یا VHDL)\n" +
+    "💻 ۲. آشنایی با معماری داخلی FPGA و ابزارهای سنتز (مثل Vivado)\n" +
+    "🚀 ۳. پیاده‌سازی پردازش سیگنال دیجیتال (DSP) و تست روی سخت‌افزار واقعی",
+  default:
+    "🏗️ ۱. تسلط بر اصول شئ‌گرایی (OOP) و الگوهای طراحی (Design Patterns)\n" +
+    "📊 ۲. مدل‌سازی سیستم با نمودارهای UML (ساختار Use Caseها و روابط آن)\n" +
+    "💻 ۳. طراحی معماری نرم‌افزار و سیستم‌های ماژولار",
+};
+
+const FALLBACK = {
+  system: "You are a concise engineering career mentor. Answer in Persian.",
+  temperature: 0.7,
+  maxTokens: 700,
+  template:
+    "شما یک مشاور شغلی مهندسی هستید. نام کاربر {{name}} است و حوزه تخصصی او {{skill}}. " +
+    "یک نقشه راه خلاصه و ۳ مرحله‌ای مهندسی به زبان فارسی بنویس.",
+};
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { name, skill } = body;
+    const { name, skill } = (await request.json()) as { name?: string; skill?: string };
 
-    const API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
+    const safeName = (name ?? "").toString().slice(0, 80) || "دوست عزیز";
+    const safeSkill = (skill ?? "").toString().slice(0, 80);
 
-    // اگر کلید ست نشده باشد، نقشه‌های راه شبیه‌سازی شده مهندسی را برمی‌گردانیم
-    if (API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
-      let roadmap = '';
-      
-      if (skill === 'embedded') {
-        roadmap = '⚡ ۱. تسلط بر زبان C/C++ و میکروکنترلرهای AVR/ARM\n🛠️ ۲. شبیه‌سازی مدارها در Proteus و کار با سنسورها\n🎯 ۳. پیاده‌سازی سیستم‌های RTOS و کار روی بردهای تعبیه‌شده (Embedded)';
-      } else if (skill === 'fpga') {
-        roadmap = '📐 ۱. یادگیری زبان‌های توصیف سخت‌افزار (Verilog یا VHDL)\n💻 ۲. آشنایی با معماری داخلی FPGA و ابزارهای سنتز (مثل Vivado)\n🚀 ۳. پیاده‌سازی پردازش سیگنال دیجیتال (DSP) و تست روی سخت‌افزار واقعی';
-      } else {
-        roadmap = '🏗️ ۱. تسلط بر اصول شئ‌گرایی (OOP) و الگوهای طراحی (Design Patterns)\n📊 ۲. مدل‌سازی سیستم با نمودارهای UML (ساختار Use Caseها و روابط آن)\n💻 ۳. طراحی معماری نرم‌افزار و سیستم‌های ماژولار';
-      }
-      
-      return NextResponse.json({ 
-        aiResponse: `سلام مهندس ${name} عزیز!\n\nزیرساخت هوش مصنوعی بدون نیاز به پکیج آماده است.\n\n📍 مسیر پیشنهادی برای شما در حوزه تخصصی‌تان:\n\n${roadmap}`
+    try {
+      const completion = await runPrompt(
+        "career.roadmap",
+        { name: safeName, skill: safeSkill || "مهندسی نرم‌افزار" },
+        FALLBACK
+      );
+      return NextResponse.json({ aiResponse: completion.text });
+    } catch {
+      // سرویسی تنظیم نشده یا در دسترس نیست — نسخه‌ی ثابت
+      const roadmap = CANNED[safeSkill] ?? CANNED.default;
+      return NextResponse.json({
+        aiResponse:
+          `سلام مهندس ${safeName} عزیز!\n\n` +
+          `📍 مسیر پیشنهادی برای شما در حوزه تخصصی‌تان:\n\n${roadmap}`,
       });
     }
-
-    // بخش اتصال به API واقعی گوگل (در صورت داشتن کلید)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: `شما یک مشاور شغلی مهندسی هستید. نام کاربر ${name} است و حوزه تخصصی او ${skill}. یک نقشه راه خلاصه و ۳ مرحله‌ای مهندسی به زبان فارسی بنویس.` }]
-        }]
-      })
-    });
-
-    const data = await response.json();
-    return NextResponse.json({ aiResponse: data.candidates[0].content.parts[0].text });
-
-  } catch (error) {
-    return NextResponse.json({ aiResponse: 'خطا در ارتباط با سرور مهندسی' });
+  } catch (err) {
+    return handleRouteError(err, { message: "خطا در ارتباط با سرور مهندسی", status: 400 });
   }
 }
