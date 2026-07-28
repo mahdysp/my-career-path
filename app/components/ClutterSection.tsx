@@ -7,9 +7,13 @@ import { clutterStyles } from "./clutterStyles";
 /**
  * بخش «به‌جای این‌همه حدس، یک نقشه» — قبل از پرسش‌های متداول.
  *
- * روایت با اسکرول: شش کارت (راه‌های حدسی انتخاب شغل) یکی‌یکی ظاهر
- * می‌شوند، بعد پشت سر هم علامت حذف می‌گیرند و کم‌رنگ می‌شوند، و در
- * پایان یک کارت واحد جایشان را می‌گیرد.
+ * روایت با اسکرول: شش کاشی (راه‌های حدسی انتخاب شغل) یکی‌یکی ظاهر
+ * می‌شوند، بعد پشت سر هم ضربدر می‌خورند و خطی روی برچسبشان کشیده
+ * می‌شود، و در پایان یک کارت واحد جایشان را می‌گیرد.
+ *
+ * نکته‌ی مهم در پیاده‌سازی: شفافیت روی *کل* کاشی اعمال نمی‌شود، چون
+ * آن‌وقت ضربدر قرمز هم محو می‌شد (کنتراست ۲.۷ — عملاً نامرئی). فقط
+ * آیکن و برچسب کم‌رنگ می‌شوند.
  *
  * چرا این استعاره: مرجع طراحی لوگوی رقبا را خط می‌زد. اینجا رقیب ما
  * یک محصول نیست — عادت‌های حدسیِ انتخاب شغل است. همان را خط می‌زنیم.
@@ -110,8 +114,8 @@ export default function ClutterSection({
 
   const n = data.items.length;
   /* سه فاز پشت سر هم: ظاهر شدن → خط خوردن → جایگزینی */
-  const APPEAR_END = 0.4;
-  const CROSS_END = 0.78;
+  const APPEAR_END = 0.34;
+  const CROSS_END = 0.68;
 
   return (
     <section className="cl" ref={wrapRef}>
@@ -148,14 +152,12 @@ export default function ClutterSection({
         })}
       </div>
 
-      <div className={`cl-arrow ${p > CROSS_END ? "on" : ""}`} aria-hidden="true">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 4v15" />
-          <path d="m6.5 13.5 5.5 5.5 5.5-5.5" />
-        </svg>
+      <div className={`cl-bridge ${p > CROSS_END ? "on" : ""}`} aria-hidden="true">
+        <span className="cl-bridge-line" />
+        <span className="cl-bridge-dot" />
       </div>
 
-      <div className={`cl-result ${p > CROSS_END + 0.05 ? "on" : ""}`}>
+      <div className={`cl-result ${p > CROSS_END + 0.04 ? "on" : ""}`}>
         <span className="cl-result-ico">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="9" />
