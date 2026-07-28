@@ -1,9 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/route-error";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
+import { getSession } from "@/lib/session";
+import {
+  buildUserVector,
+  hasEnoughSignal,
+  hollandCodeToVector,
+  matchPercent,
+} from "@/lib/riasec-score";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { createClient } from "@supabase/supabase-js";
 
 export async function POST(req: NextRequest) {
   try {
+    if (!req.cookies.get("sb-access-token")?.value) {
+      return NextResponse.json(
+        { message: "برای دیدن تحلیل ابتدا وارد حساب خود شوید." },
+        { status: 401 }
+      );
+    }
+
+    const limited = await checkRateLimitAsync(req, { name: "analyze", limit: 6, windowMs: 60_000 });
+    if (limited) return limited;
+
     const { query, questions, answers } = await req.json();
 
     if (!query || !questions || !answers) {
@@ -39,7 +57,7 @@ ${qaText}
   "career_paths": [
     {
       "title": "عنوان مسیر شغلی",
-      "match_percentage": 92,
+      "holland_code": "IRC",
       "description": "توضیح این مسیر و چرا مناسب این کاربر است",
       "required_skills": ["مهارت ۱", "مهارت ۲", "مهارت ۳"],
       "avg_salary": "مثلاً ۱۵-۳۰ میلیون تومان"
@@ -58,6 +76,11 @@ ${qaText}
 }
 
 حتماً:
+- برای هر مسیر شغلی، «holland_code» را بنویس: سه حرف از مدل RIASEC هالند،
+  به ترتیب اهمیت برای آن شغل. حروف مجاز:
+  R (عمل‌گرا)، I (پژوهشگر)، A (هنرمند)، S (اجتماعی)، E (متهور)، C (منظم).
+  مثال: توسعه‌دهنده نرم‌افزار = "ICR" ، طراح رابط کاربری = "AIC".
+  درصد تطابق را خودت محاسبه نکن؛ سیستم آن را از پاسخ‌های کاربر حساب می‌کند.
 - حداقل ۳ مسیر شغلی پیشنهاد بده
 - حداقل ۳ فاز در نقشه راه داشته باش
 - همه چیز را به فارسی روان بنویس
@@ -110,43 +133,67 @@ ${qaText}
       );
     }
 
-    // ذخیره در quiz_attempts اگر کاربر لاگین است
-    const accessToken = req.cookies.get("sb-access-token")?.value;
-    let attemptId = null;
+    /* ── محاسبه‌ی واقعی درصد تطابق ──
+       درصد را دیگر از هوش مصنوعی نمی‌پذیریم (قابل تکرار نبود و تعریف نداشت).
+       اینجا پروفایل RIASEC کاربر از پاسخ‌هایش ساخته می‌شود و تطابق با هر شغل
+       از شباهت کسینوسی حساب می‌گردد — همیشه یکسان و قابل توضیح. */
+    try {
+      const { vector, covered } = buildUserVector(questions, answers);
 
-    if (accessToken) {
-      try {
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          { global: { headers: { Authorization: `Bearer ${accessToken}` } } }
+      if (hasEnoughSignal(covered) && Array.isArray(result?.career_paths)) {
+        result.career_paths = result.career_paths.map(
+          (c: { holland_code?: string; match_percentage?: number }) => {
+            const target = hollandCodeToVector(c.holland_code || "");
+            return {
+              ...c,
+              match_percentage: target
+                ? matchPercent(vector, target)
+                : (c.match_percentage ?? null),
+              match_basis: target ? "riasec" : "estimate",
+            };
+          }
         );
-
-        const { data: userData } = await supabase.auth.getUser(accessToken);
-
-        if (userData.user) {
-          const { data: attempt } = await supabaseAdmin
-            .from("quiz_attempts")
-            .insert({
-              user_id: userData.user.id,
-              query,
-              answers,
-              result_summary: result.summary,
-              result_data: result,
-            })
-            .select("id")
-            .single();
-
-          attemptId = attempt?.id || null;
-        }
-      } catch (e) {
-        console.error("DB save error:", e);
+        // مرتب‌سازی نزولی تا «بهترین گزینه» واقعاً اول باشد
+        result.career_paths.sort(
+          (a: { match_percentage?: number }, b: { match_percentage?: number }) =>
+            (b.match_percentage ?? 0) - (a.match_percentage ?? 0)
+        );
+        result.riasec_profile = vector;
       }
+    } catch (e) {
+      console.error("RIASEC scoring failed:", e);
     }
 
-    return NextResponse.json({ result, attemptId });
+    // ذخیره در quiz_attempts — نشست در صورت نیاز تازه می‌شود تا نتیجه‌ی
+    // تحلیل‌شده به‌خاطر انقضای توکن از دست نرود.
+    let attemptId: string | null = null;
+    let applyCookies: (r: NextResponse) => NextResponse = (r) => r;
+
+    try {
+      const session = await getSession(req);
+      applyCookies = session.applyCookies;
+
+      if (session.user) {
+        const { data: attempt } = await supabaseAdmin
+          .from("quiz_attempts")
+          .insert({
+            user_id: session.user.id,
+            query,
+            answers,
+            result_summary: result.summary,
+            result_data: result,
+          })
+          .select("id")
+          .single();
+
+        attemptId = attempt?.id || null;
+      }
+    } catch (e) {
+      console.error("DB save error:", e);
+    }
+
+    return applyCookies(NextResponse.json({ result, attemptId }));
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ message: "خطای سرور." }, { status: 500 });
+    return handleRouteError(err);
   }
 }

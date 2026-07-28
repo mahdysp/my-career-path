@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/route-error";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
+import { setSessionCookies } from "@/lib/auth-cookies";
 import { supabase } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = await checkRateLimitAsync(req, { name: "login", limit: 10, windowMs: 60_000 });
+    if (limited) return limited;
+
     const { email, password } = await req.json();
 
     if (!email || !password) {
@@ -33,7 +39,8 @@ export async function POST(req: NextRequest) {
           { status: 401 }
         );
       }
-      return NextResponse.json({ message: error.message }, { status: 401 });
+      // خطاهای شبکه‌ای Supabase (پروژه خوابیده، فیلترینگ و…) نباید خام به کاربر برسد
+      return handleRouteError(error, { message: "ورود ناموفق بود. لطفاً دوباره تلاش کنید.", status: 401 });
     }
 
     if (!data.session) {
@@ -52,25 +59,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    response.cookies.set("sb-access-token", data.session.access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: data.session.expires_in,
-    });
-
-    response.cookies.set("sb-refresh-token", data.session.refresh_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 روز
+    setSessionCookies(response, {
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+      expires_in: data.session.expires_in,
     });
 
     return response;
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ message: "خطای سرور." }, { status: 500 });
+    return handleRouteError(err);
   }
 }

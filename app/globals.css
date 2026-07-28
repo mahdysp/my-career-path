@@ -1,28 +1,201 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
-:root {
-  --background-deep: #020203;
-  --background-base: #050506;
-  --background-elevated: #0a0a0c;
-  --surface: rgba(255, 255, 255, 0.05);
-  --surface-hover: rgba(255, 255, 255, 0.08);
-  --foreground: #ededef;
-  --foreground-muted: #8a8f98;
-  --foreground-subtle: rgba(255, 255, 255, 0.6);
-  --accent: #5e6ad2;
-  --accent-bright: #6872d9;
-  --accent-glow: rgba(94, 106, 210, 0.3);
-  --border-default: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.1);
-  --border-accent: rgba(94, 106, 210, 0.3);
+/* ─────────────────────────────────────────────
+   تم تیره (پیش‌فرض)
+   ───────────────────────────────────────────── */
+:root,
+:root[data-theme="dark"] {
+  /* همه‌ی جفت‌های متن/زمینه با ابزار WCAG اندازه‌گیری شده‌اند؛
+     نسبت‌ها در کامنت آمده تا تغییرهای بعدی کورکورانه نباشد.
 
-  --font-sans: "IBM Plex Sans Arabic", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+     کارت روشن‌تر شد (0a0a0c → 19191c) چون نسبتش با زمینه ۱.۰۳ بود —
+     عملاً هیچ لبه‌ای دیده نمی‌شد و همه‌چیز یک سطح تخت به‌نظر می‌رسید. */
+  --background-deep: #000001;
+  --background-base: #08080a;
+  --background-elevated: #16161a;
+  --surface: rgba(255, 255, 255, 0.065);
+  --surface-hover: rgba(255, 255, 255, 0.105);
+  --foreground: #f2f2f4;              /* ۱۷.۵:۱ */
+  --foreground-muted: #9297a1;        /* ۶.۷:۱ */
+  --foreground-subtle: rgba(255, 255, 255, 0.66); /* ۸.۵:۱ */
+  --accent: #7b86e8;                  /* ۶.۲:۱ — قبلاً 5e6ad2 با ۴.۳ */
+  --accent-bright: #929bf0;
+  --accent-glow: rgba(123, 134, 232, 0.32);
+  /* جداکننده‌ی ساده ۱.۳:۱ کافی است؛ هر چیز تعاملی باید ۳:۱ باشد
+     (WCAG 1.4.11) — از border-strong استفاده شود. */
+  --border-default: rgba(255, 255, 255, 0.13);
+  --border-hover: rgba(255, 255, 255, 0.22);
+  --border-strong: rgba(255, 255, 255, 0.35);
+  --border-accent: rgba(123, 134, 232, 0.45);
+
+  /* توکن‌های ترکیبی — برای اینکه صفحات رنگ ثابت ننویسند */
+  --page-gradient: radial-gradient(
+    ellipse 1200px 800px at 50% -10%,
+    #16161f 0%,
+    #08080a 55%,
+    #000001 100%
+  );
+  --nav-bg: rgba(8, 8, 10, 0.75);
+  --card-solid: linear-gradient(to bottom, #1c1c22, #131318);
+  --card-gradient: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.035)
+  );
+  /* لبه‌ی کارت باید دیده شود، وگرنه سایه روی زمینه‌ی تیره بی‌اثر است */
+  --card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.09), 0 2px 20px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(0, 0, 0, 0.2);
+  --card-shadow-hover: 0 0 0 1px rgba(255, 255, 255, 0.16), 0 12px 40px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(123, 134, 232, 0.16);
+  --input-bg: rgba(255, 255, 255, 0.06);
+  --input-bg-focus: rgba(255, 255, 255, 0.085);
+  --option-bg: #17171d;
+  --node-fill: #131318;
+  --placeholder: #7f828a;             /* ۴.۶:۱ روی کارت — قبلاً ۲.۸ و ناخوانا */
+  --overlay: rgba(2, 2, 3, 0.72);
+  --grid-line: rgba(255, 255, 255, 0.045);
+  --track: rgba(255, 255, 255, 0.12);
+  --noise-opacity: 0.02;
+  --blob-1: rgba(94, 106, 210, 0.26);
+  --blob-2: rgba(168, 85, 247, 0.13);
+  --blob-3: rgba(94, 106, 210, 0.11);
+  --success: #4ade80;
+  --danger: #fca5a5;
+  --warning: #fbbf24;
+  --heading-gradient: linear-gradient(to bottom, #ffffff, rgba(255, 255, 255, 0.8));
+
+  /* تقویم فعالیت */
+  --heat-0: rgba(255, 255, 255, 0.075);
+  --heat-1: #3d478f;
+  --heat-2: #5560c4;
+  --heat-3: #7d80ea;
+  --heat-4: #c99cff;
+  --heat-edge: rgba(255, 255, 255, 0.1);
+
+  /* نوار بالای سایت — قرص شناور */
+  --nav-pill: rgba(22, 22, 28, 0.82);
+  --nav-pill-edge: rgba(255, 255, 255, 0.15);
+  --nav-pill-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+  --nav-pill-shadow-lift: 0 10px 34px rgba(0, 0, 0, 0.6);
+  --nav-pop: rgba(24, 24, 30, 0.97);
+  --nav-pop-shadow: 0 20px 52px -14px rgba(0, 0, 0, 0.8);
+  --nav-ico: rgba(255, 255, 255, 0.1);
+  --nav-ico-fg: var(--foreground);
+  --nav-cta: var(--foreground);
+  --nav-cta-fg: #0a0a0d;
+
+  /* قاب دستگاه در بخش نمایشگر */
+  --device-body: linear-gradient(160deg, #33333d, #1d1d24 46%);
+  --device-edge: rgba(255, 255, 255, 0.2);
+  --device-sheen: rgba(255, 255, 255, 0.12);
+  --device-shadow: rgba(0, 0, 0, 0.75);
+  --device-stand: linear-gradient(to bottom, #2c2c36, #202028);
+  --device-dot: rgba(255, 255, 255, 0.26);
+  --device-label: rgba(255, 255, 255, 0.62); /* ۴.۹:۱ روی بدنه */
+
+  --font-sans: var(--font-vazirmatn), Vazirmatn, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", var(--font-vazirmatn),
+    Vazirmatn, monospace;
 
   --background: var(--background-base);
   --foreground-token: var(--foreground);
+  color-scheme: dark;
+}
+
+/* ─────────────────────────────────────────────
+   تم روشن — الهام‌گرفته از نور روز
+   ───────────────────────────────────────────── */
+:root[data-theme="light"] {
+  /* کاغذ کرمی گرم با کارت‌های سفید خالص روی آن.
+     همه‌ی جفت‌های متن/زمینه با ابزار سنجش WCAG اندازه‌گیری شده‌اند؛
+     اعداد در کامنت هر خط آمده تا تغییرهای بعدی کورکورانه نباشند.
+
+     کاغذ کمی تیره‌تر از قبل شد (faf8f3 → f5f2ea) چون کارت سفید روی آن
+     نسبت ۱.۰۶ داشت — عملاً نامرئی. حالا ۱.۱۴ است و لبه‌ی کارت بدون
+     نیاز به حاشیه‌ی پررنگ دیده می‌شود. */
+  --background-deep: #eae5da;
+  --background-base: #f5f2ea;
+  --background-elevated: #ffffff;
+  --surface: rgba(30, 27, 22, 0.05);
+  --surface-hover: rgba(30, 27, 22, 0.085);
+  --foreground: #17171c;              /* ۱۷.۳:۱ روی کارت */
+  --foreground-muted: #5f5c56;        /* ۶.۱:۱ روی کاغذ */
+  --foreground-subtle: rgba(23, 23, 28, 0.68); /* ۴.۶:۱ — قبلاً ۳.۳ بود */
+  --accent: #4f4fcc;                  /* ۶.۱:۱ روی کاغذ — قبلاً ۵.۱ */
+  --accent-bright: #3f3fb8;
+  --accent-glow: rgba(79, 79, 204, 0.22);
+  /* حاشیه‌ها: جداکننده‌ی ساده ۱.۵:۱ کافی است، ولی هر چیزی که تعاملی
+     است باید ۳:۱ باشد (WCAG 1.4.11) — از border-strong استفاده شود. */
+  --border-default: rgba(30, 27, 22, 0.14);
+  --border-hover: rgba(30, 27, 22, 0.3);
+  --border-strong: rgba(30, 27, 22, 0.48);
+  --border-accent: rgba(79, 79, 204, 0.5);
+
+  --page-gradient: radial-gradient(
+    ellipse 1200px 800px at 50% -10%,
+    #faf8f2 0%,
+    #f5f2ea 45%,
+    #eeeade 100%
+  );
+  --nav-bg: rgba(245, 242, 234, 0.85);
+  --card-solid: linear-gradient(to bottom, #ffffff, #fdfcfa);
+  --card-gradient: linear-gradient(to bottom, #ffffff, #fefdfb);
+  /* سایه‌ها عمیق‌تر شدند: روی کاغذ روشن، سایه‌ی کم‌رنگ اصلاً دیده نمی‌شود
+     و کارت‌ها روی صفحه شناور به‌نظر نمی‌رسند. */
+  --card-shadow: 0 0 0 1px rgba(30, 27, 22, 0.07), 0 1px 2px rgba(48, 42, 32, 0.06),
+    0 6px 18px -4px rgba(48, 42, 32, 0.1);
+  --card-shadow-hover: 0 0 0 1px rgba(30, 27, 22, 0.1), 0 4px 10px -2px rgba(48, 42, 32, 0.1),
+    0 18px 40px -12px rgba(48, 42, 32, 0.18);
+  --input-bg: #ffffff;
+  --input-bg-focus: #ffffff;
+  --option-bg: #ffffff;
+  --node-fill: #ffffff;
+  --placeholder: #78746c;             /* ۴.۵:۱ — قبلاً ۲.۵ و ناخوانا بود */
+  --overlay: rgba(26, 24, 20, 0.4);
+  --grid-line: rgba(30, 27, 22, 0.055);
+  --track: rgba(30, 27, 22, 0.12);
+  --noise-opacity: 0.014;
+  --blob-1: rgba(79, 79, 204, 0.11);
+  --blob-2: rgba(150, 110, 240, 0.085);
+  --blob-3: rgba(230, 160, 90, 0.1);
+  --success: #147a3a;                 /* ۵.۰:۱ */
+  --danger: #c81e1e;                  /* ۵.۴:۱ */
+  --warning: #96450a;                 /* ۶.۰:۱ — قبلاً b45309 با ۴.۷ */
+  --heading-gradient: linear-gradient(to bottom, #131318, #34313c);
+
+  /* تقویم فعالیت — جدول در حالت روز باید دیده شود */
+  --heat-0: #e5e1d7;
+  --heat-1: #bfbeea;
+  --heat-2: #8f8ddb;
+  --heat-3: #5f5fc9;
+  --heat-4: #3f349e;
+  --heat-edge: rgba(30, 27, 22, 0.14);
+
+  /* نوار بالای سایت — در تم روشن قرص سفید روی کاغذ کرمی */
+  --nav-pill: rgba(255, 255, 255, 0.9);
+  --nav-pill-edge: rgba(30, 27, 22, 0.16);
+  --nav-pill-shadow: 0 2px 10px rgba(48, 42, 32, 0.09);
+  --nav-pill-shadow-lift: 0 10px 28px -6px rgba(48, 42, 32, 0.2);
+  --nav-pop: rgba(255, 255, 255, 0.98);
+  --nav-pop-shadow: 0 20px 48px -14px rgba(48, 42, 32, 0.3);
+  --nav-ico: rgba(30, 27, 22, 0.07);
+  --nav-ico-fg: var(--foreground);
+  --nav-cta: #16161c;
+  --nav-cta-fg: #ffffff;
+
+  /* در تم روشن بدنه باید تیره‌تر از کاغذ کرمی باشد، وگرنه حاشیه‌ی
+     نمایشگر با پس‌زمینه یکی می‌شود و قاب دیده نمی‌شود. */
+  --device-body: linear-gradient(160deg, #d2cdc2, #b5b0a5 52%);
+  --device-edge: rgba(30, 27, 22, 0.32);
+  --device-sheen: rgba(255, 255, 255, 0.7);
+  --device-shadow: rgba(48, 42, 32, 0.34);
+  --device-stand: linear-gradient(to bottom, #c6c1b6, #aea99e);
+  --device-dot: rgba(30, 27, 22, 0.3);
+  --device-label: rgba(23, 23, 28, 0.72); /* ۴.۶:۱ روی بدنه — قبلاً ۳.۱ */
+
+  --background: var(--background-base);
+  --foreground-token: var(--foreground);
+  color-scheme: light;
 }
 
 @theme inline {
@@ -34,14 +207,105 @@
   box-sizing: border-box;
 }
 
+/* ─────────────────────────────────────────────
+   ارتفاع اشغال‌شده توسط نوار شناور بالای سایت.
+
+   بخش‌های چسبان (نمای انفجاری، نمایشگر، پشتوانه، سه‌گام) باید *زیر*
+   این مقدار قفل شوند؛ با top: 0 سرشان پشت نوار پنهان می‌ماند.
+   یک‌جا تعریف شده تا با تغییر ارتفاع نوار، همه با هم به‌روز شوند.
+   ───────────────────────────────────────────── */
+:root {
+  --nav-offset: calc(58px + clamp(10px, 1.6vw, 18px) + 8px);
+}
+@media (max-width: 940px) {
+  :root {
+    --nav-offset: calc(54px + clamp(10px, 1.6vw, 18px) + 8px);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   ارقام لاتین در سراسر سایت
+
+   Vazirmatn به‌طور پیش‌فرض ارقام فارسی (۱۲۳) را نمایش می‌دهد. با خاموش
+   کردن ویژگی OpenType به نام `ss02` — که همان «فرم فارسی ارقام» است —
+   رقم‌های لاتین (123) رندر می‌شوند.
+
+   این یک تور ایمنی در سطح فونت است؛ منطق قالب‌بندی در lib/format.ts
+   خودش خروجی لاتین می‌دهد. اما اگر جایی از سایت رقم فارسی از دیتابیس یا
+   متن ثابت بیاید، اینجا هم درست دیده می‌شود.
+   ───────────────────────────────────────────── */
+html {
+  font-feature-settings: "ss02" off;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
 html,
 body {
   background: var(--background-base);
   color: var(--foreground);
+  /* هیچ عنصری نباید صفحه را افقی بکشد (اسکرول افقی ناخواسته در موبایل).
+     از clip استفاده می‌شود نه hidden: مقدار hidden روی ریشه یک زمینه‌ی
+     اسکرول می‌سازد و position: sticky فرزندان را از کار می‌اندازد. */
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+/* جلوگیری از سرریز محتوای طولانی مثل ایمیل یا URL روی صفحه‌های باریک.
+   نکته: دکمه‌ها عمداً مستثنا هستند — شکستن برچسب کوتاهی مثل «خروج»
+   به دو خط، ناوبار را خراب می‌کند. */
+@media (max-width: 640px) {
+  h1, h2, h3, p, label {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* برچسب دکمه‌ها هیچ‌وقت نشکند */
+button,
+a[role="button"],
+.k2-btn {
+  white-space: nowrap;
+}
+
+/* روی دستگاه‌های لمسی، هدف‌های کوچک به حداقل استاندارد ۴۴px می‌رسند
+   بدون اینکه ظاهرشان بزرگ شود (ناحیه لمس نامرئی گسترش می‌یابد). */
+@media (hover: none) and (pointer: coarse) {
+  /* فقط دکمه‌های مستقل — نقاط نقشه سوالات عمداً مستثنا هستند، چون
+     ناحیه ۴۴px روی آن‌ها همسایه‌ها را می‌پوشاند و لمس را غیرقابل‌پیش‌بینی می‌کند. */
+  .k2-theme-toggle,
+  .k2-eye,
+  .k2-lamp {
+    position: relative;
+  }
+  .k2-theme-toggle::after,
+  .k2-eye::after,
+  .k2-lamp::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 body {
   font-family: var(--font-sans);
+}
+
+svg text {
+  font-family: var(--font-sans);
+}
+
+/* تغییر نرم بین دو تم */
+html.k2-theming,
+html.k2-theming *,
+html.k2-theming *::before,
+html.k2-theming *::after {
+  transition: background-color 0.28s ease, border-color 0.28s ease, color 0.28s ease,
+    fill 0.28s ease, stroke 0.28s ease, box-shadow 0.28s ease !important;
 }
 
 a {
@@ -50,7 +314,7 @@ a {
 
 ::selection {
   background: var(--accent-glow);
-  color: #fff;
+  color: var(--foreground);
 }
 
 :focus-visible {
@@ -59,4 +323,53 @@ a {
     0 0 0 2px var(--background-base),
     0 0 0 4px var(--accent);
   border-radius: 8px;
+}
+
+/* ─────────────────────────────────────────────
+   دکمه تغییر تم — در همه صفحات مشترک
+   ───────────────────────────────────────────── */
+.k2-theme-toggle {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border-default);
+  color: var(--foreground-muted);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.k2-theme-toggle:hover {
+  background: var(--surface-hover);
+  color: var(--foreground);
+  border-color: var(--border-hover);
+}
+.k2-theme-toggle svg {
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  transition: opacity 0.3s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* در تم تیره: ماه دیده می‌شود */
+.k2-theme-toggle .k2-sun {
+  opacity: 0;
+  transform: rotate(-70deg) scale(0.5);
+}
+.k2-theme-toggle .k2-moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+/* در تم روشن: خورشید دیده می‌شود */
+:root[data-theme="light"] .k2-theme-toggle .k2-sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+:root[data-theme="light"] .k2-theme-toggle .k2-moon {
+  opacity: 0;
+  transform: rotate(70deg) scale(0.5);
 }

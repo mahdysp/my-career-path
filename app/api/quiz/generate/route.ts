@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/route-error";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    // فقط کاربران واردشده — این مسیر به سرویس پولی وصل است
+    if (!req.cookies.get("sb-access-token")?.value) {
+      return NextResponse.json(
+        { message: "برای شروع آزمون ابتدا وارد حساب خود شوید." },
+        { status: 401 }
+      );
+    }
+
+    const limited = await checkRateLimitAsync(req, { name: "generate", limit: 8, windowMs: 60_000 });
+    if (limited) return limited;
+
     const { query, count } = await req.json();
 
     if (!query || !count) {
@@ -33,12 +46,14 @@ ${count} سوال ترکیبی طراحی کن که:
     {
       "id": 1,
       "type": "multiple_choice",
+      "dimension": "I",
       "text": "متن سوال",
       "options": ["گزینه ۱", "گزینه ۲", "گزینه ۳", "گزینه ۴"]
     },
     {
       "id": 2,
       "type": "likert",
+      "dimension": "S",
       "text": "چقدر از کار تیمی لذت می‌بری؟",
       "scale": {
         "min": 1,
@@ -49,6 +64,19 @@ ${count} سوال ترکیبی طراحی کن که:
     }
   ]
 }
+
+قواعد «dimension» (مدل RIASEC هالند) — این فیلد برای همه سوالات الزامی است:
+  R = عمل‌گرا: ساختن، تعمیر، کار با ابزار و تجهیزات
+  I = پژوهشگر: تحلیل، پژوهش، حل مسائل پیچیده
+  A = هنرمند: خلاقیت، طراحی، بیان بصری
+  S = اجتماعی: آموزش، کمک و خدمت به دیگران
+  E = متهور: رهبری، مذاکره، توسعه کسب‌وکار
+  C = منظم: نظم، داده، کار مبتنی بر رویه
+
+مهم:
+- هر شش بُعد باید حداقل یک سوال داشته باشد و توزیع تا حد امکان یکنواخت باشد.
+- در سوالات چندگزینه‌ای، گزینه‌ها را از «بیشترین همسویی با آن بُعد» به
+  «کمترین» مرتب کن؛ یعنی گزینه اول قوی‌ترین نشانه‌ی آن بُعد باشد.
 
 برای ${count} سوال، حدوداً ${Math.round(count * 0.6)} تا multiple_choice و ${Math.round(count * 0.4)} تا likert بیاور. فقط JSON خالص برگردان.`;
 
@@ -110,7 +138,6 @@ ${count} سوال ترکیبی طراحی کن که:
 
     return NextResponse.json({ questions: parsed.questions });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ message: "خطای سرور." }, { status: 500 });
+    return handleRouteError(err);
   }
 }

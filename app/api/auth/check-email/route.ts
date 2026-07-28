@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/route-error";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { supabase } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = await checkRateLimitAsync(req, { name: "check-email", limit: 20, windowMs: 60_000 });
+    if (limited) return limited;
+
     const { email } = await req.json();
 
     if (!email) {
@@ -33,7 +38,6 @@ export async function POST(req: NextRequest) {
       message: data ? "این ایمیل قبلاً ثبت شده است." : "ایمیل قابل استفاده است.",
     });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ message: "خطای سرور." }, { status: 500 });
+    return handleRouteError(err);
   }
 }

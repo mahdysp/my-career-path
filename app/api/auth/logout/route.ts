@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
+import { clearSessionCookies } from "@/lib/auth-cookies";
 
 export async function POST() {
-  const response = NextResponse.json({ message: "خروج با موفقیت انجام شد." });
-
-  // حذف کوکی‌های session
-  response.cookies.set("sb-access-token", "", { maxAge: 0, path: "/" });
-  response.cookies.set("sb-refresh-token", "", { maxAge: 0, path: "/" });
-
-  return response;
+  // صفات کوکی باید دقیقاً با زمان ست‌شدن یکی باشد، وگرنه ممکن است پاک نشود
+  return clearSessionCookies(
+    NextResponse.json({ message: "خروج با موفقیت انجام شد." })
+  );
 }

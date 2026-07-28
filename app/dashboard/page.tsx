@@ -1,13 +1,38 @@
 // مسیر فایل: app/dashboard/page.tsx
 "use client";
-import { useEffect, useRef, useState } from "react";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { RIASEC_AXES, matchProfile } from "@/lib/onet-profiles";
+import SiteNav from "@/app/components/SiteNav";
+import { agoFa, dateFa, monthFa, num } from "@/lib/format";
+
+/* ─────────────────────────── انواع ─────────────────────────── */
+
+type CareerPath = {
+  title?: string;
+  match_percentage?: number;
+  description?: string;
+  required_skills?: string[];
+  avg_salary?: string;
+};
+
+type Trait = { trait?: string; description?: string; score?: number };
+
+type ResultData = {
+  summary?: string;
+  personality_traits?: Trait[];
+  career_paths?: CareerPath[];
+  strengths?: string[];
+  areas_to_improve?: string[];
+};
 
 type QuizAttempt = {
   id: string;
   created_at: string;
   query: string | null;
   result_summary: string | null;
+  result_data?: ResultData | null;
 };
 
 type UserData = {
@@ -16,13 +41,265 @@ type UserData = {
   firstName: string;
   lastName: string;
   education: string;
+  memberSince?: string | null;
 };
+
+/* ─────────────────────────── استایل ─────────────────────────── */
+
+const styles = `
+  @keyframes k2Float1 { 0%,100% { transform: translate(0,0) rotate(0deg); } 50% { transform: translate(20px,-30px) rotate(2deg); } }
+  @keyframes k2Float2 { 0%,100% { transform: translate(0,0) rotate(0deg); } 50% { transform: translate(-24px,20px) rotate(-2deg); } }
+  @keyframes k2FadeUp { from { opacity:0; transform: translateY(18px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes k2Spin { to { transform: rotate(360deg); } }
+  @keyframes k2Pulse { 0%,100% { opacity:1; transform: scale(1); } 50% { opacity:.35; transform: scale(.72); } }
+  @keyframes k2Shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  @keyframes k2Shake {
+    10%,90% { transform: translateX(-1px); } 20%,80% { transform: translateX(2px); }
+    30%,50%,70% { transform: translateX(-3px); } 40%,60% { transform: translateX(3px); }
+  }
+
+  .k2-f1 { animation: k2FadeUp .6s cubic-bezier(.16,1,.3,1) both; }
+  .k2-f2 { animation: k2FadeUp .6s cubic-bezier(.16,1,.3,1) both; animation-delay: .07s; }
+  .k2-f3 { animation: k2FadeUp .6s cubic-bezier(.16,1,.3,1) both; animation-delay: .14s; }
+  .k2-f4 { animation: k2FadeUp .6s cubic-bezier(.16,1,.3,1) both; animation-delay: .21s; }
+
+  .k2-grid-overlay {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+  }
+  .k2-noise {
+    position: fixed; inset: 0; opacity: var(--noise-opacity); pointer-events: none; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .k2-gradient-text {
+    background: var(--heading-gradient);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  .k2-btn {
+    font-family: var(--font-sans); font-weight: 500; border: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s ease, background .2s ease, color .2s ease, opacity .2s ease;
+  }
+  .k2-btn:active:not(:disabled) { transform: scale(.98); }
+  .k2-btn:disabled { cursor: not-allowed; opacity: .5; }
+  .k2-btn-primary {
+    background: var(--accent); color: #fff; border-radius: 8px;
+    box-shadow: 0 0 0 1px rgba(94,106,210,.5), 0 4px 12px rgba(94,106,210,.3), inset 0 1px 0 0 rgba(255,255,255,.2);
+  }
+  .k2-btn-primary:hover:not(:disabled) {
+    background: var(--accent-bright); transform: translateY(-2px);
+    box-shadow: 0 0 0 1px rgba(94,106,210,.7), 0 6px 24px rgba(94,106,210,.45), inset 0 1px 0 0 rgba(255,255,255,.25);
+  }
+  .k2-btn-secondary {
+    background: var(--surface); color: var(--foreground); border-radius: 8px;
+    box-shadow: inset 0 0 0 1px var(--border-default);
+  }
+  .k2-btn-secondary:hover:not(:disabled) { background: var(--surface-hover); box-shadow: inset 0 0 0 1px var(--border-hover); }
+  .k2-btn-ghost { background: transparent; color: var(--foreground-muted); border-radius: 8px; }
+  .k2-btn-ghost:hover { background: var(--surface); color: var(--foreground); }
+
+  .k2-card {
+    position: relative;
+    background: var(--card-gradient);
+    border: 1px solid var(--border-default); border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+  }
+  .k2-card::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: radial-gradient(340px circle at var(--mx,50%) var(--my,50%), rgba(94,106,210,.13), transparent 60%);
+    opacity: 0; transition: opacity .3s ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .k2-card:hover::before { opacity: 1; }
+  }
+
+  .k2-sec-label {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; color: var(--accent);
+  }
+  .k2-sec-title {
+    font-weight: 700; font-size: 17px; letter-spacing: -.01em; color: var(--foreground); margin: 6px 0 0;
+  }
+
+  .k2-icon-box {
+    width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+    border: 1px solid var(--border-hover); background: var(--surface);
+    display: flex; align-items: center; justify-content: center; color: var(--accent);
+  }
+
+  /* چیدمان */
+  .k2-shell { max-width: 1180px; margin: 0 auto; padding: 0 clamp(16px,4vw,36px); }
+  .k2-grid {
+    display: grid; grid-template-columns: minmax(0,1.3fr) minmax(300px,.85fr);
+    gap: 18px; align-items: start;
+  }
+  .k2-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  .k2-stats > * { min-width: 0; }
+  .k2-grid > * { min-width: 0; }
+
+  /* DNA: نمودار با عرض ثابت، نوارها بقیه فضا — بدون کِش آمدن */
+  .k2-dna {
+    display: grid; grid-template-columns: 210px minmax(0,1fr);
+    gap: 20px; align-items: center; margin-top: 14px;
+  }
+  .k2-dna-chart { width: 210px; height: 186px; overflow: visible; }
+  .k2-dna-bars { min-width: 0; }
+
+  .k2-stat {
+    padding: 16px 18px; text-align: right;
+  }
+  .k2-stat-num { font-family: var(--font-mono); font-size: 24px; color: var(--foreground); line-height: 1.2; }
+  .k2-stat-lbl { font-size: 11.5px; color: var(--foreground-subtle); margin-top: 6px; }
+
+  /* لیست آزمون‌ها */
+  .k2-row {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: right;
+    padding: 15px 18px; background: transparent; border: none; cursor: pointer;
+    border-bottom: 1px solid var(--border-default);
+    transition: background .2s ease;
+    font-family: var(--font-sans);
+  }
+  .k2-row:last-child { border-bottom: none; }
+  .k2-row:hover { background: rgba(255,255,255,.03); }
+  .k2-row:hover .k2-row-go { opacity: 1; transform: translateX(-3px); }
+  .k2-row-go { opacity: 0; transition: all .2s ease; color: var(--accent); flex-shrink: 0; }
+  .k2-row-idx {
+    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 11.5px;
+    background: var(--surface); border: 1px solid var(--border-default); color: var(--foreground-muted);
+  }
+
+  /* تراشه */
+  .k2-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; color: var(--foreground-muted);
+    background: var(--surface); border: 1px solid var(--border-default);
+    border-radius: 100px; padding: 4px 10px;
+  }
+
+  /* نوار افقی */
+  .k2-bar { height: 6px; border-radius: 100px; background: var(--track); overflow: hidden; }
+  .k2-bar > i {
+    display: block; height: 100%; border-radius: 100px;
+    background: linear-gradient(90deg,#5e6ad2,#a855f7);
+    box-shadow: 0 0 10px rgba(94,106,210,.45);
+    transition: width .9s cubic-bezier(.16,1,.3,1);
+  }
+
+  /* تقویم فعالیت */
+  /* تقویم فعالیت */
+  .k2-heat-wrap { display: flex; gap: 7px; direction: rtl; }
+  .k2-heat-dows {
+    display: grid; grid-template-rows: repeat(7, 13px); gap: 3px;
+    font-size: 9px; color: var(--foreground-subtle); flex-shrink: 0;
+  }
+  .k2-heat-dows span { line-height: 13px; height: 13px; text-align: left; }
+  .k2-heat-scroll { overflow-x: auto; padding-bottom: 2px; }
+  .k2-heat-months {
+    display: grid; gap: 3px; direction: rtl;
+    font-size: 9.5px; color: var(--foreground-subtle); margin-bottom: 4px; height: 13px;
+  }
+  .k2-heat-months span { white-space: nowrap; line-height: 13px; }
+  .k2-heat {
+    display: grid; grid-template-rows: repeat(7, 13px);
+    grid-auto-flow: column; gap: 3px; direction: rtl;
+  }
+  .k2-heat i {
+    width: 13px; height: 13px; border-radius: 3px; display: block;
+    background: var(--heat-0);
+    box-shadow: inset 0 0 0 1px var(--heat-edge);
+    transition: transform .14s ease, filter .14s ease;
+  }
+  .k2-heat i:hover { transform: scale(1.25); filter: brightness(1.12); }
+  .k2-heat i.is-future { background: transparent; box-shadow: none; }
+  .k2-heat i.is-today { box-shadow: inset 0 0 0 1.4px var(--foreground-muted); }
+  .k2-legend i {
+    width: 11px; height: 11px; border-radius: 2.5px; display: inline-block;
+    box-shadow: inset 0 0 0 1px var(--heat-edge);
+  }
+
+  /* اسکلت بارگذاری */
+  .k2-skel {
+    background: linear-gradient(90deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.09) 50%, rgba(255,255,255,.04) 75%);
+    background-size: 200% 100%; animation: k2Shimmer 1.4s linear infinite; border-radius: 10px;
+  }
+
+  .k2-input {
+    width: 100%; background: var(--input-bg); border: 1px solid var(--border-default);
+    border-radius: 10px; padding: 11px 13px; color: var(--foreground);
+    font-family: var(--font-sans); font-size: 14px; outline: none;
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .k2-input:focus {
+    border-color: var(--border-accent); background: var(--input-bg-focus);
+    box-shadow: 0 0 0 3px rgba(94,106,210,.12);
+  }
+  select.k2-input { appearance: none; -webkit-appearance: none; cursor: pointer; }
+  select.k2-input option { background: var(--option-bg); color: var(--foreground); }
+
+  .k2-alert {
+    display: flex; align-items: flex-start; gap: 9px; text-align: right;
+    font-size: 12.5px; line-height: 1.7; padding: 10px 12px; border-radius: 9px;
+  }
+  .k2-alert.err { background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.25); color: #fca5a5; animation: k2Shake .4s ease both; }
+  .k2-alert.ok  { background: rgba(74,222,128,.08);  border: 1px solid rgba(74,222,128,.25);  color: #86efac; }
+
+  .k2-spinner {
+    width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.25);
+    border-top-color: #fff; border-radius: 50%; animation: k2Spin .7s linear infinite;
+  }
+
+  .k2-link { color: var(--accent); text-decoration: none; transition: color .2s ease; }
+  .k2-link:hover { color: var(--accent-bright); text-decoration: underline; }
+
+  /* ── واکنش‌گرایی: از بزرگ به کوچک، تا قانون بعدی قبلی را بازنویسی کند ── */
+  @media (max-width: 940px) {
+    .k2-grid { grid-template-columns: 1fr !important; }
+    .k2-stats { grid-template-columns: repeat(2,1fr) !important; }
+    .k2-nav-hide { display: none !important; }
+  }
+
+  @media (max-width: 620px) {
+    /* نمودار و نوارها زیر هم — در غیر این صورت نوارها له می‌شوند */
+    .k2-dna { grid-template-columns: 1fr !important; justify-items: center; gap: 16px; }
+    .k2-dna-bars { width: 100%; }
+    .k2-shell { padding: 0 14px; }
+    .k2-card-pad-sm { padding: 18px 16px !important; }
+    .k2-heat-scroll { -webkit-overflow-scrolling: touch; }
+  }
+
+  @media (max-width: 380px) {
+    .k2-stats { grid-template-columns: 1fr !important; }
+    .k2-dna-chart { width: 100%; max-width: 210px; height: auto; }
+    .k2-shell { padding: 0 12px; }
+  }
+`;
+
+/* ─────────────────────────── کمکی‌ها ─────────────────────────── */
+
+const EDU_LABEL: Record<string, string> = {
+  student: "دانش‌آموز",
+  university: "دانشجو",
+  graduate: "فارغ‌التحصیل",
+};
+
+/* قالب‌بندی مشترک — ارقام در کل سایت لاتین‌اند (lib/format.ts) */
+const toFa = (n: number | string) =>
+  typeof n === "number" ? num(n) : String(n);
+const faDate = (d: Date) => dateFa(d, { weekday: true });
+const fmtDate = (iso: string) => dateFa(iso);
+const relTime = (iso: string) => agoFa(iso);
+
+/* ─────────────────────────── صفحه ─────────────────────────── */
 
 export default function DashboardPage() {
   const router = useRouter();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const animRef = useRef<number>(0);
 
   const [user, setUser] = useState<UserData | null>(null);
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
@@ -34,11 +311,16 @@ export default function DashboardPage() {
   const [saveMessage, setSaveMessage] = useState("");
   const [saveError, setSaveError] = useState("");
 
+  const [hoverAxis, setHoverAxis] = useState<number | null>(null);
+
   useEffect(() => {
     fetch("/api/dashboard")
       .then((res) => res.json())
       .then((data) => {
-        if (!data.user) { router.push("/auth"); return; }
+        if (!data.user) {
+          router.push("/auth");
+          return;
+        }
         setUser(data.user);
         setAttempts(data.attempts || []);
         setFormData({
@@ -51,10 +333,12 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, [router]);
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/");
-  };
+  const spotlight = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+  }, []);
+
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,629 +354,611 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "خطایی پیش آمده است.");
       setUser((prev) => (prev ? { ...prev, ...formData } : prev));
-      setSaveMessage(data.message || "اطلاعات با موفقیت به‌روزرسانی شد.");
+      setSaveMessage(data.message || "اطلاعات به‌روزرسانی شد.");
       setEditMode(false);
-    } catch (err: any) {
-      setSaveError(err.message);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "خطایی پیش آمده است.");
     } finally {
       setSaving(false);
     }
   };
 
-  // ── پس‌زمینه: ستاره‌های ثابت + shooting stars + slow comets ──
-  useEffect(() => {
-    const cv = canvasRef.current;
-    const wrap = wrapRef.current;
-    if (!cv || !wrap) return;
-    const ctx = cv.getContext("2d");
-    if (!ctx) return;
+  /* ── DNA مهارتی: تجمیع همه آزمون‌ها روی محورهای RIASEC ── */
+  const dna = useMemo(() => {
+    const sums = new Array(RIASEC_AXES.length).fill(0);
+    let matched = 0;
 
-    function resize() {
-      if (!cv || !wrap) return;
-      cv.width = wrap.offsetWidth;
-      cv.height = wrap.offsetHeight;
-    }
-    resize();
-    window.addEventListener("resize", resize);
-
-    // ستاره‌های ثابت چشمک‌زن
-    const stars = Array.from({ length: 160 }, () => ({
-      x: Math.random() * cv.width,
-      y: Math.random() * cv.height,
-      r: Math.random() * 1.4 + 0.2,
-      a: Math.random(),
-      speed: Math.random() * 0.006 + 0.002,
-      phase: Math.random() * Math.PI * 2,
-    }));
-
-    // shooting stars (خط کشیده سریع)
-    type ShootingStar = {
-      x: number; y: number;
-      vx: number; vy: number;
-      len: number; alpha: number;
-      life: number; maxLife: number;
-    };
-
-    function makeShootingStar(): ShootingStar {
-      const angle = (Math.random() * 30 + 15) * (Math.PI / 180);
-      const speed = Math.random() * 10 + 8;
-      return {
-        x: Math.random() * cv!.width,
-        y: Math.random() * cv!.height * 0.5,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        len: Math.random() * 120 + 60,
-        alpha: Math.random() * 0.7 + 0.3,
-        life: 0,
-        maxLife: Math.random() * 40 + 20,
-      };
-    }
-
-    // slow comets (دنباله‌دار کند با دنباله بلند)
-    type Comet = {
-      x: number; y: number;
-      vx: number; vy: number;
-      len: number; alpha: number;
-      r: number;
-      life: number; maxLife: number;
-      color: string;
-    };
-
-    function makeComet(): Comet {
-      const angle = (Math.random() * 40 + 10) * (Math.PI / 180);
-      const speed = Math.random() * 1.5 + 0.5;
-      const colors = ["#3b82f6", "#10b981", "#f59e0b", "#a78bfa"];
-      return {
-        x: Math.random() * cv!.width * 0.5,
-        y: Math.random() * cv!.height * 0.4,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        len: Math.random() * 180 + 80,
-        alpha: Math.random() * 0.5 + 0.2,
-        r: Math.random() * 1.5 + 0.8,
-        life: 0,
-        maxLife: Math.random() * 300 + 200,
-        color: colors[Math.floor(Math.random() * colors.length)],
-      };
-    }
-
-    let shootingStars: ShootingStar[] = [];
-    let comets: Comet[] = Array.from({ length: 3 }, makeComet);
-    let shootingTimer = 0;
-    let t = 0;
-
-    function draw() {
-      if (!cv || !ctx) return;
-      t++;
-      shootingTimer++;
-      ctx.clearRect(0, 0, cv.width, cv.height);
-
-      // nebula glows
-      const g1 = ctx.createRadialGradient(cv.width * 0.15, cv.height * 0.35, 0, cv.width * 0.15, cv.height * 0.35, cv.width * 0.5);
-      g1.addColorStop(0, "rgba(29,78,216,0.08)");
-      g1.addColorStop(1, "transparent");
-      ctx.fillStyle = g1;
-      ctx.fillRect(0, 0, cv.width, cv.height);
-
-      const g2 = ctx.createRadialGradient(cv.width * 0.85, cv.height * 0.65, 0, cv.width * 0.85, cv.height * 0.65, cv.width * 0.45);
-      g2.addColorStop(0, "rgba(16,185,129,0.06)");
-      g2.addColorStop(1, "transparent");
-      ctx.fillStyle = g2;
-      ctx.fillRect(0, 0, cv.width, cv.height);
-
-      const g3 = ctx.createRadialGradient(cv.width * 0.5, cv.height * 0.2, 0, cv.width * 0.5, cv.height * 0.2, cv.width * 0.35);
-      g3.addColorStop(0, "rgba(99,102,241,0.04)");
-      g3.addColorStop(1, "transparent");
-      ctx.fillStyle = g3;
-      ctx.fillRect(0, 0, cv.width, cv.height);
-
-      // ستاره‌های ثابت
-      stars.forEach((s) => {
-        s.phase += s.speed;
-        const a = s.a * (0.5 + 0.5 * Math.sin(s.phase));
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(148,163,184,${a})`;
-        ctx.fill();
+    for (const a of attempts) {
+      const prof = matchProfile(a.query || "");
+      if (!prof) continue;
+      matched++;
+      RIASEC_AXES.forEach((ax, i) => {
+        sums[i] += prof.scores[ax.key];
       });
+    }
+    if (!matched) return null;
+    return sums.map((s) => Math.round(s / matched));
+  }, [attempts]);
 
-      // scan line محو
-      const scanY = (t * 0.3) % cv.height;
-      const sg = ctx.createLinearGradient(0, scanY - 50, 0, scanY + 50);
-      sg.addColorStop(0, "transparent");
-      sg.addColorStop(0.5, "rgba(59,130,246,0.015)");
-      sg.addColorStop(1, "transparent");
-      ctx.fillStyle = sg;
-      ctx.fillRect(0, scanY - 50, cv.width, 100);
-
-      // shooting stars — هر ۹۰ فریم یکی جدید
-      if (shootingTimer > 90 && Math.random() < 0.4) {
-        shootingStars.push(makeShootingStar());
-        shootingTimer = 0;
-      }
-
-      shootingStars = shootingStars.filter((s) => s.life <= s.maxLife);
-      shootingStars.forEach((s) => {
-        s.life++;
-        const progress = s.life / s.maxLife;
-        const fade = progress < 0.2 ? progress / 0.2 : progress > 0.7 ? (1 - progress) / 0.3 : 1;
-        const tailX = s.x - (s.vx / Math.sqrt(s.vx * s.vx + s.vy * s.vy)) * s.len;
-        const tailY = s.y - (s.vy / Math.sqrt(s.vx * s.vx + s.vy * s.vy)) * s.len;
-
-        const grad = ctx.createLinearGradient(s.x, s.y, tailX, tailY);
-        grad.addColorStop(0, `rgba(255,255,255,${s.alpha * fade})`);
-        grad.addColorStop(0.3, `rgba(180,210,255,${s.alpha * fade * 0.6})`);
-        grad.addColorStop(1, "rgba(180,210,255,0)");
-
-        ctx.beginPath();
-        ctx.moveTo(s.x, s.y);
-        ctx.lineTo(tailX, tailY);
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // هسته روشن
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${s.alpha * fade})`;
-        ctx.fill();
-
-        s.x += s.vx;
-        s.y += s.vy;
-      });
-
-      // slow comets (دنباله‌دار کند)
-      comets.forEach((c, i) => {
-        c.life++;
-        if (c.life > c.maxLife || c.x > cv!.width + 200 || c.y > cv!.height + 200) {
-          comets[i] = makeComet();
-          return;
+  /* ── جدول مسیرهای شغلی از تحلیل‌های ذخیره‌شده ── */
+  const topCareers = useMemo(() => {
+    const map = new Map<string, { title: string; best: number; times: number }>();
+    for (const a of attempts) {
+      for (const c of a.result_data?.career_paths ?? []) {
+        if (!c?.title) continue;
+        const key = c.title.trim();
+        const pct = typeof c.match_percentage === "number" ? c.match_percentage : 0;
+        const cur = map.get(key);
+        if (cur) {
+          cur.best = Math.max(cur.best, pct);
+          cur.times += 1;
+        } else {
+          map.set(key, { title: key, best: pct, times: 1 });
         }
+      }
+    }
+    return [...map.values()].sort((x, y) => y.best - x.best).slice(0, 5);
+  }, [attempts]);
 
-        const progress = c.life / c.maxLife;
-        const fade = progress < 0.15 ? progress / 0.15 : progress > 0.75 ? (1 - progress) / 0.25 : 1;
+  /* ── نقاط قوت پرتکرار ── */
+  const topStrengths = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const a of attempts) {
+      for (const s of a.result_data?.strengths ?? []) {
+        if (!s) continue;
+        map.set(s.trim(), (map.get(s.trim()) ?? 0) + 1);
+      }
+    }
+    return [...map.entries()].sort((x, y) => y[1] - x[1]).slice(0, 6).map(([t]) => t);
+  }, [attempts]);
 
-        const speed = Math.sqrt(c.vx * c.vx + c.vy * c.vy);
-        const nx = c.vx / speed;
-        const ny = c.vy / speed;
-        const tailX = c.x - nx * c.len;
-        const tailY = c.y - ny * c.len;
+  /* ── تقویم فعالیت ──
+     نکته‌ها:
+     • کلید روز به وقت محلی ساخته می‌شود؛ toISOString() چون UTC است در ایران
+       (UTC+3:30) فعالیت‌های بعدازظهر را به روز بعد منتقل می‌کرد.
+     • هفته از «شنبه» شروع می‌شود (تقویم ایرانی)، نه یکشنبه.                       */
+  const heat = useMemo(() => {
+    const dayKey = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    // شنبه = ۰ … جمعه = ۶
+    const persianDow = (d: Date) => (d.getDay() + 1) % 7;
 
-        // دنباله با رنگ کومت
-        const cometGrad = ctx.createLinearGradient(c.x, c.y, tailX, tailY);
-        cometGrad.addColorStop(0, `${c.color}${Math.round(c.alpha * fade * 255).toString(16).padStart(2, "0")}`);
-        cometGrad.addColorStop(0.4, `${c.color}${Math.round(c.alpha * fade * 0.4 * 255).toString(16).padStart(2, "0")}`);
-        cometGrad.addColorStop(1, `${c.color}00`);
-
-        ctx.beginPath();
-        ctx.moveTo(c.x, c.y);
-        ctx.lineTo(tailX, tailY);
-        ctx.strokeStyle = cometGrad;
-        ctx.lineWidth = c.r * 1.5;
-        ctx.lineCap = "round";
-        ctx.stroke();
-
-        // هسته کومت
-        const coreGlow = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r * 4);
-        coreGlow.addColorStop(0, `${c.color}${Math.round(c.alpha * fade * 255).toString(16).padStart(2, "0")}`);
-        coreGlow.addColorStop(1, `${c.color}00`);
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, c.r * 4, 0, Math.PI * 2);
-        ctx.fillStyle = coreGlow;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${c.alpha * fade * 0.9})`;
-        ctx.fill();
-
-        c.x += c.vx;
-        c.y += c.vy;
-      });
-
-      animRef.current = requestAnimationFrame(draw);
+    const counts = new Map<string, number>();
+    for (const a of attempts) {
+      counts.set(dayKey(new Date(a.created_at)), (counts.get(dayKey(new Date(a.created_at))) ?? 0) + 1);
     }
 
-    draw();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    return () => {
-      window.removeEventListener("resize", resize);
-      cancelAnimationFrame(animRef.current);
-    };
-  }, []);
+    // آخرین ستون کامل شود: تا پایان همین هفته جلو می‌رویم
+    const end = new Date(today);
+    end.setDate(end.getDate() + (6 - persianDow(today)));
 
-  const educationLabels: Record<string, string> = {
-    student: "دانش‌آموز",
-    university: "دانشجو",
-    graduate: "فارغ‌التحصیل",
-  };
+    const WEEKS = 18;
+    const start = new Date(end);
+    start.setDate(start.getDate() - (WEEKS * 7 - 1));
 
-  const formatDate = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleDateString("fa-IR", {
-        year: "numeric", month: "long", day: "numeric",
+    const cells: { key: string; date: Date; n: number; future: boolean; isToday: boolean }[] = [];
+    for (let i = 0; i < WEEKS * 7; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      cells.push({
+        key: dayKey(d),
+        date: d,
+        n: counts.get(dayKey(d)) ?? 0,
+        future: d.getTime() > today.getTime(),
+        isToday: d.getTime() === today.getTime(),
       });
-    } catch { return iso; }
-  };
+    }
 
+    // برچسب ماه شمسی بالای هر ستونی که ماه در آن عوض می‌شود
+    const monthOf = (d: Date) => monthFa(d);
+    const months: { col: number; label: string }[] = [];
+    for (let w = 0; w < WEEKS; w++) {
+      const first = cells[w * 7];
+      const label = monthOf(first.date);
+      if (w === 0 || label !== months[months.length - 1]?.label) {
+        months.push({ col: w, label });
+      }
+    }
+
+    const total = attempts.length;
+    const activeDays = [...counts.values()].filter(Boolean).length;
+
+    return { cells, months, weeks: WEEKS, total, activeDays };
+  }, [attempts]);
+
+  const uniqueFields = useMemo(
+    () => new Set(attempts.map((a) => (a.query || "").trim()).filter(Boolean)).size,
+    [attempts]
+  );
+
+  const bestMatch = useMemo(
+    () => (topCareers.length ? topCareers[0].best : 0),
+    [topCareers]
+  );
+
+  /* ── هندسه رادار ── */
+  const R = 74, CX = 110, CY = 104;
+  const axisPt = (i: number, r: number) => {
+    const ang = -Math.PI / 2 + (i * 2 * Math.PI) / RIASEC_AXES.length;
+    return [CX + Math.cos(ang) * r, CY + Math.sin(ang) * r] as const;
+  };
+  const poly = (vals: number[]) => vals.map((v, i) => axisPt(i, (R * v) / 100).join(",")).join(" ");
+
+  /* ─────────────── بارگذاری ─────────────── */
   if (loading) {
     return (
-      <div style={{
-        minHeight: "100vh", width: "100%", background: "#0a0a2e",
-        fontFamily: "Vazirmatn, sans-serif", direction: "rtl",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        color: "#94a3b8", fontSize: 14,
-      }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap');`}</style>
-        در حال بارگذاری...
-      </div>
+      <>
+        <style>{styles}</style>
+        <main dir="rtl" style={shellStyle}>
+          <div className="k2-grid-overlay" />
+          <div className="k2-shell" style={{ position: "relative", zIndex: 10, paddingTop: 90 }}>
+            <div className="k2-skel" style={{ height: 34, width: 220, marginBottom: 26 }} />
+            <div className="k2-stats" style={{ marginBottom: 18 }}>
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="k2-skel" style={{ height: 92 }} />
+              ))}
+            </div>
+            <div className="k2-grid">
+              <div className="k2-skel" style={{ height: 340 }} />
+              <div className="k2-skel" style={{ height: 340 }} />
+            </div>
+          </div>
+        </main>
+      </>
     );
   }
 
+  if (!user) return null;
+
+  const fullName = `${user.firstName} ${user.lastName}`.trim() || user.email;
+  const initials = (user.firstName?.[0] || user.email[0] || "K").toUpperCase();
+
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap');
+      <style>{styles}</style>
 
-        @keyframes blink {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(0.7); }
-        }
-
-        .auth-input {
-          width: 100%;
-          background: rgba(15,31,61,0.6);
-          border: 1px solid rgba(59,130,246,0.15);
-          border-radius: 12px;
-          padding: 12px 16px;
-          color: #e2e8f0;
-          font-size: 14px;
-          font-family: 'Vazirmatn', sans-serif;
-          font-weight: 500;
-          outline: none;
-          transition: all 0.2s;
-          box-sizing: border-box;
-        }
-        .auth-input:focus {
-          border-color: rgba(59,130,246,0.5);
-          box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
-        }
-        .auth-input::placeholder { color: #475569; }
-        .auth-input:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        select.auth-input {
-          appearance: none; -webkit-appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2393c5fd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-          background-repeat: no-repeat;
-          background-position: left 14px center;
-          padding-left: 38px;
-          cursor: pointer;
-        }
-        select.auth-input option { background: #0f1f3d; color: #e2e8f0; }
-
-        .auth-submit:hover:not(:disabled) {
-          transform: translateY(-2px) scale(1.01);
-          box-shadow: 0 12px 40px rgba(29,78,216,0.5) !important;
-        }
-        .auth-submit:active:not(:disabled) { transform: scale(0.98); }
-        .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        .ghost-btn {
-          background: transparent; border: 1px solid rgba(59,130,246,0.25);
-          color: #93c5fd; border-radius: 10px; padding: 10px 20px;
-          font-family: 'Vazirmatn', sans-serif; font-size: 13px; font-weight: 700;
-          cursor: pointer; transition: all 0.2s;
-        }
-        .ghost-btn:hover { background: rgba(59,130,246,0.1) !important; }
-
-        .nav-logout:hover { background: rgba(239,68,68,0.12) !important; border-color: rgba(239,68,68,0.6) !important; color: #fca5a5 !important; }
-        .nav-back:hover { background: rgba(59,130,246,0.12) !important; border-color: rgba(59,130,246,0.6) !important; color: #60a5fa !important; }
-
-        .attempt-card { transition: all 0.2s; cursor: pointer; }
-        .attempt-card:hover {
-          border-color: rgba(59,130,246,0.4) !important;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(29,78,216,0.15);
-        }
-
-        @media (max-width: 768px) {
-          .dash-nav { padding: 12px 16px !important; }
-          .dash-main { padding: 24px 16px !important; }
-          .dash-grid { grid-template-columns: 1fr !important; }
-          .profile-grid-2 { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-
-      <div
-        ref={wrapRef}
-        style={{
-          minHeight: "100vh", width: "100%", background: "#070d1a",
-          fontFamily: "Vazirmatn, sans-serif", direction: "rtl",
-          position: "relative", overflow: "hidden",
-        }}
-      >
-        <canvas
-          ref={canvasRef}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
+      <main dir="rtl" style={shellStyle}>
+        <div
+          style={{
+            position: "absolute", top: "-260px", left: "50%", transform: "translateX(-50%)",
+            width: 1100, height: 700, borderRadius: "50%",
+            background: "radial-gradient(circle, var(--blob-1), transparent 70%)",
+            filter: "blur(140px)", pointerEvents: "none", animation: "k2Float1 9s ease-in-out infinite",
+          }}
         />
-
-        {/* ناوبار */}
-        <nav
-          className="dash-nav"
+        <div
           style={{
-            position: "sticky", top: 0, zIndex: 50,
-            background: "rgba(7,13,26,0.85)", backdropFilter: "blur(16px)",
-            borderBottom: "1px solid rgba(59,130,246,0.1)",
-            padding: "14px 40px", display: "flex",
-            justifyContent: "space-between", alignItems: "center",
+            position: "absolute", top: "40%", left: "-240px",
+            width: 620, height: 800, borderRadius: "50%",
+            background: "radial-gradient(circle, var(--blob-2), transparent 70%)",
+            filter: "blur(120px)", pointerEvents: "none", animation: "k2Float2 11s ease-in-out infinite",
           }}
-        >
-          {/* سمت راست: سلام + بازگشت */}
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#e2e8f0" }}>
-              سلام، {user?.firstName || user?.email}
-            </span>
-            <button className="ghost-btn nav-back" onClick={() => router.push("/quiz")}>
-              بازگشت به خانه
-            </button>
-          </div>
+        />
+        <div className="k2-grid-overlay" />
+        <div className="k2-noise" />
 
-          {/* سمت چپ: خروج */}
-          <button
-            className="ghost-btn nav-logout"
-            onClick={handleLogout}
-            style={{
-              color: "#fff",
-              background: "linear-gradient(135deg,#dc2626,#b91c1c)",
-              border: "1px solid rgba(239,68,68,0.4)",
-              boxShadow: "0 4px 16px rgba(220,38,38,0.35)",
-            }}
-          >
-            خروج
-          </button>
-        </nav>
+        <div style={{ position: "relative", zIndex: 10 }}>
+          {/* ── ناوبار ── */}
+          <SiteNav />
+          <div className="kn-spacer" />
 
-        {/* محتوای اصلی */}
-        <main
-          className="dash-main"
-          style={{
-            maxWidth: 1100, margin: "0 auto", padding: "48px 40px",
-            position: "relative", zIndex: 10,
-          }}
-        >
-          {/* عنوان */}
-          <div style={{ marginBottom: 32, textAlign: "right" }}>
-            <div style={{ marginBottom: 14 }}>
-              <span style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)",
-                color: "#fcd34d", fontSize: 12, fontWeight: 700,
-                padding: "5px 14px", borderRadius: 100,
-              }}>
-                <span style={{
-                  width: 6, height: 6, background: "#f59e0b", borderRadius: "50%",
-                  animation: "blink 1.8s ease-in-out infinite", display: "inline-block",
-                }} />
-                سامانه هوشمند مسیریابی شغلی
-              </span>
-            </div>
-            <h1 style={{ fontSize: 32, fontWeight: 900, color: "#f8fafc", marginBottom: 6 }}>
-              داشبورد{" "}
-              <span style={{
-                background: "linear-gradient(90deg,#3b82f6,#10b981)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              }}>
-                من
-              </span>
-            </h1>
-            <p style={{ fontSize: 14, color: "#94a3b8" }}>
-              مدیریت اطلاعات حساب و مشاهده‌ی تاریخچه آزمون‌های مسیر شغلی
-            </p>
-          </div>
-
-          {/* گرید اصلی */}
-          <div className="dash-grid" style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 24, alignItems: "start" }}>
-
-            {/* کارت پروفایل */}
-            <div style={{
-              background: "linear-gradient(145deg,rgba(15,31,61,0.95),rgba(7,13,26,0.98))",
-              border: "1px solid rgba(59,130,246,0.18)",
-              borderRadius: 24, padding: "28px 24px",
-              boxShadow: "0 0 40px rgba(29,78,216,0.1), 0 0 0 1px rgba(255,255,255,0.04) inset",
-              textAlign: "right",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-                <h2 style={{ fontSize: 17, fontWeight: 900, color: "#f8fafc" }}>اطلاعات پروفایل</h2>
-                <div style={{
-                  width: 40, height: 40, borderRadius: 12,
-                  background: "linear-gradient(135deg,rgba(29,78,216,0.3),rgba(16,185,129,0.2))",
-                  border: "1px solid rgba(59,130,246,0.3)",
-                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
-                }}>👤</div>
+          <div className="k2-shell" style={{ padding: "clamp(28px,5vw,44px) clamp(16px,4vw,36px) 72px" }}>
+            {/* ── سربرگ ── */}
+            <div className="k2-f1" style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 26, flexWrap: "wrap" }}>
+              <div
+                style={{
+                  width: 54, height: 54, borderRadius: 16, flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 21, fontWeight: 700, color: "#fff",
+                  background: "linear-gradient(135deg,#5e6ad2,#a855f7)",
+                  boxShadow: "0 6px 22px rgba(94,106,210,.4)",
+                }}
+              >
+                {initials}
               </div>
-
-              {saveMessage && (
-                <div style={{
-                  background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)",
-                  color: "#34d399", fontSize: 12, padding: "8px 12px",
-                  borderRadius: 10, marginBottom: 14, textAlign: "center",
-                }}>{saveMessage}</div>
-              )}
-              {saveError && (
-                <div style={{
-                  background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
-                  color: "#f87171", fontSize: 12, padding: "8px 12px",
-                  borderRadius: 10, marginBottom: 14, textAlign: "center",
-                }}>{saveError}</div>
-              )}
-
-              {!editMode ? (
-                <>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
-                    {[
-                      { lbl: "نام و نام خانوادگی", val: `${user?.firstName} ${user?.lastName}` },
-                      { lbl: "ایمیل", val: user?.email, ltr: true },
-                      { lbl: "وضعیت تحصیلی", val: user?.education ? educationLabels[user.education] || user.education : "—" },
-                    ].map((item) => (
-                      <div key={item.lbl}>
-                        <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>{item.lbl}</div>
-                        <div style={{
-                          fontSize: 14, fontWeight: 700, color: "#e2e8f0",
-                          ...(item.ltr ? { direction: "ltr", textAlign: "right" } : {}),
-                        }}>{item.val}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => { setEditMode(true); setSaveMessage(""); setSaveError(""); }}
-                    className="auth-submit"
-                    style={{
-                      width: "100%",
-                      background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
-                      color: "#fff", border: "none", borderRadius: 12,
-                      padding: "11px 16px",
-                      fontFamily: "Vazirmatn, sans-serif", fontSize: 14, fontWeight: 800,
-                      cursor: "pointer", boxShadow: "0 6px 20px rgba(29,78,216,0.3)",
-                      transition: "transform 0.18s, box-shadow 0.18s",
-                    }}
-                  >ویرایش اطلاعات</button>
-                </>
-              ) : (
-                <form onSubmit={handleSaveProfile} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div className="profile-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    {[
-                      { lbl: "نام", key: "firstName" },
-                      { lbl: "نام خانوادگی", key: "lastName" },
-                    ].map((f) => (
-                      <div key={f.key}>
-                        <label style={{ display: "block", fontSize: 12, color: "#94a3b8", marginBottom: 5, fontWeight: 600 }}>{f.lbl}</label>
-                        <input
-                          type="text" required className="auth-input"
-                          value={formData[f.key as keyof typeof formData]}
-                          onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: 12, color: "#94a3b8", marginBottom: 5, fontWeight: 600 }}>وضعیت تحصیلی</label>
-                    <select className="auth-input" required value={formData.education}
-                      onChange={(e) => setFormData({ ...formData, education: e.target.value })}>
-                      <option value="">انتخاب کنید</option>
-                      <option value="student">دانش‌آموز</option>
-                      <option value="university">دانشجو</option>
-                      <option value="graduate">فارغ‌التحصیل</option>
-                    </select>
-                  </div>
-                  <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-                    <button type="submit" disabled={saving} className="auth-submit" style={{
-                      flex: 1, background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
-                      color: "#fff", border: "none", borderRadius: 12, padding: "11px 16px",
-                      fontFamily: "Vazirmatn, sans-serif", fontSize: 14, fontWeight: 800,
-                      cursor: "pointer", boxShadow: "0 6px 20px rgba(29,78,216,0.3)",
-                      transition: "transform 0.18s, box-shadow 0.18s",
-                    }}>
-                      {saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
-                    </button>
-                    <button type="button" className="ghost-btn" style={{ flex: "0 0 auto" }}
-                      onClick={() => {
-                        setEditMode(false); setSaveError("");
-                        if (user) setFormData({ firstName: user.firstName, lastName: user.lastName, education: user.education });
-                      }}>
-                      انصراف
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-
-            {/* ستون راست: آمار + لیست */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <div style={{ display: "flex", gap: 12 }}>
-                {[
-                  { val: attempts.length, lbl: "آزمون انجام‌شده", color: "#3b82f6", bg: "rgba(59,130,246,0.06)", border: "rgba(59,130,246,0.15)" },
-                  { val: attempts.length > 0 ? formatDate(attempts[0].created_at) : "—", lbl: "آخرین آزمون", color: "#10b981", bg: "rgba(16,185,129,0.06)", border: "rgba(16,185,129,0.15)" },
-                ].map((s) => (
-                  <div key={s.lbl} style={{
-                    flex: 1, background: s.bg, border: `1px solid ${s.border}`,
-                    borderRadius: 16, padding: "16px 18px", textAlign: "right",
-                  }}>
-                    <div style={{ fontSize: 24, fontWeight: 900, color: s.color }}>{s.val}</div>
-                    <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{s.lbl}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{
-                background: "linear-gradient(145deg,rgba(15,31,61,0.95),rgba(7,13,26,0.98))",
-                border: "1px solid rgba(59,130,246,0.18)",
-                borderRadius: 24, padding: "24px",
-                boxShadow: "0 0 40px rgba(29,78,216,0.1), 0 0 0 1px rgba(255,255,255,0.04) inset",
-                textAlign: "right",
-              }}>
-                <h2 style={{ fontSize: 17, fontWeight: 900, color: "#f8fafc", marginBottom: 4 }}>تاریخچه آزمون‌ها</h2>
-                <p style={{ fontSize: 12, color: "#64748b", marginBottom: 18 }}>
-                  هر آزمون به‌صورت جدا و با تاریخ مربوط به خودش نگه داشته می‌شود
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h1 className="k2-gradient-text" style={{ fontWeight: 700, fontSize: 25, letterSpacing: "-.02em", margin: 0, lineHeight: 1.3 }}>
+                  سلام، {fullName}
+                </h1>
+                <p style={{ fontSize: 13, color: "var(--foreground-muted)", margin: "5px 0 0" }}>
+                  {attempts.length > 0
+                    ? `تا حالا ${attempts.length} آزمون داده‌اید — پروفایل شغلی‌تان در حال شکل‌گیری است.`
+                    : "برای ساختن پروفایل شغلی‌تان، اولین آزمون را شروع کنید."}
                 </p>
+              </div>
+            </div>
 
-                {attempts.length === 0 ? (
-                  <div style={{
-                    border: "1px dashed rgba(59,130,246,0.25)", borderRadius: 16,
-                    padding: "36px 20px", textAlign: "center",
-                  }}>
-                    <div style={{ fontSize: 32, marginBottom: 10 }}>🧭</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>هنوز هیچ آزمونی ثبت نکرده‌ای</div>
-                    <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 18, lineHeight: 1.8 }}>
-                      با شرکت در آزمون مسیریابی شغلی، نتایج اینجا به‌ترتیب زمان نمایش داده می‌شوند.
+            {/* ── آمار ── */}
+            <div className="k2-stats k2-f2" style={{ marginBottom: 18 }}>
+              {[
+                { num: attempts.length, lbl: "آزمون انجام‌شده" },
+                { num: uniqueFields, lbl: "حوزه بررسی‌شده" },
+                { num: bestMatch ? `٪${bestMatch}` : "—", lbl: "بالاترین تطابق" },
+                { num: attempts.length ? fmtDate(attempts[0].created_at) : "—", lbl: "آخرین فعالیت", small: true },
+              ].map((s) => (
+                <div key={s.lbl} className="k2-card k2-stat" onMouseMove={spotlight}>
+                  <div className="k2-stat-num" style={s.small ? { fontSize: 15, lineHeight: 1.9 } : undefined}>{s.num}</div>
+                  <div className="k2-stat-lbl">{s.lbl}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── شبکه اصلی ── */}
+            <div className="k2-grid">
+              {/* ستون راست (اصلی) */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                {/* DNA مهارتی */}
+                <div className="k2-card k2-f3 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "22px 24px" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
+                    <div>
+                      <span className="k2-sec-label">DNA شغلی شما</span>
+                      <h2 className="k2-sec-title">پروفایل تجمیعی علاقه</h2>
                     </div>
-                    <button onClick={() => router.push("/quiz")} className="auth-submit" style={{
-                      background: "linear-gradient(135deg,#1d4ed8,#1e40af)",
-                      color: "#fff", border: "none", borderRadius: 12, padding: "10px 24px",
-                      fontFamily: "Vazirmatn, sans-serif", fontSize: 13, fontWeight: 800,
-                      cursor: "pointer", boxShadow: "0 6px 20px rgba(29,78,216,0.3)",
-                      transition: "transform 0.18s, box-shadow 0.18s",
-                    }}>شروع آزمون جدید ←</button>
+                    <span className="k2-chip">
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", boxShadow: "0 0 8px var(--accent-glow)" }} />
+                      RIASEC
+                    </span>
                   </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {attempts.map((attempt, idx) => (
-                      <div key={attempt.id} className="attempt-card"
-                        onClick={() => router.push(`/result?attempt=${attempt.id}`)}
-                        style={{
-                          background: "rgba(59,130,246,0.05)",
-                          border: "1px solid rgba(59,130,246,0.15)",
-                          borderRadius: 14, padding: "14px 16px",
-                          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div style={{
-                            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                            background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.25)",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 12, fontWeight: 800, color: "#3b82f6",
-                          }}>#{attempts.length - idx}</div>
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "#e2e8f0" }}>
-                              {attempt.result_summary || attempt.query || "آزمون مسیریابی شغلی"}
+
+                  {dna ? (
+                    <div className="k2-dna">
+                      <svg viewBox="-8 0 244 210" className="k2-dna-chart">
+                        <defs>
+                          <radialGradient id="dnaFill" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stopColor="#5e6ad2" stopOpacity=".45" />
+                            <stop offset="100%" stopColor="#a855f7" stopOpacity=".12" />
+                          </radialGradient>
+                        </defs>
+                        {[25, 50, 75, 100].map((k) => (
+                          <polygon key={k} points={poly(RIASEC_AXES.map(() => k))} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="1" />
+                        ))}
+                        {RIASEC_AXES.map((ax, i) => {
+                          const [x, y] = axisPt(i, R);
+                          const [lx, ly] = axisPt(i, R + 21);
+                          const hot = hoverAxis === i;
+                          return (
+                            <g key={ax.key} onMouseEnter={() => setHoverAxis(i)} onMouseLeave={() => setHoverAxis(null)}>
+                              <line x1={CX} y1={CY} x2={x} y2={y} stroke="rgba(255,255,255,.05)" strokeWidth="1" />
+                              <circle cx={lx} cy={ly - 4} r="18" fill="transparent" />
+                              <text
+                                x={lx} y={ly}
+                                textAnchor={Math.abs(lx - CX) < 8 ? "middle" : lx > CX ? "start" : "end"}
+                                fill={hot ? "var(--foreground)" : "var(--foreground-muted)"} fontSize="10"
+                                style={{ transition: "fill .2s ease" }}
+                              >
+                                {ax.label}
+                              </text>
+                            </g>
+                          );
+                        })}
+                        <polygon points={poly(dna)} fill="url(#dnaFill)" stroke="#6872d9" strokeWidth="1.9" strokeLinejoin="round" />
+                        {dna.map((v, i) => {
+                          const [x, y] = axisPt(i, (R * v) / 100);
+                          return <circle key={i} cx={x} cy={y} r={hoverAxis === i ? 4.6 : 3} fill="var(--node-fill)" stroke={hoverAxis === i ? "#a855f7" : "#5e6ad2"} strokeWidth="1.6" style={{ transition: "all .18s ease" }} />;
+                        })}
+                      </svg>
+
+                      <div className="k2-dna-bars">
+                        {RIASEC_AXES.map((ax, i) => (
+                          <div
+                            key={ax.key}
+                            onMouseEnter={() => setHoverAxis(i)}
+                            onMouseLeave={() => setHoverAxis(null)}
+                            style={{ marginBottom: 9, opacity: hoverAxis === null || hoverAxis === i ? 1 : 0.45, transition: "opacity .2s ease" }}
+                          >
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, marginBottom: 4 }}>
+                              <span style={{ color: "var(--foreground-muted)" }}>{ax.label}</span>
+                              <span style={{ fontFamily: "var(--font-mono)", color: "var(--foreground-subtle)" }}>{dna[i]}</span>
                             </div>
-                            <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
-                              {formatDate(attempt.created_at)}
-                            </div>
+                            <div className="k2-bar"><i style={{ width: `${dna[i]}%` }} /></div>
                           </div>
+                        ))}
+                        <p style={{ fontSize: 10.5, color: "var(--foreground-subtle)", lineHeight: 1.7, margin: "10px 0 0" }}>
+                          میانگین پروفایل حوزه‌هایی که آزمون داده‌اید، بر پایه داده‌های O*NET
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: 13, color: "var(--foreground-muted)", lineHeight: 1.9, margin: "12px 0 0" }}>
+                      پس از اولین آزمون، نمودار DNA شغلی شما اینجا ساخته می‌شود.
+                    </p>
+                  )}
+                </div>
+
+                {/* تاریخچه آزمون‌ها */}
+                <div className="k2-card k2-f3" onMouseMove={spotlight}>
+                  <div style={{ padding: "20px 24px 14px", borderBottom: attempts.length ? "1px solid var(--border-default)" : "none" }}>
+                    <span className="k2-sec-label">تاریخچه</span>
+                    <h2 className="k2-sec-title">آزمون‌های شما</h2>
+                  </div>
+
+                  {attempts.length === 0 ? (
+                    <div style={{ padding: "34px 24px", textAlign: "center" }}>
+                      <div className="k2-icon-box" style={{ margin: "0 auto 14px", width: 46, height: 46 }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                          <path d="M9 5h6M7 5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                          <path d="M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <p style={{ fontSize: 13.5, color: "var(--foreground-muted)", lineHeight: 1.9, margin: "0 0 18px" }}>
+                        هنوز آزمونی انجام نداده‌اید.
+                      </p>
+                      <button className="k2-btn k2-btn-primary" onClick={() => router.push("/quiz")} style={{ height: 42, padding: "0 24px", fontSize: 14 }}>
+                        شروع اولین آزمون
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      {attempts.map((a, i) => (
+                        <button key={a.id} className="k2-row" onClick={() => router.push(`/result?attempt=${a.id}`)}>
+                          <span className="k2-row-idx">{String(attempts.length - i).padStart(2, "0")}</span>
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <span
+                              style={{
+                                display: "block", fontWeight: 500, fontSize: 14, color: "var(--foreground)",
+                                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                              }}
+                            >
+                              {a.query || "آزمون مسیریابی شغلی"}
+                            </span>
+                            <span
+                              style={{
+                                display: "block", fontSize: 12, color: "var(--foreground-muted)", marginTop: 3,
+                                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                              }}
+                            >
+                              {a.result_summary || "بدون خلاصه"}
+                            </span>
+                          </span>
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--foreground-subtle)", flexShrink: 0 }}>
+                            {relTime(a.created_at)}
+                          </span>
+                          <svg className="k2-row-go" width="15" height="15" viewBox="0 0 24 24" fill="none">
+                            <path d="M14 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ستون چپ (کناری) */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                {/* مسیرهای برتر */}
+                {topCareers.length > 0 && (
+                  <div className="k2-card k2-f2 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
+                    <span className="k2-sec-label">بر اساس تحلیل‌ها</span>
+                    <h2 className="k2-sec-title" style={{ marginBottom: 16 }}>مسیرهای برتر شما</h2>
+
+                    {topCareers.map((c, i) => (
+                      <div key={c.title} style={{ marginBottom: i === topCareers.length - 1 ? 0 : 13 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 5 }}>
+                          <span style={{ fontSize: 13, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {c.title}
+                          </span>
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: i === 0 ? "var(--accent)" : "var(--foreground-subtle)", flexShrink: 0 }}>
+                            ٪{num(c.best)}
+                          </span>
                         </div>
-                        <div style={{ fontSize: 12, color: "#3b82f6", fontWeight: 700, whiteSpace: "nowrap" }}>
-                          مشاهده نتیجه ←
-                        </div>
+                        <div className="k2-bar"><i style={{ width: `${c.best}%` }} /></div>
                       </div>
                     ))}
                   </div>
                 )}
+
+                {/* نقاط قوت */}
+                {topStrengths.length > 0 && (
+                  <div className="k2-card k2-f3 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
+                    <span className="k2-sec-label">تکرارشونده</span>
+                    <h2 className="k2-sec-title" style={{ marginBottom: 14 }}>نقاط قوت شما</h2>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                      {topStrengths.map((s) => (
+                        <span key={s} className="k2-chip">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style={{ color: "#4ade80" }}>
+                            <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* تقویم فعالیت */}
+                <div className="k2-card k2-f3 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
+                    <div>
+                      <span className="k2-sec-label">۱۸ هفته اخیر</span>
+                      <h2 className="k2-sec-title">فعالیت شما</h2>
+                    </div>
+                    {heat.total > 0 && (
+                      <span className="k2-chip" style={{ flexShrink: 0 }}>
+                        {toFa(heat.total)} آزمون در {toFa(heat.activeDays)} روز
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="k2-heat-wrap">
+                    {/* روزهای هفته — شنبه بالا */}
+                    <div className="k2-heat-dows" aria-hidden="true">
+                      {["ش", "", "د", "", "چ", "", "ج"].map((d, i) => (
+                        <span key={i}>{d}</span>
+                      ))}
+                    </div>
+
+                    <div className="k2-heat-scroll">
+                      {/* برچسب ماه‌های شمسی */}
+                      <div
+                        className="k2-heat-months"
+                        style={{ gridTemplateColumns: `repeat(${heat.weeks}, 13px)` }}
+                        aria-hidden="true"
+                      >
+                        {heat.months.map((m) => (
+                          <span key={`${m.col}-${m.label}`} style={{ gridColumn: `${m.col + 1} / span 4` }}>
+                            {m.label}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="k2-heat" role="img" aria-label={`تقویم فعالیت: ${heat.total} آزمون در ${heat.activeDays} روز`}>
+                        {heat.cells.map((d) => (
+                          <i
+                            key={d.key}
+                            className={d.future ? "is-future" : d.isToday ? "is-today" : undefined}
+                            title={d.future ? undefined : `${faDate(d.date)}${d.n ? ` — ${toFa(d.n)} آزمون` : " — بدون فعالیت"}`}
+                            style={d.n ? { background: `var(--heat-${Math.min(d.n, 4)})` } : undefined}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className="k2-legend"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 5, marginTop: 12, fontSize: 10.5, color: "var(--foreground-subtle)" }}
+                  >
+                    <span>کمتر</span>
+                    <i style={{ background: "var(--heat-0)" }} />
+                    <i style={{ background: "var(--heat-1)" }} />
+                    <i style={{ background: "var(--heat-2)" }} />
+                    <i style={{ background: "var(--heat-3)" }} />
+                    <i style={{ background: "var(--heat-4)" }} />
+                    <span>بیشتر</span>
+                  </div>
+                </div>
+
+                {/* پروفایل */}
+                <div className="k2-card k2-f4 k2-card-pad-sm" onMouseMove={spotlight} style={{ padding: "20px 22px" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
+                    <div>
+                      <span className="k2-sec-label">حساب کاربری</span>
+                      <h2 className="k2-sec-title">اطلاعات شما</h2>
+                    </div>
+                    {!editMode && (
+                      <button
+                        className="k2-btn k2-btn-secondary"
+                        onClick={() => { setEditMode(true); setSaveMessage(""); setSaveError(""); }}
+                        style={{ fontSize: 12.5, height: 32, padding: "0 12px" }}
+                      >
+                        ویرایش
+                      </button>
+                    )}
+                  </div>
+
+                  {saveMessage && (
+                    <div className="k2-alert ok" style={{ marginBottom: 12 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
+                        <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span>{saveMessage}</span>
+                    </div>
+                  )}
+                  {saveError && (
+                    <div className="k2-alert err" style={{ marginBottom: 12 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M12 7.5v5.5M12 16.2v.3" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                      </svg>
+                      <span>{saveError}</span>
+                    </div>
+                  )}
+
+                  {!editMode ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                      {[
+                        { k: "نام و نام خانوادگی", v: fullName },
+                        { k: "ایمیل", v: user.email, mono: true },
+                        { k: "وضعیت تحصیلی", v: EDU_LABEL[user.education] || "—" },
+                        ...(user.memberSince ? [{ k: "عضو از", v: fmtDate(user.memberSince) }] : []),
+                      ].map((r) => (
+                        <div key={r.k} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12.5 }}>
+                          <span style={{ color: "var(--foreground-subtle)", flexShrink: 0 }}>{r.k}</span>
+                          <span
+                            style={{
+                              color: "var(--foreground)", textAlign: "left", minWidth: 0,
+                              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                              fontFamily: r.mono ? "var(--font-mono)" : undefined,
+                              fontSize: r.mono ? 11.5 : undefined,
+                              direction: r.mono ? "ltr" : undefined,
+                            }}
+                            title={r.v}
+                          >
+                            {r.v}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSaveProfile} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                      <input
+                        className="k2-input"
+                        placeholder="نام"
+                        required
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      />
+                      <input
+                        className="k2-input"
+                        placeholder="نام خانوادگی"
+                        required
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      />
+                      <select
+                        className="k2-input"
+                        required
+                        value={formData.education}
+                        onChange={(e) => setFormData({ ...formData, education: e.target.value })}
+                      >
+                        <option value="">وضعیت تحصیلی…</option>
+                        <option value="student">دانش‌آموز</option>
+                        <option value="university">دانشجو</option>
+                        <option value="graduate">فارغ‌التحصیل</option>
+                      </select>
+                      <div style={{ display: "flex", gap: 8, marginTop: 3 }}>
+                        <button type="submit" disabled={saving} className="k2-btn k2-btn-primary" style={{ flex: 1, height: 40, fontSize: 13.5 }}>
+                          {saving ? <><span className="k2-spinner" />ذخیره…</> : "ذخیره"}
+                        </button>
+                        <button
+                          type="button"
+                          className="k2-btn k2-btn-secondary"
+                          onClick={() => {
+                            setEditMode(false);
+                            setSaveError("");
+                            setFormData({ firstName: user.firstName, lastName: user.lastName, education: user.education });
+                          }}
+                          style={{ height: 40, padding: "0 16px", fontSize: 13.5 }}
+                        >
+                          انصراف
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </main>
-      </div>
+
+          <footer style={{ borderTop: "1px solid var(--border-default)", padding: "22px clamp(16px,4vw,36px)", textAlign: "center" }}>
+            <p style={{ fontSize: 12, color: "var(--foreground-subtle)", fontFamily: "var(--font-mono)", margin: 0 }}>
+              © Karex — تمامی حقوق محفوظ است
+            </p>
+          </footer>
+        </div>
+      </main>
     </>
   );
 }
+
+const shellStyle: React.CSSProperties = {
+  position: "relative",
+  minHeight: "100vh",
+  width: "100%",
+  background: "var(--page-gradient)",
+  fontFamily: "var(--font-sans)",
+  overflow: "hidden",
+};
