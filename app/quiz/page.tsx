@@ -280,7 +280,7 @@ export default function QuizLanding() {
           border-radius: 16px;
           overflow: hidden;
           box-shadow:
-            0 0 0 1px rgba(255,255,255,0.03),
+            0 0 0 1px var(--border-default),
             0 2px 20px rgba(0,0,0,0.4),
             0 0 40px rgba(0,0,0,0.15);
           transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease, border-color 0.25s ease;
@@ -304,7 +304,7 @@ export default function QuizLanding() {
             transform: translateY(-6px);
             border-color: var(--border-hover);
             box-shadow:
-              0 0 0 1px rgba(255,255,255,0.08),
+              0 0 0 1px var(--border-hover),
               0 12px 40px rgba(0,0,0,0.5),
               0 0 60px var(--blob-3);
           }
@@ -345,13 +345,13 @@ export default function QuizLanding() {
           gap: 8px;
           padding: 7px;
           border-radius: 12px;
-          background: rgba(255,255,255,0.04);
+          background: var(--input-bg);
           border: 1px solid var(--border-default);
           transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
         .k2-search.focused {
           border-color: var(--border-accent);
-          background: rgba(255,255,255,0.055);
+          background: var(--input-bg-focus);
           box-shadow: 0 0 0 3px var(--blob-3);
         }
         .k2-search input {
@@ -395,7 +395,7 @@ export default function QuizLanding() {
           transition: background 0.2s ease;
         }
         .k2-step-row:last-child { border-bottom: none; }
-        .k2-step-row:hover { background: rgba(255,255,255,0.02); }
+        .k2-step-row:hover { background: var(--surface); }
 
         .k2-mobile-actions { display: none; gap: 8px; align-items: center; }
 
@@ -811,7 +811,7 @@ export default function QuizLanding() {
                         key={k}
                         points={polygon(RIASEC_AXES.map(() => k))}
                         fill="none"
-                        stroke="rgba(255,255,255,0.06)"
+                        stroke="var(--grid-line)"
                         strokeWidth="1"
                       />
                     ))}
@@ -832,7 +832,7 @@ export default function QuizLanding() {
                           onMouseLeave={() => setHovered(null)}
                           style={{ cursor: "default" }}
                         >
-                          <line x1={CX} y1={CY} x2={x} y2={y} stroke="rgba(255,255,255,0.055)" strokeWidth="1" />
+                          <line x1={CX} y1={CY} x2={x} y2={y} stroke="var(--grid-line)" strokeWidth="1" />
                           {/* ناحیه بزرگ‌تر برای hover */}
                           <circle cx={lx} cy={ly - 4} r="22" fill="transparent" />
                           <text

@@ -18,6 +18,8 @@
   --accent-glow: rgba(94, 106, 210, 0.3);
   --border-default: rgba(255, 255, 255, 0.06);
   --border-hover: rgba(255, 255, 255, 0.1);
+  /* برای اجزای تعاملی که باید ۳:۱ کنتراست داشته باشند (WCAG 1.4.11) */
+  --border-strong: rgba(255, 255, 255, 0.35);
   --border-accent: rgba(94, 106, 210, 0.3);
 
   /* توکن‌های ترکیبی — برای اینکه صفحات رنگ ثابت ننویسند */
@@ -97,82 +99,92 @@
    تم روشن — الهام‌گرفته از نور روز
    ───────────────────────────────────────────── */
 :root[data-theme="light"] {
-  /* الهام‌گرفته از داشبوردهای مدرن SaaS: کاغذ کرمی گرم به‌جای سفید سرد،
-     کارت‌های سفید خالص روی آن، و لهجه‌ی بنفش‌آبی اشباع. */
-  --background-deep: #efece4;
-  --background-base: #faf8f3;
+  /* کاغذ کرمی گرم با کارت‌های سفید خالص روی آن.
+     همه‌ی جفت‌های متن/زمینه با ابزار سنجش WCAG اندازه‌گیری شده‌اند؛
+     اعداد در کامنت هر خط آمده تا تغییرهای بعدی کورکورانه نباشند.
+
+     کاغذ کمی تیره‌تر از قبل شد (faf8f3 → f5f2ea) چون کارت سفید روی آن
+     نسبت ۱.۰۶ داشت — عملاً نامرئی. حالا ۱.۱۴ است و لبه‌ی کارت بدون
+     نیاز به حاشیه‌ی پررنگ دیده می‌شود. */
+  --background-deep: #eae5da;
+  --background-base: #f5f2ea;
   --background-elevated: #ffffff;
-  --surface: rgba(30, 27, 22, 0.045);
-  --surface-hover: rgba(30, 27, 22, 0.075);
-  --foreground: #1a1a1f;
-  --foreground-muted: #6b6862;
-  --foreground-subtle: rgba(26, 26, 31, 0.5);
-  --accent: #5b5bd6;
-  --accent-bright: #4a4ac4;
-  --accent-glow: rgba(91, 91, 214, 0.2);
-  --border-default: rgba(30, 27, 22, 0.09);
-  --border-hover: rgba(30, 27, 22, 0.16);
-  --border-accent: rgba(91, 91, 214, 0.35);
+  --surface: rgba(30, 27, 22, 0.05);
+  --surface-hover: rgba(30, 27, 22, 0.085);
+  --foreground: #17171c;              /* ۱۷.۳:۱ روی کارت */
+  --foreground-muted: #5f5c56;        /* ۶.۱:۱ روی کاغذ */
+  --foreground-subtle: rgba(23, 23, 28, 0.68); /* ۴.۶:۱ — قبلاً ۳.۳ بود */
+  --accent: #4f4fcc;                  /* ۶.۱:۱ روی کاغذ — قبلاً ۵.۱ */
+  --accent-bright: #3f3fb8;
+  --accent-glow: rgba(79, 79, 204, 0.22);
+  /* حاشیه‌ها: جداکننده‌ی ساده ۱.۵:۱ کافی است، ولی هر چیزی که تعاملی
+     است باید ۳:۱ باشد (WCAG 1.4.11) — از border-strong استفاده شود. */
+  --border-default: rgba(30, 27, 22, 0.14);
+  --border-hover: rgba(30, 27, 22, 0.3);
+  --border-strong: rgba(30, 27, 22, 0.48);
+  --border-accent: rgba(79, 79, 204, 0.5);
 
   --page-gradient: radial-gradient(
     ellipse 1200px 800px at 50% -10%,
-    #fdfcf9 0%,
-    #faf8f3 45%,
-    #f4f1e9 100%
+    #faf8f2 0%,
+    #f5f2ea 45%,
+    #eeeade 100%
   );
-  --nav-bg: rgba(250, 248, 243, 0.82);
+  --nav-bg: rgba(245, 242, 234, 0.85);
   --card-solid: linear-gradient(to bottom, #ffffff, #fdfcfa);
   --card-gradient: linear-gradient(to bottom, #ffffff, #fefdfb);
-  --card-shadow: 0 0 0 1px rgba(30, 27, 22, 0.05), 0 1px 3px rgba(30, 27, 22, 0.04),
-    0 8px 24px rgba(30, 27, 22, 0.05);
-  --card-shadow-hover: 0 0 0 1px rgba(30, 27, 22, 0.08), 0 4px 12px rgba(30, 27, 22, 0.07),
-    0 16px 40px rgba(30, 27, 22, 0.09);
+  /* سایه‌ها عمیق‌تر شدند: روی کاغذ روشن، سایه‌ی کم‌رنگ اصلاً دیده نمی‌شود
+     و کارت‌ها روی صفحه شناور به‌نظر نمی‌رسند. */
+  --card-shadow: 0 0 0 1px rgba(30, 27, 22, 0.07), 0 1px 2px rgba(48, 42, 32, 0.06),
+    0 6px 18px -4px rgba(48, 42, 32, 0.1);
+  --card-shadow-hover: 0 0 0 1px rgba(30, 27, 22, 0.1), 0 4px 10px -2px rgba(48, 42, 32, 0.1),
+    0 18px 40px -12px rgba(48, 42, 32, 0.18);
   --input-bg: #ffffff;
   --input-bg-focus: #ffffff;
   --option-bg: #ffffff;
   --node-fill: #ffffff;
-  --placeholder: #a8a49c;
+  --placeholder: #78746c;             /* ۴.۵:۱ — قبلاً ۲.۵ و ناخوانا بود */
   --overlay: rgba(26, 24, 20, 0.4);
-  --grid-line: rgba(30, 27, 22, 0.04);
-  --track: rgba(30, 27, 22, 0.08);
-  --noise-opacity: 0.012;
-  --blob-1: rgba(91, 91, 214, 0.13);
-  --blob-2: rgba(168, 130, 255, 0.1);
-  --blob-3: rgba(255, 190, 120, 0.13);
-  --success: #15803d;
-  --danger: #dc2626;
-  --warning: #b45309;
-  --heading-gradient: linear-gradient(to bottom, #16161c, #3d3a45);
+  --grid-line: rgba(30, 27, 22, 0.055);
+  --track: rgba(30, 27, 22, 0.12);
+  --noise-opacity: 0.014;
+  --blob-1: rgba(79, 79, 204, 0.11);
+  --blob-2: rgba(150, 110, 240, 0.085);
+  --blob-3: rgba(230, 160, 90, 0.1);
+  --success: #147a3a;                 /* ۵.۰:۱ */
+  --danger: #c81e1e;                  /* ۵.۴:۱ */
+  --warning: #96450a;                 /* ۶.۰:۱ — قبلاً b45309 با ۴.۷ */
+  --heading-gradient: linear-gradient(to bottom, #131318, #34313c);
 
   /* تقویم فعالیت — جدول در حالت روز باید دیده شود */
-  --heat-0: #ebe8e0;
-  --heat-1: #c9c8ee;
-  --heat-2: #9a99e0;
-  --heat-3: #6b6bd0;
-  --heat-4: #4a3fa8;
-  --heat-edge: rgba(30, 27, 22, 0.1);
+  --heat-0: #e5e1d7;
+  --heat-1: #bfbeea;
+  --heat-2: #8f8ddb;
+  --heat-3: #5f5fc9;
+  --heat-4: #3f349e;
+  --heat-edge: rgba(30, 27, 22, 0.14);
 
   /* نوار بالای سایت — در تم روشن قرص سفید روی کاغذ کرمی */
-  --nav-pill: rgba(255, 255, 255, 0.82);
-  --nav-pill-edge: rgba(30, 27, 22, 0.1);
-  --nav-pill-shadow: 0 2px 12px rgba(48, 42, 32, 0.07);
-  --nav-pill-shadow-lift: 0 10px 30px rgba(48, 42, 32, 0.14);
-  --nav-pop: rgba(255, 255, 255, 0.97);
-  --nav-pop-shadow: 0 18px 46px -14px rgba(48, 42, 32, 0.24);
-  --nav-ico: rgba(30, 27, 22, 0.055);
+  --nav-pill: rgba(255, 255, 255, 0.9);
+  --nav-pill-edge: rgba(30, 27, 22, 0.16);
+  --nav-pill-shadow: 0 2px 10px rgba(48, 42, 32, 0.09);
+  --nav-pill-shadow-lift: 0 10px 28px -6px rgba(48, 42, 32, 0.2);
+  --nav-pop: rgba(255, 255, 255, 0.98);
+  --nav-pop-shadow: 0 20px 48px -14px rgba(48, 42, 32, 0.3);
+  --nav-ico: rgba(30, 27, 22, 0.07);
   --nav-ico-fg: var(--foreground);
   --nav-cta: #16161c;
   --nav-cta-fg: #ffffff;
 
   /* در تم روشن بدنه باید تیره‌تر از کاغذ کرمی باشد، وگرنه حاشیه‌ی
      نمایشگر با پس‌زمینه یکی می‌شود و قاب دیده نمی‌شود. */
-  --device-body: linear-gradient(160deg, #d9d5cb, #bfbab0 52%);
-  --device-edge: rgba(30, 27, 22, 0.26);
-  --device-sheen: rgba(255, 255, 255, 0.75);
+  --device-body: linear-gradient(160deg, #d2cdc2, #b5b0a5 52%);
+  --device-edge: rgba(30, 27, 22, 0.32);
+  --device-sheen: rgba(255, 255, 255, 0.7);
   --device-shadow: rgba(48, 42, 32, 0.34);
-  --device-stand: linear-gradient(to bottom, #cdc8be, #b6b1a7);
-  --device-dot: rgba(30, 27, 22, 0.22);
-  --device-label: rgba(30, 27, 22, 0.52);
+  --device-stand: linear-gradient(to bottom, #c6c1b6, #aea99e);
+  --device-dot: rgba(30, 27, 22, 0.3);
+  --device-label: rgba(23, 23, 28, 0.72); /* ۴.۶:۱ روی بدنه — قبلاً ۳.۱ */
 
   --background: var(--background-base);
   --foreground-token: var(--foreground);

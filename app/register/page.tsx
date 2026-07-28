@@ -252,7 +252,7 @@ export default function RegisterPage() {
           border: 1px solid var(--border-default);
           border-radius: 16px;
           box-shadow:
-            0 0 0 1px rgba(255,255,255,0.03),
+            0 0 0 1px var(--border-default),
             0 2px 20px rgba(0,0,0,0.4),
             0 0 40px rgba(0,0,0,0.15);
         }
@@ -291,14 +291,14 @@ export default function RegisterPage() {
           position: relative;
           display: flex;
           align-items: center;
-          background: rgba(255,255,255,0.04);
+          background: var(--input-bg);
           border: 1px solid var(--border-default);
           border-radius: 10px;
           transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
         .k2-input-wrap.focused {
           border-color: var(--border-accent);
-          background: rgba(255,255,255,0.055);
+          background: var(--input-bg-focus);
           box-shadow: 0 0 0 3px var(--blob-3);
         }
         .k2-input-wrap.ok      { border-color: rgba(74,222,128,0.42); }
@@ -388,7 +388,7 @@ export default function RegisterPage() {
           flex: 1;
           height: 3px;
           border-radius: 100px;
-          background: rgba(255,255,255,0.08);
+          background: var(--surface-hover);
           transition: background 0.3s ease;
         }
 

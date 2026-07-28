@@ -156,10 +156,12 @@ export const adminStyles = `
   .ad-badge.ok     { color: var(--success); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
 
   /* ── ورودی ── */
+  /* ورودی‌ها و دکمه‌ها اجزای تعاملی‌اند: حاشیه‌شان باید ۳:۱ کنتراست
+     داشته باشد وگرنه در تم روشن مرزشان با پس‌زمینه گم می‌شود. */
   .ad-input, .ad-select, .ad-textarea {
     width: 100%; font-family: inherit; font-size: 13px;
     color: var(--foreground); background: var(--input-bg);
-    border: 1px solid var(--border-default); border-radius: 8px;
+    border: 1px solid var(--border-strong); border-radius: 8px;
     padding: 9px 11px; transition: border-color .16s ease, background .16s ease;
   }
   .ad-textarea { line-height: 1.85; resize: vertical; min-height: 76px; }
@@ -179,7 +181,7 @@ export const adminStyles = `
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     font-family: inherit; font-size: 12.5px; font-weight: 600;
     padding: 8px 14px; border-radius: 8px; cursor: pointer;
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-strong);
     background: var(--surface); color: var(--foreground);
     white-space: nowrap;
     transition: background .16s ease, border-color .16s ease, opacity .16s ease;
@@ -329,7 +331,7 @@ export const adminStyles = `
   }
   .ad-toggle {
     flex: 0 0 auto; width: 40px; height: 23px; border-radius: 100px;
-    border: 1px solid var(--border-hover); background: var(--track);
+    border: 1px solid var(--border-strong); background: var(--track);
     position: relative; cursor: pointer; padding: 0;
     transition: background .18s ease, border-color .18s ease;
   }

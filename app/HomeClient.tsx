@@ -200,13 +200,15 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           transform: translateY(-2px);
         }
 
+        /* دکمه‌ی تعاملی: مرزش باید ۳:۱ کنتراست داشته باشد، وگرنه در تم
+           روشن روی کاغذ کرمی محو می‌شود. */
         .k2-btn-secondary {
           background: var(--surface);
           color: var(--foreground);
           border-radius: 8px;
-          box-shadow: inset 0 0 0 1px var(--border-default);
+          box-shadow: inset 0 0 0 1px var(--border-strong);
         }
-        .k2-btn-secondary:hover { background: var(--surface-hover); box-shadow: inset 0 0 0 1px var(--border-hover); }
+        .k2-btn-secondary:hover { background: var(--surface-hover); box-shadow: inset 0 0 0 1.5px var(--border-strong); }
 
         .k2-btn-ghost {
           background: transparent;
@@ -249,7 +251,7 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           border-radius: 16px;
           overflow: hidden;
           box-shadow:
-            0 0 0 1px rgba(255,255,255,0.03),
+            0 0 0 1px var(--border-default),
             0 2px 20px rgba(0,0,0,0.4),
             0 0 40px rgba(0,0,0,0.15);
           transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease, border-color 0.25s ease;
@@ -261,7 +263,7 @@ export default function HomeClient({ content }: { content: SiteContent }) {
             transform: translateY(-6px);
             border-color: var(--border-hover);
             box-shadow:
-              0 0 0 1px rgba(255,255,255,0.08),
+              0 0 0 1px var(--border-hover),
               0 12px 40px rgba(0,0,0,0.5),
               0 0 60px var(--blob-3);
           }

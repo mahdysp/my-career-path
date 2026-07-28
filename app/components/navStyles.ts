@@ -167,6 +167,7 @@ export const navStyles = `
   /* ── سمت چپ: تم، ورود، ثبت‌نام ── */
   .kn-side { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; }
 
+  /* دکمه‌ی تعاملی: حاشیه‌ی ۳:۱ لازم است، نه لبه‌ی ملایم قرص */
   .kn-ghost {
     font-family: inherit; font-size: 13.5px; font-weight: 600;
     color: var(--foreground);
@@ -174,7 +175,7 @@ export const navStyles = `
     display: inline-flex; align-items: center;
     border-radius: 100px; cursor: pointer;
     background: transparent;
-    border: 1px solid var(--nav-pill-edge);
+    border: 1px solid var(--border-strong);
     white-space: nowrap;
     transition: background .18s ease, border-color .18s ease;
   }
@@ -217,7 +218,7 @@ export const navStyles = `
     align-items: center; justify-content: center;
     border-radius: 100px; cursor: pointer;
     background: transparent; color: var(--foreground);
-    border: 1px solid var(--nav-pill-edge);
+    border: 1px solid var(--border-strong);
   }
   .kn-burger span {
     position: relative; display: block;

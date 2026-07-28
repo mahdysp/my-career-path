@@ -267,7 +267,7 @@ export default function AuthClient() {
           border: 1px solid var(--border-default);
           border-radius: 16px;
           box-shadow:
-            0 0 0 1px rgba(255,255,255,0.03),
+            0 0 0 1px var(--border-default),
             0 2px 20px rgba(0,0,0,0.4),
             0 0 40px rgba(0,0,0,0.15);
         }
@@ -318,19 +318,21 @@ export default function AuthClient() {
           align-items: center;
           justify-content: space-between;
         }
+        /* پس‌زمینه از توکن می‌آید نه رنگ ثابت: rgba سفید روی تم روشن
+           عملاً نامرئی بود. حاشیه هم باید ۳:۱ باشد چون ورودی تعاملی است. */
         .k2-input-wrap {
           position: relative;
           display: flex;
           align-items: center;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid var(--border-default);
+          background: var(--input-bg);
+          border: 1px solid var(--border-strong);
           border-radius: 10px;
           transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
         .k2-input-wrap.focused {
-          border-color: var(--border-accent);
-          background: rgba(255,255,255,0.055);
-          box-shadow: 0 0 0 3px var(--blob-3);
+          border-color: var(--accent);
+          background: var(--input-bg-focus);
+          box-shadow: 0 0 0 3px var(--accent-glow);
         }
         .k2-input-wrap svg.lead { margin: 0 12px; color: var(--foreground-subtle); flex-shrink: 0; transition: color 0.2s ease; }
         .k2-input-wrap.focused svg.lead { color: var(--accent); }
