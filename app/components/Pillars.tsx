@@ -42,11 +42,25 @@ export default function Pillars({ data }: { data: SiteContent["pillars"] }) {
       ticking = false;
       const r = el.getBoundingClientRect();
       const vh = window.innerHeight;
-      /* بازه‌ی قفل‌بودن بخش. شبکه در نیمه‌ی اول کامل می‌شود و نیمه‌ی
-         دوم فرصت خواندن ستون‌هاست. */
-      const travel = Math.max(1, r.height - vh);
-      const p = clamp01(-r.top / travel);
-      setOrder(easeInOut(clamp01(p / 0.55)));
+
+      /* دو حالت داریم:
+         • چسبان (دسکتاپ): بخش بلندتر از پنجره است و بازه‌ی پیشرفت،
+           همان مدتی است که قفل می‌ماند.
+         • غیرچسبان (موبایل و نمایشگر کوتاه): بخش کوتاه‌تر از پنجره
+           است، پس r.height - vh منفی می‌شود و انیمیشن به‌جای حرکت نرم
+           می‌پرد. آنجا معیار را «ورود بخش به قاب دید» می‌گیریم. */
+      const pinned = r.height > vh + 40;
+
+      let p: number;
+      if (pinned) {
+        p = clamp01(-r.top / Math.max(1, r.height - vh)) / 0.55;
+      } else {
+        const start = vh * 0.9;
+        const distance = Math.max(1, Math.min(r.height * 0.85, vh * 0.7));
+        p = (start - r.top) / distance;
+      }
+
+      setOrder(easeInOut(clamp01(p)));
     };
 
     const onScroll = () => {

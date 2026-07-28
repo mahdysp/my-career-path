@@ -76,17 +76,19 @@ export const pillarsStyles = `
 
   .pl-visual {
     position: relative;
-    height: 100%;
     min-height: 0;
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  /* ابعاد بوم را جاوااسکریپت ست می‌کند */
+  /* صحنه مربعی است، پس سقف عرض باید از ارتفاعِ در دسترس هم تبعیت کند
+     وگرنه بوم بلندتر از قاب می‌شود. ارتفاع را جاوااسکریپت برابر عرض
+     نهایی ست می‌کند. */
   .pl-canvas {
     display: block;
     width: 100%;
-    max-width: min(100%, 60vh);
+    max-width: min(100%, 52vh);
     margin: 0 auto;
   }
 
@@ -95,6 +97,7 @@ export const pillarsStyles = `
   /* ── موارد ── */
   .pl-item {
     padding: clamp(12px, 1.8vh, 22px) 0;
+    min-width: 0;
     border-bottom: 1px solid var(--border-default);
     opacity: 0;
     transform: translateY(14px);
@@ -148,20 +151,31 @@ export const pillarsStyles = `
   }
 
   @media (max-width: 880px) {
+    /* یک‌ستونه: صحنه بالا، متن پایین. بخش دیگر قفل نمی‌شود چون
+       ارتفاع لازم برای سه ستون متن + صحنه از یک پنجره بیشتر است. */
+    .pl-wrap { height: auto; }
+    .pl {
+      position: static;
+      height: auto;
+      padding-block: clamp(48px, 9vw, 80px);
+      gap: clamp(18px, 3.5vw, 30px);
+    }
     .pl-split {
       grid-template-columns: 1fr;
-      gap: clamp(14px, 2.5vh, 26px);
-      align-content: center;
+      gap: clamp(16px, 4vw, 30px);
+      align-items: start;
     }
-    .pl-canvas { max-width: min(100%, 34vh); }
-    .pl-item-b { font-size: 12.5px; }
+    .pl-visual { width: 100%; }
+    /* سقف بر حسب عرض صفحه، نه ارتفاع — در چیدمان عمودی ارتفاع آزاد است */
+    .pl-canvas { max-width: min(100%, 300px); }
+    .pl-item-b { font-size: 13px; }
     .pl-title { font-size: clamp(22px, 5.4vw, 32px); }
   }
-  /* روی نمایشگرهای کوتاه، قفل‌کردن محتوا را می‌بُرد */
-  @media (max-height: 620px) {
+  /* نمایشگر کوتاه در حالت دوستونه هم نباید قفل شود */
+  @media (min-width: 881px) and (max-height: 680px) {
     .pl-wrap { height: auto; }
-    .pl { position: static; height: auto; padding-block: 56px; }
-    .pl-canvas { max-width: 320px; }
+    .pl { position: static; height: auto; padding-block: 64px; }
+    .pl-canvas { max-width: 340px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .pl-item, .pl-cta, .pl-item-t::before, .pl-shift-s {

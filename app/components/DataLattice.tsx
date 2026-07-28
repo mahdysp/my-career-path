@@ -145,10 +145,12 @@ export default function DataLattice({
     let dpr = 1;
     let cssW = 0;
 
+    /* اندازه از خودِ بوم خوانده می‌شود، نه از والدش.
+       CSS با max-width بوم را کوچک‌تر از والد می‌کند؛ اگر عرض والد را
+       مبنا بگیریم، ارتفاع inline بزرگ‌تر از عرض واقعی می‌شود و صحنه
+       کشیده و بیرون‌زده می‌شود — همان چیزی که روی موبایل دیده می‌شد. */
     const resize = () => {
-      const box = canvas.parentElement;
-      if (!box) return;
-      const w = box.clientWidth;
+      const w = canvas.clientWidth;
       if (!w) return;
       dpr = Math.min(2, window.devicePixelRatio || 1);
       cssW = w;
@@ -282,7 +284,7 @@ export default function DataLattice({
         stop();
       }
     });
-    if (canvas.parentElement) ro.observe(canvas.parentElement);
+    ro.observe(canvas);
 
     return () => {
       io.disconnect();
