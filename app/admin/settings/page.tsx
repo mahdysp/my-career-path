@@ -109,6 +109,12 @@ export default function AdminSettingsPage() {
                 onToggle={() => set({ pillarsVisible: !flags.pillarsVisible })}
               />
               <Switch
+                on={flags.clutterVisible}
+                label="بخش ساده‌سازی"
+                note="کارت‌هایی که با اسکرول خط می‌خورند، قبل از پرسش‌های متداول."
+                onToggle={() => set({ clutterVisible: !flags.clutterVisible })}
+              />
+              <Switch
                 on={flags.faqVisible}
                 label="صفحه‌ی پرسش‌های متداول"
                 note="اگر خاموش شود، صفحه‌ی /faq پیام «یافت نشد» می‌دهد."

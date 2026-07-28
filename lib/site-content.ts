@@ -44,6 +44,8 @@ export type IntegrationItem = {
   tags: string[];
 };
 
+export type ClutterItem = { id: string; label: string; icon: string };
+
 export type PillarItem = {
   id: string;
   title: string;
@@ -86,6 +88,16 @@ export type SiteContent = {
     ctaHref: string;
     items: PillarItem[];
   };
+  clutter: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    /** چیزهایی که کنار گذاشته می‌شوند */
+    items: ClutterItem[];
+    /** آنچه جایگزینشان می‌شود */
+    resultTitle: string;
+    resultBody: string;
+  };
   faq: {
     eyebrow: string;
     title: string;
@@ -109,6 +121,8 @@ export type SiteContent = {
     aboutVisible: boolean;
     /** بخش «بر چه چیزی ساخته شده» روی صفحه‌ی اصلی */
     pillarsVisible: boolean;
+    /** بخش «به‌جای این‌همه حدس» روی صفحه‌ی اصلی */
+    clutterVisible: boolean;
     /** صفحه‌ی پرسش‌های متداول */
     faqVisible: boolean;
     /** صفحه‌ی یکپارچه‌سازی و داده */
@@ -248,6 +262,23 @@ export const DEFAULT_CONTENT: SiteContent = {
       },
     ],
   },
+  clutter: {
+    eyebrow: "ساده‌سازی",
+    title: "به‌جای این‌همه حدس، یک نقشه",
+    lede:
+      "بیشتر ما مسیر شغلی‌مان را از دل توصیه‌های پراکنده و آزمون‌های بی‌پایه بیرون می‌کشیم. Karex همه‌ی این‌ها را با یک سنجش استاندارد جایگزین می‌کند.",
+    items: [
+      { id: "c-1", label: "توصیه‌ی اطرافیان", icon: "chat" },
+      { id: "c-2", label: "آزمون‌های بی‌منبع", icon: "quiz" },
+      { id: "c-3", label: "مقایسه‌ی حقوق در گروه‌ها", icon: "money" },
+      { id: "c-4", label: "تبلیغ دوره‌های آموزشی", icon: "megaphone" },
+      { id: "c-5", label: "لیست «۱۰ شغل آینده»", icon: "list" },
+      { id: "c-6", label: "آزمون‌وخطای چندساله", icon: "clock" },
+    ],
+    resultTitle: "یک پروفایل، بر پایه‌ی داده",
+    resultBody:
+      "شش بُعد سنجیده‌شده، مقایسه با نمره‌های رسمی O*NET، و درصد تطابقی که فرمولش را می‌توانید ببینید.",
+  },
   faq: {
     eyebrow: "پرسش‌های متداول",
     title: "پاسخ سؤال‌هایتان",
@@ -362,6 +393,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     registrationOpen: true,
     aboutVisible: true,
     pillarsVisible: true,
+    clutterVisible: true,
     faqVisible: true,
     integrationsVisible: true,
     banner: "",

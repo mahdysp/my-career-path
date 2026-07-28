@@ -7,6 +7,7 @@ import ExplodedProfile from "@/app/components/ExplodedProfile";
 import ScreenShowcase from "@/app/components/ScreenShowcase";
 import Pillars from "@/app/components/Pillars";
 import FaqSection from "@/app/components/FaqSection";
+import ClutterSection from "@/app/components/ClutterSection";
 import type { SiteContent } from "@/lib/site-content";
 
 /* مسیر عمودی که بین گام‌ها می‌پیچد. عمداً کاملاً صاف نیست تا حس
@@ -1019,6 +1020,11 @@ export default function HomeClient({ content }: { content: SiteContent }) {
 
           {/* پشتوانه — منابع داده و چارچوب سنجش */}
           {content.flags.pillarsVisible && <Pillars data={content.pillars} />}
+
+          {/* ساده‌سازی — قبل از پرسش‌های متداول */}
+          {content.flags.clutterVisible && (
+            <ClutterSection data={content.clutter} />
+          )}
 
           {/* پرسش‌های متداول — انتهای صفحه، قبل از فوتر */}
           {content.flags.faqVisible && <FaqSection faq={content.faq} />}

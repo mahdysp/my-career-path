@@ -8,6 +8,7 @@ import { api } from "../adminClient";
 import type {
   AboutValue,
   ContactChannel,
+  ClutterItem,
   FaqItem,
   IntegrationItem,
   PillarItem,
@@ -44,6 +45,21 @@ const blankPillar = (): PillarItem => ({
   tags: [],
 });
 
+const blankClutter = (): ClutterItem => ({
+  id: `x-${rid()}`,
+  label: "",
+  icon: "list",
+});
+
+const CLUTTER_ICONS = [
+  { v: "chat", t: "گفت‌وگو" },
+  { v: "quiz", t: "آزمون" },
+  { v: "money", t: "حقوق" },
+  { v: "megaphone", t: "تبلیغ" },
+  { v: "list", t: "فهرست" },
+  { v: "clock", t: "زمان" },
+];
+
 const blankFaq = (): FaqItem => ({ id: `f-${rid()}`, q: "", a: "" });
 const blankIntegration = (): IntegrationItem => ({
   id: `i-${rid()}`,
@@ -74,6 +90,7 @@ export default function AdminContentPage() {
   const [exploded, setExploded] = useState({ eyebrow: "", title: "", subtitle: "" });
   const [about, setAbout] = useState<SiteContent["about"] | null>(null);
   const [pillars, setPillars] = useState<SiteContent["pillars"] | null>(null);
+  const [clutter, setClutter] = useState<SiteContent["clutter"] | null>(null);
   const [faq, setFaq] = useState<SiteContent["faq"] | null>(null);
   const [integrations, setIntegrations] =
     useState<SiteContent["integrations"] | null>(null);
@@ -89,6 +106,7 @@ export default function AdminContentPage() {
         setExploded(d.content.exploded);
         setAbout(d.content.about);
         setPillars(d.content.pillars);
+        setClutter(d.content.clutter);
         setFaq(d.content.faq);
         setIntegrations(d.content.integrations);
       })
@@ -781,6 +799,156 @@ export default function AdminContentPage() {
                     className="ad-btn"
                     disabled={busy}
                     onClick={() => setPillars(data.defaults.pillars)}
+                  >
+                    بازگردانی به پیش‌فرض
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {clutter && (
+              <div className="ad-card">
+                <div className="ad-slide-top" style={{ marginBottom: 6 }}>
+                  <div>
+                    <p className="ad-card-title">بخش ساده‌سازی (صفحه‌ی اصلی)</p>
+                    <p className="ad-card-note" style={{ marginBottom: 0 }}>
+                      کارت‌هایی که با اسکرول خط می‌خورند و جایشان را نتیجه می‌گیرد.
+                    </p>
+                  </div>
+                  <button
+                    className="ad-btn sm"
+                    onClick={() =>
+                      setClutter({ ...clutter, items: [...clutter.items, blankClutter()] })
+                    }
+                  >
+                    + مورد
+                  </button>
+                </div>
+
+                <div className="ad-field">
+                  <label className="ad-label">عنوان بالا (کوچک)</label>
+                  <input
+                    className="ad-input"
+                    value={clutter.eyebrow}
+                    onChange={(e) => setClutter({ ...clutter, eyebrow: e.target.value })}
+                  />
+                </div>
+                <div className="ad-field">
+                  <label className="ad-label">تیتر</label>
+                  <input
+                    className="ad-input"
+                    value={clutter.title}
+                    onChange={(e) => setClutter({ ...clutter, title: e.target.value })}
+                  />
+                </div>
+                <div className="ad-field">
+                  <label className="ad-label">توضیح کوتاه</label>
+                  <textarea
+                    className="ad-textarea"
+                    value={clutter.lede}
+                    onChange={(e) => setClutter({ ...clutter, lede: e.target.value })}
+                  />
+                </div>
+
+                <div style={{ marginTop: 16 }}>
+                  {clutter.items.map((it, i) => (
+                    <div key={it.id} className="ad-slide">
+                      <div className="ad-slide-top">
+                        <span className="ad-badge accent">{i + 1}</span>
+                        <button
+                          className="ad-btn sm danger"
+                          onClick={() =>
+                            setClutter({
+                              ...clutter,
+                              items: clutter.items.filter((_, j) => j !== i),
+                            })
+                          }
+                        >
+                          حذف
+                        </button>
+                      </div>
+                      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 140px" }}>
+                        <div className="ad-field" style={{ marginTop: 0 }}>
+                          <label className="ad-label">برچسب</label>
+                          <input
+                            className="ad-input"
+                            value={it.label}
+                            onChange={(e) =>
+                              setClutter({
+                                ...clutter,
+                                items: clutter.items.map((x, j) =>
+                                  j === i ? { ...x, label: e.target.value } : x
+                                ),
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="ad-field" style={{ marginTop: 0 }}>
+                          <label className="ad-label">آیکن</label>
+                          <select
+                            className="ad-select"
+                            value={it.icon}
+                            onChange={(e) =>
+                              setClutter({
+                                ...clutter,
+                                items: clutter.items.map((x, j) =>
+                                  j === i ? { ...x, icon: e.target.value } : x
+                                ),
+                              })
+                            }
+                          >
+                            {CLUTTER_ICONS.map((k) => (
+                              <option key={k.v} value={k.v}>
+                                {k.t}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="ad-field" style={{ marginTop: 20 }}>
+                  <label className="ad-label">تیتر کارت نتیجه</label>
+                  <input
+                    className="ad-input"
+                    value={clutter.resultTitle}
+                    onChange={(e) =>
+                      setClutter({ ...clutter, resultTitle: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="ad-field">
+                  <label className="ad-label">متن کارت نتیجه</label>
+                  <textarea
+                    className="ad-textarea"
+                    value={clutter.resultBody}
+                    onChange={(e) =>
+                      setClutter({ ...clutter, resultBody: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="ad-row" style={{ marginTop: 16 }}>
+                  <button
+                    className="ad-btn primary"
+                    disabled={busy}
+                    onClick={() => save("clutter", clutter)}
+                  >
+                    {busy ? "در حال ذخیره…" : "ذخیره‌ی بخش ساده‌سازی"}
+                  </button>
+                  <button
+                    className="ad-btn"
+                    disabled={busy}
+                    onClick={() => setClutter(data.content.clutter)}
+                  >
+                    بازگردانی تغییرات
+                  </button>
+                  <button
+                    className="ad-btn"
+                    disabled={busy}
+                    onClick={() => setClutter(data.defaults.clutter)}
                   >
                     بازگردانی به پیش‌فرض
                   </button>
