@@ -44,7 +44,17 @@ export type IntegrationItem = {
   tags: string[];
 };
 
-export type ClutterItem = { id: string; label: string; icon: string };
+export type TimelineStage = {
+  id: string;
+  /** بازه‌ی سنی — روی محور نمایش داده می‌شود */
+  age: string;
+  title: string;
+  body: string;
+  /** پایداری علاقه در این بازه، ۰ تا ۱۰۰ — ارتفاع ستون از این می‌آید */
+  stability: number;
+  /** آیا این نقطه‌ی عطف است (تثبیت علاقه) */
+  peak?: boolean;
+};
 
 export type PillarItem = {
   id: string;
@@ -88,15 +98,16 @@ export type SiteContent = {
     ctaHref: string;
     items: PillarItem[];
   };
-  clutter: {
+  timeline: {
     eyebrow: string;
     title: string;
     lede: string;
-    /** چیزهایی که کنار گذاشته می‌شوند */
-    items: ClutterItem[];
-    /** آنچه جایگزینشان می‌شود */
-    resultTitle: string;
-    resultBody: string;
+    stages: TimelineStage[];
+    /** جمله‌ی پایانی زیر نمودار */
+    footnote: string;
+    /** منبع یافته */
+    source: string;
+    sourceHref: string;
   };
   faq: {
     eyebrow: string;
@@ -121,8 +132,8 @@ export type SiteContent = {
     aboutVisible: boolean;
     /** بخش «بر چه چیزی ساخته شده» روی صفحه‌ی اصلی */
     pillarsVisible: boolean;
-    /** بخش «به‌جای این‌همه حدس» روی صفحه‌ی اصلی */
-    clutterVisible: boolean;
+    /** بخش خط زمانی تثبیت علاقه روی صفحه‌ی اصلی */
+    timelineVisible: boolean;
     /** صفحه‌ی پرسش‌های متداول */
     faqVisible: boolean;
     /** صفحه‌ی یکپارچه‌سازی و داده */
@@ -262,22 +273,53 @@ export const DEFAULT_CONTENT: SiteContent = {
       },
     ],
   },
-  clutter: {
-    eyebrow: "ساده‌سازی",
-    title: "به‌جای این‌همه حدس، یک نقشه",
+  timeline: {
+    eyebrow: "زمان‌بندی",
+    title: "چه وقتی برای این تصمیم درست است؟",
     lede:
-      "بیشتر ما مسیر شغلی‌مان را از دل توصیه‌های پراکنده و آزمون‌های بی‌پایه بیرون می‌کشیم. Karex همه‌ی این‌ها را با یک سنجش استاندارد جایگزین می‌کند.",
-    items: [
-      { id: "c-1", label: "توصیه‌ی اطرافیان", icon: "chat" },
-      { id: "c-2", label: "آزمون‌های بی‌منبع", icon: "quiz" },
-      { id: "c-3", label: "مقایسه‌ی حقوق در گروه‌ها", icon: "money" },
-      { id: "c-4", label: "تبلیغ دوره‌های آموزشی", icon: "megaphone" },
-      { id: "c-5", label: "لیست «۱۰ شغل آینده»", icon: "list" },
-      { id: "c-6", label: "آزمون‌وخطای چندساله", icon: "clock" },
+      "علاقه‌های شغلی ثابت به دنیا نمی‌آیند — شکل می‌گیرند. فراتحلیل ۶۶ پژوهش طولی نشان می‌دهد این شکل‌گیری چه مسیری دارد و از کجا قابل اتکا می‌شود.",
+    stages: [
+      {
+        id: "t-12",
+        age: "۱۲–۱۴",
+        title: "هنوز در حال شکل‌گیری",
+        body: "علاقه‌ها بی‌ثبات‌اند و بیشتر بازتاب محیط‌اند تا خودِ فرد. آزمون در این سن بیشتر کنجکاوی است تا راهنما.",
+        stability: 51,
+      },
+      {
+        id: "t-15",
+        age: "۱۵–۱۷",
+        title: "الگوها پیدا می‌شوند",
+        body: "ترجیح‌ها شروع به تکرار می‌کنند. نتیجه‌ی آزمون در این سن برای کشف گزینه‌ها مفید است، نه برای تصمیم قطعی.",
+        stability: 58,
+      },
+      {
+        id: "t-18",
+        age: "۱۸–۲۲",
+        title: "جهش تثبیت",
+        body: "بیشترین تغییر همین‌جا رخ می‌دهد. پایداری علاقه‌ها به‌سرعت بالا می‌رود — دقیقاً همان سنی که بیشتر ما باید رشته و شغل را انتخاب کنیم.",
+        stability: 72,
+        peak: true,
+      },
+      {
+        id: "t-23",
+        age: "۲۳–۳۰",
+        title: "قابل اتکا",
+        body: "پروفایل شما به سطحی رسیده که می‌توان روی آن برنامه‌ریزی کرد. تغییرها از این به بعد تدریجی‌اند، نه بنیادی.",
+        stability: 77,
+      },
+      {
+        id: "t-31",
+        age: "۳۱–۴۰",
+        title: "پایدار",
+        body: "علاقه‌ها تقریباً ثابت می‌مانند — حتی پایدارتر از صفات شخصیتی. تغییر مسیر ممکن است، ولی بر پایه‌ی همین علاقه‌ها.",
+        stability: 74,
+      },
     ],
-    resultTitle: "یک پروفایل، بر پایه‌ی داده",
-    resultBody:
-      "شش بُعد سنجیده‌شده، مقایسه با نمره‌های رسمی O*NET، و درصد تطابقی که فرمولش را می‌توانید ببینید.",
+    footnote:
+      "اگر بین ۱۸ تا ۲۲ سالگی هستید، در بحرانی‌ترین بازه‌اید: تصمیم‌های بزرگ دقیقاً وقتی گرفته می‌شوند که پروفایل تازه دارد تثبیت می‌شود. یک سنجش استاندارد اینجا بیشترین ارزش را دارد.",
+    source: "Low, Yoon, Roberts & Rounds (2005) — فراتحلیل ۶۶ پژوهش طولی",
+    sourceHref: "/science#evidence",
   },
   faq: {
     eyebrow: "پرسش‌های متداول",
@@ -393,7 +435,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     registrationOpen: true,
     aboutVisible: true,
     pillarsVisible: true,
-    clutterVisible: true,
+    timelineVisible: true,
     faqVisible: true,
     integrationsVisible: true,
     banner: "",

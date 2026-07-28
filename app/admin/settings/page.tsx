@@ -109,10 +109,10 @@ export default function AdminSettingsPage() {
                 onToggle={() => set({ pillarsVisible: !flags.pillarsVisible })}
               />
               <Switch
-                on={flags.clutterVisible}
-                label="بخش ساده‌سازی"
-                note="کارت‌هایی که با اسکرول خط می‌خورند، قبل از پرسش‌های متداول."
-                onToggle={() => set({ clutterVisible: !flags.clutterVisible })}
+                on={flags.timelineVisible}
+                label="بخش زمان‌بندی"
+                note="نمودار تثبیت علاقه‌ها با گذر سن، قبل از پرسش‌های متداول."
+                onToggle={() => set({ timelineVisible: !flags.timelineVisible })}
               />
               <Switch
                 on={flags.faqVisible}

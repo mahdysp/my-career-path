@@ -8,10 +8,10 @@ import { api } from "../adminClient";
 import type {
   AboutValue,
   ContactChannel,
-  ClutterItem,
   FaqItem,
   IntegrationItem,
   PillarItem,
+  TimelineStage,
   ShowcaseSlide,
   SiteContent,
 } from "@/lib/site-content";
@@ -45,20 +45,13 @@ const blankPillar = (): PillarItem => ({
   tags: [],
 });
 
-const blankClutter = (): ClutterItem => ({
-  id: `x-${rid()}`,
-  label: "",
-  icon: "list",
+const blankStage = (): TimelineStage => ({
+  id: `s-${rid()}`,
+  age: "",
+  title: "",
+  body: "",
+  stability: 60,
 });
-
-const CLUTTER_ICONS = [
-  { v: "chat", t: "گفت‌وگو" },
-  { v: "quiz", t: "آزمون" },
-  { v: "money", t: "حقوق" },
-  { v: "megaphone", t: "تبلیغ" },
-  { v: "list", t: "فهرست" },
-  { v: "clock", t: "زمان" },
-];
 
 const blankFaq = (): FaqItem => ({ id: `f-${rid()}`, q: "", a: "" });
 const blankIntegration = (): IntegrationItem => ({
@@ -90,7 +83,7 @@ export default function AdminContentPage() {
   const [exploded, setExploded] = useState({ eyebrow: "", title: "", subtitle: "" });
   const [about, setAbout] = useState<SiteContent["about"] | null>(null);
   const [pillars, setPillars] = useState<SiteContent["pillars"] | null>(null);
-  const [clutter, setClutter] = useState<SiteContent["clutter"] | null>(null);
+  const [timeline, setTimeline] = useState<SiteContent["timeline"] | null>(null);
   const [faq, setFaq] = useState<SiteContent["faq"] | null>(null);
   const [integrations, setIntegrations] =
     useState<SiteContent["integrations"] | null>(null);
@@ -106,7 +99,7 @@ export default function AdminContentPage() {
         setExploded(d.content.exploded);
         setAbout(d.content.about);
         setPillars(d.content.pillars);
-        setClutter(d.content.clutter);
+        setTimeline(d.content.timeline);
         setFaq(d.content.faq);
         setIntegrations(d.content.integrations);
       })
@@ -806,22 +799,26 @@ export default function AdminContentPage() {
               </div>
             )}
 
-            {clutter && (
+            {timeline && (
               <div className="ad-card">
                 <div className="ad-slide-top" style={{ marginBottom: 6 }}>
                   <div>
-                    <p className="ad-card-title">بخش ساده‌سازی (صفحه‌ی اصلی)</p>
+                    <p className="ad-card-title">بخش زمان‌بندی (صفحه‌ی اصلی)</p>
                     <p className="ad-card-note" style={{ marginBottom: 0 }}>
-                      کارت‌هایی که با اسکرول خط می‌خورند و جایشان را نتیجه می‌گیرد.
+                      نمودار تثبیت علاقه‌ها با گذر سن. عدد پایداری از پژوهش
+                      می‌آید — بدون منبع تغییرش ندهید.
                     </p>
                   </div>
                   <button
                     className="ad-btn sm"
                     onClick={() =>
-                      setClutter({ ...clutter, items: [...clutter.items, blankClutter()] })
+                      setTimeline({
+                        ...timeline,
+                        stages: [...timeline.stages, blankStage()],
+                      })
                     }
                   >
-                    + مورد
+                    + مرحله
                   </button>
                 </div>
 
@@ -829,126 +826,193 @@ export default function AdminContentPage() {
                   <label className="ad-label">عنوان بالا (کوچک)</label>
                   <input
                     className="ad-input"
-                    value={clutter.eyebrow}
-                    onChange={(e) => setClutter({ ...clutter, eyebrow: e.target.value })}
+                    value={timeline.eyebrow}
+                    onChange={(e) =>
+                      setTimeline({ ...timeline, eyebrow: e.target.value })
+                    }
                   />
                 </div>
                 <div className="ad-field">
                   <label className="ad-label">تیتر</label>
                   <input
                     className="ad-input"
-                    value={clutter.title}
-                    onChange={(e) => setClutter({ ...clutter, title: e.target.value })}
+                    value={timeline.title}
+                    onChange={(e) =>
+                      setTimeline({ ...timeline, title: e.target.value })
+                    }
                   />
                 </div>
                 <div className="ad-field">
                   <label className="ad-label">توضیح کوتاه</label>
                   <textarea
                     className="ad-textarea"
-                    value={clutter.lede}
-                    onChange={(e) => setClutter({ ...clutter, lede: e.target.value })}
+                    value={timeline.lede}
+                    onChange={(e) =>
+                      setTimeline({ ...timeline, lede: e.target.value })
+                    }
                   />
                 </div>
 
                 <div style={{ marginTop: 16 }}>
-                  {clutter.items.map((it, i) => (
-                    <div key={it.id} className="ad-slide">
+                  {timeline.stages.map((st, i) => (
+                    <div key={st.id} className="ad-slide">
                       <div className="ad-slide-top">
                         <span className="ad-badge accent">{i + 1}</span>
-                        <button
-                          className="ad-btn sm danger"
-                          onClick={() =>
-                            setClutter({
-                              ...clutter,
-                              items: clutter.items.filter((_, j) => j !== i),
-                            })
-                          }
-                        >
-                          حذف
-                        </button>
+                        <div className="ad-row">
+                          <button
+                            className={`ad-btn sm ${st.peak ? "primary" : ""}`}
+                            onClick={() =>
+                              setTimeline({
+                                ...timeline,
+                                stages: timeline.stages.map((x, j) => ({
+                                  ...x,
+                                  peak: j === i ? !x.peak : false,
+                                })),
+                              })
+                            }
+                          >
+                            نقطه‌ی عطف
+                          </button>
+                          <button
+                            className="ad-btn sm danger"
+                            onClick={() =>
+                              setTimeline({
+                                ...timeline,
+                                stages: timeline.stages.filter((_, j) => j !== i),
+                              })
+                            }
+                          >
+                            حذف
+                          </button>
+                        </div>
                       </div>
-                      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 140px" }}>
+                      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "140px 1fr" }}>
                         <div className="ad-field" style={{ marginTop: 0 }}>
-                          <label className="ad-label">برچسب</label>
+                          <label className="ad-label">بازه‌ی سنی</label>
                           <input
                             className="ad-input"
-                            value={it.label}
+                            value={st.age}
+                            placeholder="۱۸–۲۲"
                             onChange={(e) =>
-                              setClutter({
-                                ...clutter,
-                                items: clutter.items.map((x, j) =>
-                                  j === i ? { ...x, label: e.target.value } : x
+                              setTimeline({
+                                ...timeline,
+                                stages: timeline.stages.map((x, j) =>
+                                  j === i ? { ...x, age: e.target.value } : x
                                 ),
                               })
                             }
                           />
                         </div>
                         <div className="ad-field" style={{ marginTop: 0 }}>
-                          <label className="ad-label">آیکن</label>
-                          <select
-                            className="ad-select"
-                            value={it.icon}
+                          <label className="ad-label">عنوان</label>
+                          <input
+                            className="ad-input"
+                            value={st.title}
                             onChange={(e) =>
-                              setClutter({
-                                ...clutter,
-                                items: clutter.items.map((x, j) =>
-                                  j === i ? { ...x, icon: e.target.value } : x
+                              setTimeline({
+                                ...timeline,
+                                stages: timeline.stages.map((x, j) =>
+                                  j === i ? { ...x, title: e.target.value } : x
                                 ),
                               })
                             }
-                          >
-                            {CLUTTER_ICONS.map((k) => (
-                              <option key={k.v} value={k.v}>
-                                {k.t}
-                              </option>
-                            ))}
-                          </select>
+                          />
                         </div>
+                      </div>
+                      <div className="ad-field">
+                        <label className="ad-label">توضیح</label>
+                        <textarea
+                          className="ad-textarea"
+                          value={st.body}
+                          onChange={(e) =>
+                            setTimeline({
+                              ...timeline,
+                              stages: timeline.stages.map((x, j) =>
+                                j === i ? { ...x, body: e.target.value } : x
+                              ),
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="ad-field">
+                        <label className="ad-label">
+                          پایداری ({st.stability}) — ارتفاع ستون
+                        </label>
+                        <input
+                          className="ad-input"
+                          type="range"
+                          min={40}
+                          max={85}
+                          value={st.stability}
+                          onChange={(e) =>
+                            setTimeline({
+                              ...timeline,
+                              stages: timeline.stages.map((x, j) =>
+                                j === i
+                                  ? { ...x, stability: Number(e.target.value) }
+                                  : x
+                              ),
+                            })
+                          }
+                        />
                       </div>
                     </div>
                   ))}
                 </div>
 
                 <div className="ad-field" style={{ marginTop: 20 }}>
-                  <label className="ad-label">تیتر کارت نتیجه</label>
-                  <input
-                    className="ad-input"
-                    value={clutter.resultTitle}
+                  <label className="ad-label">جمع‌بندی زیر نمودار</label>
+                  <textarea
+                    className="ad-textarea"
+                    value={timeline.footnote}
                     onChange={(e) =>
-                      setClutter({ ...clutter, resultTitle: e.target.value })
+                      setTimeline({ ...timeline, footnote: e.target.value })
                     }
                   />
                 </div>
-                <div className="ad-field">
-                  <label className="ad-label">متن کارت نتیجه</label>
-                  <textarea
-                    className="ad-textarea"
-                    value={clutter.resultBody}
-                    onChange={(e) =>
-                      setClutter({ ...clutter, resultBody: e.target.value })
-                    }
-                  />
+                <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 200px" }}>
+                  <div className="ad-field">
+                    <label className="ad-label">متن منبع</label>
+                    <input
+                      className="ad-input"
+                      value={timeline.source}
+                      onChange={(e) =>
+                        setTimeline({ ...timeline, source: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="ad-field">
+                    <label className="ad-label">لینک منبع</label>
+                    <input
+                      className="ad-input"
+                      dir="ltr"
+                      value={timeline.sourceHref}
+                      onChange={(e) =>
+                        setTimeline({ ...timeline, sourceHref: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
 
                 <div className="ad-row" style={{ marginTop: 16 }}>
                   <button
                     className="ad-btn primary"
                     disabled={busy}
-                    onClick={() => save("clutter", clutter)}
+                    onClick={() => save("timeline", timeline)}
                   >
-                    {busy ? "در حال ذخیره…" : "ذخیره‌ی بخش ساده‌سازی"}
+                    {busy ? "در حال ذخیره…" : "ذخیره‌ی بخش زمان‌بندی"}
                   </button>
                   <button
                     className="ad-btn"
                     disabled={busy}
-                    onClick={() => setClutter(data.content.clutter)}
+                    onClick={() => setTimeline(data.content.timeline)}
                   >
                     بازگردانی تغییرات
                   </button>
                   <button
                     className="ad-btn"
                     disabled={busy}
-                    onClick={() => setClutter(data.defaults.clutter)}
+                    onClick={() => setTimeline(data.defaults.timeline)}
                   >
                     بازگردانی به پیش‌فرض
                   </button>
