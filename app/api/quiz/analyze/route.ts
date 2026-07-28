@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/route-error";
 import { checkRateLimitAsync } from "@/lib/rate-limit";
+import { aiErrorMessage, parseJsonLoose, runPrompt } from "@/lib/ai-runtime";
 import { getSession } from "@/lib/session";
 import {
   buildUserVector,
@@ -10,41 +11,32 @@ import {
 } from "@/lib/riasec-score";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-export async function POST(req: NextRequest) {
-  try {
-    if (!req.cookies.get("sb-access-token")?.value) {
-      return NextResponse.json(
-        { message: "برای دیدن تحلیل ابتدا وارد حساب خود شوید." },
-        { status: 401 }
-      );
-    }
+/** شکل خروجی تحلیل — فقط فیلدهایی که کد سمت سرور به آن‌ها دست می‌زند */
+type CareerPath = {
+  holland_code?: string;
+  match_percentage?: number | null;
+  match_basis?: string;
+};
 
-    const limited = await checkRateLimitAsync(req, { name: "analyze", limit: 6, windowMs: 60_000 });
-    if (limited) return limited;
+type AnalysisResult = Record<string, unknown> & {
+  summary?: string;
+  career_paths?: CareerPath[];
+  riasec_profile?: unknown;
+};
 
-    const { query, questions, answers } = await req.json();
-
-    if (!query || !questions || !answers) {
-      return NextResponse.json(
-        { message: "اطلاعات ناقص است." },
-        { status: 400 }
-      );
-    }
-
-    // ساخت متن سوال‌وجواب برای AI
-    const qaText = questions.map((q: any) => {
-      const answer = answers.find((a: any) => a.questionId === q.id);
-      if (q.type === "multiple_choice") {
-        return `سوال: ${q.text}\nجواب: ${answer?.answer || "بدون جواب"}`;
-      } else {
-        return `سوال: ${q.text}\nجواب: ${answer?.answer} از ۵`;
-      }
-    }).join("\n\n");
-
-    const prompt = `شما یک مشاور ارشد مسیریابی شغلی هستید. کاربر آزمون مسیریابی شغلی در حوزه "${query}" را تکمیل کرده است.
+/**
+ * قالب پشتیبان — وقتی جدول ai_prompts هنوز ساخته نشده است.
+ * نسخه‌ی قابل ویرایش در دیتابیس و پنل /admin/ai قرار دارد.
+ */
+const FALLBACK = {
+  system:
+    "You are a career counseling expert. Always respond with valid JSON only, no markdown, no extra text.",
+  temperature: 0.7,
+  maxTokens: 4000,
+  template: `شما یک مشاور ارشد مسیریابی شغلی هستید. کاربر آزمون مسیریابی شغلی در حوزه "{{query}}" را تکمیل کرده است.
 
 پاسخ‌های کاربر:
-${qaText}
+{{qaText}}
 
 بر اساس این پاسخ‌ها، یک تحلیل جامع و دقیق به فارسی ارائه بده.
 
@@ -84,52 +76,56 @@ ${qaText}
 - حداقل ۳ مسیر شغلی پیشنهاد بده
 - حداقل ۳ فاز در نقشه راه داشته باش
 - همه چیز را به فارسی روان بنویس
-- فقط JSON خالص برگردان`;
+- فقط JSON خالص برگردان`,
+};
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        messages: [
-          {
-            role: "system",
-            content: "You are a career counseling expert. Always respond with valid JSON only, no markdown, no extra text.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
-    });
-
-    if (!response.ok) {
-      const err = await response.json();
-      console.error("Groq API error:", err);
+export async function POST(req: NextRequest) {
+  try {
+    if (!req.cookies.get("sb-access-token")?.value) {
       return NextResponse.json(
-        { message: "خطا در تحلیل.", detail: err },
-        { status: 500 }
+        { message: "برای دیدن تحلیل ابتدا وارد حساب خود شوید." },
+        { status: 401 }
       );
     }
 
-    const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || "";
-    const clean = text.replace(/```json|```/g, "").trim();
+    const limited = await checkRateLimitAsync(req, { name: "analyze", limit: 6, windowMs: 60_000 });
+    if (limited) return limited;
 
-    let result;
+    const { query, questions, answers } = await req.json();
+
+    if (!query || !questions || !answers) {
+      return NextResponse.json(
+        { message: "اطلاعات ناقص است." },
+        { status: 400 }
+      );
+    }
+
+    // ساخت متن سوال‌وجواب برای AI
+    const qaText = questions.map((q: any) => {
+      const answer = answers.find((a: any) => a.questionId === q.id);
+      if (q.type === "multiple_choice") {
+        return `سوال: ${q.text}\nجواب: ${answer?.answer || "بدون جواب"}`;
+      } else {
+        return `سوال: ${q.text}\nجواب: ${answer?.answer} از ۵`;
+      }
+    }).join("\n\n");
+
+    let completion;
     try {
-      result = JSON.parse(clean);
+      completion = await runPrompt("quiz.analyze", { query, qaText }, FALLBACK);
+    } catch (e) {
+      console.error("[quiz.analyze] همه‌ی سرویس‌ها شکست خوردند:", e);
+      return NextResponse.json({ message: aiErrorMessage(e) }, { status: 503 });
+    }
+
+    let result: AnalysisResult;
+    try {
+      result = parseJsonLoose(completion.text);
     } catch {
-      console.error("JSON parse error:", clean);
+      console.error("[quiz.analyze] پاسخ JSON نبود:", completion.text.slice(0, 400));
       return NextResponse.json(
         { message: "خطا در پردازش نتیجه. لطفاً دوباره تلاش کنید." },
-        { status: 500 }
+        { status: 502 }
       );
     }
 
@@ -142,7 +138,7 @@ ${qaText}
 
       if (hasEnoughSignal(covered) && Array.isArray(result?.career_paths)) {
         result.career_paths = result.career_paths.map(
-          (c: { holland_code?: string; match_percentage?: number }) => {
+          (c: CareerPath) => {
             const target = hollandCodeToVector(c.holland_code || "");
             return {
               ...c,
@@ -155,7 +151,7 @@ ${qaText}
         );
         // مرتب‌سازی نزولی تا «بهترین گزینه» واقعاً اول باشد
         result.career_paths.sort(
-          (a: { match_percentage?: number }, b: { match_percentage?: number }) =>
+          (a: CareerPath, b: CareerPath) =>
             (b.match_percentage ?? 0) - (a.match_percentage ?? 0)
         );
         result.riasec_profile = vector;

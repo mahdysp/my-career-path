@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import AdminShell from "../AdminShell";
 import AdminGate from "../AdminGate";
 import { api } from "../adminClient";
@@ -187,8 +188,25 @@ export default function AdminSettingsPage() {
               <p className="ad-card-note">
                 اگر بخشی از پنل خطای «جدول وجود ندارد» می‌دهد، فایل{" "}
                 <code>supabase/admin-setup.sql</code> را در Supabase → SQL Editor اجرا کنید.
-                این فایل جدول‌های نقش، محتوا، رویدادها و مخزن رسانه را می‌سازد و اجرای دوباره‌اش
-                مشکلی ایجاد نمی‌کند.
+                این فایل جدول‌های نقش، محتوا، رویدادها، مخزن رسانه و سرویس‌های هوش مصنوعی را
+                می‌سازد و اجرای دوباره‌اش مشکلی ایجاد نمی‌کند.
+              </p>
+            </div>
+
+            <div className="ad-card">
+              <p className="ad-card-title">کلید رمزگذاری هوش مصنوعی</p>
+              <p className="ad-card-note">
+                برای ذخیره‌ی کلید API سرویس‌ها در صفحه‌ی{" "}
+                <Link href="/admin/ai">هوش مصنوعی</Link>، متغیر محیطی{" "}
+                <code>AI_ENCRYPTION_KEY</code> باید تنظیم باشد. کلیدها با AES-256-GCM رمز
+                می‌شوند و بدون این متغیر قابل ذخیره یا خواندن نیستند.
+              </p>
+              <p className="ad-card-note">
+                یک کلید بسازید و در Vercel اضافه کنید:{" "}
+                <code>openssl rand -hex 32</code>
+                <br />
+                هشدار: اگر این متغیر را بعداً عوض کنید، کلیدهای ذخیره‌شده دیگر باز نمی‌شوند و
+                باید دوباره وارد شوند.
               </p>
             </div>
           </>

@@ -51,6 +51,12 @@ const I = {
       <circle cx="12" cy="12" r="9" /><path d="M12 7v5.2l3.2 2" />
     </svg>
   ),
+  ai: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5.5" y="5.5" width="13" height="13" rx="3" /><rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1" />
+      <path d="M9.5 2.5v3M14.5 2.5v3M9.5 18.5v3M14.5 18.5v3M2.5 9.5h3M2.5 14.5h3M18.5 9.5h3M18.5 14.5h3" />
+    </svg>
+  ),
 };
 
 const NAV: NavItem[] = [
@@ -59,6 +65,7 @@ const NAV: NavItem[] = [
   { href: "/admin/attempts", label: "آزمون‌ها", icon: I.quiz },
   { href: "/admin/content", label: "محتوای سایت", icon: I.content },
   { href: "/admin/media", label: "رسانه", icon: I.media },
+  { href: "/admin/ai", label: "هوش مصنوعی", icon: I.ai },
   { href: "/admin/settings", label: "تنظیمات", icon: I.settings },
   { href: "/admin/audit", label: "رویدادها", icon: I.audit },
 ];

@@ -1,42 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/route-error";
 import { checkRateLimitAsync } from "@/lib/rate-limit";
+import { aiErrorMessage, parseJsonLoose, runPrompt } from "@/lib/ai-runtime";
 
-export async function POST(req: NextRequest) {
-  try {
-    // فقط کاربران واردشده — این مسیر به سرویس پولی وصل است
-    if (!req.cookies.get("sb-access-token")?.value) {
-      return NextResponse.json(
-        { message: "برای شروع آزمون ابتدا وارد حساب خود شوید." },
-        { status: 401 }
-      );
-    }
+/**
+ * قالب پشتیبان.
+ *
+ * اگر جدول ai_prompts هنوز ساخته نشده باشد (مهاجرت اجرا نشده) همین متن
+ * استفاده می‌شود تا آزمون از کار نیفتد. نسخه‌ی قابل ویرایش در دیتابیس است.
+ */
+const FALLBACK = {
+  system:
+    "You are a career counseling expert. Always respond with valid JSON only, no markdown, no extra text.",
+  temperature: 0.7,
+  maxTokens: 4000,
+  template: `شما یک متخصص مسیریابی شغلی هستید. کاربر می‌خواهد مسیر شغلی خود را در حوزه "{{query}}" کشف کند.
 
-    const limited = await checkRateLimitAsync(req, { name: "generate", limit: 8, windowMs: 60_000 });
-    if (limited) return limited;
-
-    const { query, count } = await req.json();
-
-    if (!query || !count) {
-      return NextResponse.json(
-        { message: "حوزه تخصصی و تعداد سوالات الزامی است." },
-        { status: 400 }
-      );
-    }
-
-    const validCounts = [10, 15, 20];
-    if (!validCounts.includes(Number(count))) {
-      return NextResponse.json(
-        { message: "تعداد سوالات باید ۱۰، ۱۵ یا ۲۰ باشد." },
-        { status: 400 }
-      );
-    }
-
-    const prompt = `شما یک متخصص مسیریابی شغلی هستید. کاربر می‌خواهد مسیر شغلی خود را در حوزه "${query}" کشف کند.
-
-${count} سوال ترکیبی طراحی کن که:
+{{count}} سوال ترکیبی طراحی کن که:
 - علایق، مهارت‌ها، شخصیت و اهداف کاربر را بسنجد
-- مرتبط با حوزه "${query}" باشد
+- مرتبط با حوزه "{{query}}" باشد
 - به فارسی روان و ساده نوشته شده باشد
 - از ساده به پیچیده پیش برود
 
@@ -78,62 +60,67 @@ ${count} سوال ترکیبی طراحی کن که:
 - در سوالات چندگزینه‌ای، گزینه‌ها را از «بیشترین همسویی با آن بُعد» به
   «کمترین» مرتب کن؛ یعنی گزینه اول قوی‌ترین نشانه‌ی آن بُعد باشد.
 
-برای ${count} سوال، حدوداً ${Math.round(count * 0.6)} تا multiple_choice و ${Math.round(count * 0.4)} تا likert بیاور. فقط JSON خالص برگردان.`;
+برای {{count}} سوال، حدوداً {{mcCount}} تا multiple_choice و {{likertCount}} تا likert بیاور. فقط JSON خالص برگردان.`,
+};
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        messages: [
-          {
-            role: "system",
-            content: "You are a career counseling expert. Always respond with valid JSON only, no markdown, no extra text.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
-    });
-
-    if (!response.ok) {
-      const err = await response.json();
-      console.error("Groq API error:", err);
+export async function POST(req: NextRequest) {
+  try {
+    // فقط کاربران واردشده — این مسیر به سرویس پولی وصل است
+    if (!req.cookies.get("sb-access-token")?.value) {
       return NextResponse.json(
-        { message: "خطا در ساخت سوالات.", detail: err },
-        { status: 500 }
+        { message: "برای شروع آزمون ابتدا وارد حساب خود شوید." },
+        { status: 401 }
       );
     }
 
-    const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || "";
+    const limited = await checkRateLimitAsync(req, { name: "generate", limit: 8, windowMs: 60_000 });
+    if (limited) return limited;
 
-    // پاک کردن markdown fences احتمالی
-    const clean = text.replace(/```json|```/g, "").trim();
+    const { query, count } = await req.json();
 
-    let parsed;
+    if (!query || !count) {
+      return NextResponse.json(
+        { message: "حوزه تخصصی و تعداد سوالات الزامی است." },
+        { status: 400 }
+      );
+    }
+
+    const validCounts = [10, 15, 20];
+    if (!validCounts.includes(Number(count))) {
+      return NextResponse.json(
+        { message: "تعداد سوالات باید ۱۰، ۱۵ یا ۲۰ باشد." },
+        { status: 400 }
+      );
+    }
+
+    const mcCount = Math.round(Number(count) * 0.6);
+    const likertCount = Math.round(Number(count) * 0.4);
+
+    let completion;
     try {
-      parsed = JSON.parse(clean);
+      completion = await runPrompt(
+        "quiz.generate",
+        { query, count, mcCount, likertCount },
+        FALLBACK
+      );
+    } catch (e) {
+      console.error("[quiz.generate] همه‌ی سرویس‌ها شکست خوردند:", e);
+      return NextResponse.json({ message: aiErrorMessage(e) }, { status: 503 });
+    }
+
+    let parsed: { questions?: unknown };
+    try {
+      parsed = parseJsonLoose<{ questions?: unknown }>(completion.text);
     } catch {
-      console.error("JSON parse error:", clean);
+      console.error("[quiz.generate] پاسخ JSON نبود:", completion.text.slice(0, 400));
       return NextResponse.json(
         { message: "خطا در پردازش سوالات. لطفاً دوباره تلاش کنید." },
-        { status: 500 }
+        { status: 502 }
       );
     }
 
     if (!parsed.questions || !Array.isArray(parsed.questions)) {
-      return NextResponse.json(
-        { message: "فرمت سوالات نامعتبر است." },
-        { status: 500 }
-      );
+      return NextResponse.json({ message: "فرمت سوالات نامعتبر است." }, { status: 502 });
     }
 
     return NextResponse.json({ questions: parsed.questions });
