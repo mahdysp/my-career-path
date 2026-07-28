@@ -23,7 +23,13 @@ export default function HomeClient({ content }: { content: SiteContent }) {
 
   // پیشرفت رسم مسیر «سه گام» (۰ تا ۱) و گام فعال
   const stepsRef = useRef<HTMLDivElement | null>(null);
+  const pathRef = useRef<SVGPathElement | null>(null);
   const [pathProgress, setPathProgress] = useState(0);
+  /* طول واقعی مسیر پس از کشیده‌شدن توسط preserveAspectRatio="none".
+     عدد ثابت کار نمی‌کرد: JOURNEY_LEN طول مسیر در فضای viewBox است،
+     ولی SVG عمودی فشرده می‌شود و طول رسم‌شده کمتر می‌شود — برای همین
+     خط زودتر از پیشرفت اسکرول پر می‌شد. */
+  const [pathLen, setPathLen] = useState(JOURNEY_LEN);
 
   useEffect(() => {
     setMounted(true);
@@ -90,7 +96,27 @@ export default function HomeClient({ content }: { content: SiteContent }) {
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
+
+    /* getTotalLength طول واقعیِ رسم‌شده را می‌دهد، با احتساب کشیدگی.
+       بعد از هر تغییر چیدمان دوباره خوانده می‌شود چون ارتفاع کارت‌ها
+       با شکستن متن عوض می‌شود. */
+    const measure = () => {
+      const path = pathRef.current;
+      if (!path) return;
+      try {
+        const len = path.getTotalLength();
+        if (len > 0) setPathLen(len);
+      } catch {
+        /* در مرورگرهای قدیمی ممکن است پرتاب کند — مقدار پیش‌فرض می‌ماند */
+      }
+    };
+    const raf = requestAnimationFrame(measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+
     return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
@@ -925,13 +951,14 @@ export default function HomeClient({ content }: { content: SiteContent }) {
                 />
                 {/* بخش کشیده‌شده — ضخامتش عمداً یکنواخت نیست */}
                 <path
+                  ref={pathRef}
                   d={JOURNEY_PATH}
                   fill="none"
                   stroke="var(--accent)"
                   strokeWidth="2.6"
                   strokeLinecap="round"
-                  strokeDasharray={JOURNEY_LEN}
-                  strokeDashoffset={JOURNEY_LEN * (1 - pathProgress)}
+                  strokeDasharray={pathLen}
+                  strokeDashoffset={pathLen * (1 - pathProgress)}
                   style={{ transition: "stroke-dashoffset .12s linear" }}
                 />
               </svg>
