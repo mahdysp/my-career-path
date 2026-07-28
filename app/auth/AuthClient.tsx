@@ -47,11 +47,18 @@ export default function AuthClient() {
       }
 
       setAdminMode(true);
-      // اگر همین حالا نشست دارد، معطلش نکنیم
-      fetch("/api/auth/me", { credentials: "same-origin" })
+      /* اگر همین حالا نشست ادمین دارد، معطلش نکنیم. اگر نشست دارد ولی
+         ادمین نیست، همین‌جا بگوییم — نه بعد از فرستادنش به پنل. */
+      fetch("/api/admin/whoami", {
+        credentials: "same-origin",
+        cache: "no-store",
+      })
         .then((r) => r.json())
         .then((d) => {
-          if (d?.user) router.push("/admin");
+          if (d?.admin) window.location.assign("/admin");
+          else if (d?.reason === "forbidden") {
+            setError("این حساب دسترسی مدیریت ندارد.");
+          }
         })
         .catch(() => {});
       return;
@@ -78,9 +85,11 @@ export default function AuthClient() {
 
   useEffect(() => {
     setMounted(true);
-    router.prefetch(nextUrl);
+    /* مقصدِ پس از ورود عمداً prefetch نمی‌شود: در آن لحظه هنوز کوکی
+       نداریم، پس middleware پاسخ ریدایرکت می‌دهد و Next همان را کش
+       می‌کند — بعد از ورود، ناوبری بی‌اثر می‌شد. */
     router.prefetch("/register");
-  }, [router, nextUrl]);
+  }, [router]);
 
   const handleSpotlight = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -108,15 +117,43 @@ export default function AuthClient() {
         throw new Error(data.message || "مشکلی پیش آمده است.");
       }
 
-      if (isLogin) {
-        router.push(nextUrl);
-      } else {
+      if (!isLogin) {
         setIsLogin(true);
         setError("");
+        setLoading(false);
+        return;
       }
+
+      /* در حالت ورود مدیران، پیش از هدایت بررسی می‌کنیم که این حساب
+         واقعاً دسترسی دارد. بدون این، کاربر عادی به /admin فرستاده
+         می‌شد و خطا را یک صفحه دیرتر می‌دید. */
+      if (adminMode) {
+        const who = await fetch("/api/admin/whoami", {
+          credentials: "same-origin",
+          cache: "no-store",
+        })
+          .then((r) => r.json())
+          .catch(() => null);
+
+        if (!who?.admin) {
+          setError(
+            "این حساب دسترسی مدیریت ندارد. برای ورود عادی، دوباره روی قفل بزنید."
+          );
+          setLoading(false);
+          return;
+        }
+      }
+
+      /* از router.push استفاده نمی‌شود: مسیریاب Next پاسخ‌های
+         ریدایرکتِ middleware را (از زمانی که هنوز کوکی نداشتیم) کش
+         می‌کند و ناوبری را بی‌اثر می‌گذارد — دقیقاً همان چیزی که باعث
+         می‌شد کاربر پشت «در حال پردازش» بماند تا دستی رفرش کند.
+         جابه‌جایی کامل صفحه کوکی تازه را قطعی اعمال می‌کند. */
+      window.location.assign(nextUrl);
+      // عمداً setLoading(false) صدا زده نمی‌شود؛ صفحه در حال ترک است.
+      return;
     } catch (err) {
       setError(err instanceof Error ? err.message : "مشکلی پیش آمده است.");
-    } finally {
       setLoading(false);
     }
   };
