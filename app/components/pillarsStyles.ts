@@ -13,8 +13,9 @@ export const pillarsStyles = `
 
   .pl {
     position: sticky;
-    top: 0;
-    height: 100svh;
+    /* زیر نوار شناور، وگرنه تیتر و برچسب پشت نوار پنهان می‌شوند */
+    top: var(--nav-offset);
+    height: calc(100svh - var(--nav-offset));
     max-width: 1240px;
     margin: 0 auto;
     padding: clamp(16px, 3vh, 40px) clamp(16px, 4vw, 40px);

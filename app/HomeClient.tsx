@@ -62,11 +62,22 @@ export default function HomeClient({ content }: { content: SiteContent }) {
       /* مسافت بر پایه‌ی «چقدر از بخش دیده شده» حساب می‌شود، نه موقعیت مطلق.
          قبلاً اگر بعد از این بخش فضای اسکرول کافی نبود (اینجا فقط یک دکمه و
          فوتر هست)، پیشرفت هرگز به ۱۰۰٪ نمی‌رسید و گام سوم فعال نمی‌شد. */
-      const startAt = vh * 0.92;
-      const distance = Math.max(1, Math.min(r.height, vh * 0.6));
-      const travelled = startAt - r.top;
+      /* بخش چسبان است: بازه‌ی پیشرفت همان مدتی است که قفل می‌ماند.
+         قبلاً مسافت حداکثر ۶۰٪ یک صفحه بود و انیمیشن آن‌قدر سریع تمام
+         می‌شد که به چشم نمی‌آمد.
+         روی نمایشگرهای کوتاه که قفل نمی‌شود، معیار «ورود بخش به قاب
+         دید» است — وگرنه r.height − vh منفی می‌شود و مسیر می‌پرد. */
+      const pinned = r.height > vh + 40;
+      let p: number;
+      if (pinned) {
+        p = -r.top / Math.max(1, r.height - vh);
+      } else {
+        const startAt = vh * 0.92;
+        const distance = Math.max(1, Math.min(r.height, vh * 0.6));
+        p = (startAt - r.top) / distance;
+      }
 
-      setPathProgress(Math.max(0, Math.min(1, travelled / distance)));
+      setPathProgress(Math.max(0, Math.min(1, p)));
       ticking = false;
     };
 
@@ -254,6 +265,35 @@ export default function HomeClient({ content }: { content: SiteContent }) {
         }
 
         /* ── مسیر سه‌گام ── */
+        /* ارتفاع اضافی = فرصت اسکرول برای دیده‌شدن انیمیشن مسیر */
+        .k2-steps-wrap {
+          position: relative;
+          height: 230vh;
+          max-width: 860px;
+          width: 100%;
+          margin: 0 auto;
+        }
+        .k2-steps-sticky {
+          position: sticky;
+          /* نوار بالا شناور است و روی محتوا می‌افتد؛ بدون این آفست،
+             سرِ بخش زیر نوار پنهان می‌ماند. */
+          top: var(--nav-offset);
+          min-height: calc(100svh - var(--nav-offset));
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: 0 clamp(16px, 4vw, 40px);
+        }
+        /* نمایشگر کوتاه: قفل‌کردن محتوا را می‌بُرد */
+        @media (max-height: 700px) {
+          .k2-steps-wrap { height: auto; }
+          .k2-steps-sticky {
+            position: static;
+            min-height: 0;
+            padding-block: 64px 96px;
+          }
+        }
+
         .k2-journey {
           position: relative;
           padding-right: 62px;
@@ -382,12 +422,11 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           height: 215vh;
           position: relative;
         }
-        /* نوار بالا شناور است و با اسکرول به پایین کنار می‌رود، پس صحنه
-           می‌تواند تمام ارتفاع پنجره را بگیرد. */
+        /* زیر نوار شناور قفل می‌شود؛ با top: 0 سرِ بخش پشت نوار می‌رفت. */
         .k2-exp-sticky {
           position: sticky;
-          top: 0;
-          height: 100svh;
+          top: var(--nav-offset);
+          height: calc(100svh - var(--nav-offset));
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -502,8 +541,8 @@ export default function HomeClient({ content }: { content: SiteContent }) {
         }
         .k2-screen {
           position: sticky;
-          top: 0;
-          height: 100svh;
+          top: var(--nav-offset);
+          height: calc(100svh - var(--nav-offset));
           max-width: 1280px;
           margin: 0 auto;
           padding: clamp(16px, 3vh, 40px) clamp(16px, 4vw, 40px);
@@ -859,7 +898,8 @@ export default function HomeClient({ content }: { content: SiteContent }) {
           </section>
 
           {/* How it works */}
-          <section id="how-it-works" style={{ maxWidth: 860, width: "100%", margin: "0 auto", padding: "0 clamp(16px, 4vw, 40px) 128px" }}>
+          <section id="how-it-works" className="k2-steps-wrap">
+            <div className="k2-steps-sticky">
             <div style={{ textAlign: "right", marginBottom: 28 }}>
               <h2 style={{ fontWeight: 700, fontSize: 34, letterSpacing: "-0.02em", color: "var(--foreground)", margin: 0 }}>
                 سه گام تا مسیر روشن
@@ -935,6 +975,7 @@ export default function HomeClient({ content }: { content: SiteContent }) {
               >
                 جزئیات کامل روش کار
               </a>
+            </div>
             </div>
           </section>
 

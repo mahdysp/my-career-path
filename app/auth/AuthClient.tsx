@@ -136,9 +136,7 @@ export default function AuthClient() {
           .catch(() => null);
 
         if (!who?.admin) {
-          setError(
-            "این حساب دسترسی مدیریت ندارد. برای ورود عادی، دوباره روی قفل بزنید."
-          );
+          setError("این حساب دسترسی مدیریت ندارد.");
           setLoading(false);
           return;
         }
